@@ -1,0 +1,37 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment"
+    android:orientation="vertical">
+
+<!-- TODO Todo el relleno de esta aplicacion es de muestra/temporal -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:layout_height="1dp"
+        android:layout_weight="1">
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp">
+
+
+        </android.support.constraint.ConstraintLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:layout_height="1dp"
+        android:layout_weight="1">
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp">
+
+
+        </android.support.constraint.ConstraintLayout>
+    </LinearLayout>
+
+</LinearLayout>

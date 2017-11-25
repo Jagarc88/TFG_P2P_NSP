@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context="com.tfgp2p.tfg_p2p_nsp.MainActivity"
     android:columnCount="1">
-
     <GridLayout
         android:layout_height="75dp"
         android:layout_width="match_parent"
@@ -118,7 +117,6 @@
                 android:textColor="@android:color/black"/>
         </LinearLayout>
     </GridLayout>
-
     <FrameLayout
         android:id="@+id/main_content_layout"
         android:layout_width="1dp"
@@ -130,5 +128,4 @@
         android:layout_alignParentStart="true"
         android:layout_below="@+id/tabbar_layout"
         android:background="#666666"></FrameLayout>
-
 </RelativeLayout>
