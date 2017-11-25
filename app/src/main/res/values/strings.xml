@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">TFG_P2P_NSP</string>
+    <string name="app_name">TFG Friend-2-Friend</string>
+
+    <string name="tab_tabbar_inicio">Inicio</string>
+    <string name="tab_tabbar_ficheros">Ficheros</string>
+    <string name="tab_tabbar_amigos">Amigos</string>
+    <string name="tab_tabbar_opciones">Opciones</string>
 </resources>
