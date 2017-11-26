@@ -13,14 +13,14 @@
 
         <ImageView
             android:layout_marginLeft="3dp"
-            android:id="@+id/pestana_image_icon"
+            android:id="@+id/pestanahead_image_icon"
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_gravity="center"
             android:background="@drawable/ic_file_download_black_24dp" />
 
         <TextView
-            android:id="@+id/pestana_texto"
+            android:id="@+id/pestanahead_texto"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
