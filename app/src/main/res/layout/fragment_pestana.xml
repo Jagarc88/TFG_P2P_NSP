@@ -39,6 +39,7 @@
             android:gravity="fill_horizontal" />
 
         <ImageView
+            android:id="@+id/pestana_button_expandir"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_marginRight="10dp"
@@ -46,6 +47,7 @@
             android:layout_gravity="center" />
     </LinearLayout>
     <FrameLayout
+        android:id="@+id/pestana_relleno"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_weight="1"

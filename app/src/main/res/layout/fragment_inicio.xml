@@ -8,30 +8,20 @@
 <!-- TODO Todo el relleno de esta aplicacion es de muestra/temporal -->
 
     <LinearLayout
+        android:id="@+id/layout_pestana_top"
         android:layout_width="match_parent"
         android:orientation="horizontal"
         android:layout_height="1dp"
         android:layout_weight="1">
 
-        <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="60dp">
-
-
-        </android.support.constraint.ConstraintLayout>
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/layout_pestana_bottom"
         android:layout_width="match_parent"
         android:orientation="horizontal"
         android:layout_height="1dp"
         android:layout_weight="1">
 
-        <android.support.constraint.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="60dp">
-
-
-        </android.support.constraint.ConstraintLayout>
     </LinearLayout>
 
 </LinearLayout>
