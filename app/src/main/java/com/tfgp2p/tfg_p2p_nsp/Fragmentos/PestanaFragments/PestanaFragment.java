@@ -2,15 +2,15 @@ package com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments;
 
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**
@@ -24,10 +24,11 @@ public class PestanaFragment extends Fragment {
 
     protected FrameLayout layoutRellenoPestana;
 
+    protected FragmentTab fragmentTab;
+
     public PestanaFragment() {
         // Required empty public constructor
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -40,22 +41,12 @@ public class PestanaFragment extends Fragment {
 
         layoutRellenoPestana = viewPestana.findViewById(R.id.pestana_relleno);
 
+        this.fragmentTab.rellenaVariables(textTitutloHeadPestana,imageHeadPestana,imageExpandir,layoutRellenoPestana);
+
         return viewPestana;
     }
 
-    public TextView getTextTitutloHeadPestana() {
-        return textTitutloHeadPestana;
-    }
-
-    public ImageView getImageHeadPestana() {
-        return imageHeadPestana;
-    }
-
-    public ImageView getImageExpandir() {
-        return imageExpandir;
-    }
-
-    public FrameLayout getLayoutRellenoPestana() {
-        return layoutRellenoPestana;
+    public void setFragmentTab(FragmentTab fragmentTab) {
+        this.fragmentTab = fragmentTab;
     }
 }

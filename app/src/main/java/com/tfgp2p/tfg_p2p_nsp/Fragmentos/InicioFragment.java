@@ -1,25 +1,27 @@
 package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
 
+import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.InicioDescargaFragment;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
+public class InicioFragment extends FragmentTab {
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * to handle interaction events.
- */
-public class InicioFragment extends Fragment {
+    protected PestanaFragment pestanaFragmentTop;
+    protected PestanaFragment pestanaFragmentBottom;
 
-    private PestanaFragment pestanaFragmentTop;
-    private PestanaFragment pestanaFragmentBottom;
+    protected FrameLayout topLayout;
+    protected FrameLayout bottomLayout;
 
     public InicioFragment() {
         // Required empty public constructor
@@ -32,23 +34,28 @@ public class InicioFragment extends Fragment {
         // Inflate the layout for this fragment
         View viewInicio = inflater.inflate(R.layout.fragment_inicio, container, false);
 
-        LinearLayout topLayout = viewInicio.findViewById(R.id.layout_pestana_top);
-        LinearLayout bottomLayout = viewInicio.findViewById(R.id.layout_pestana_bottom);
+        topLayout = viewInicio.findViewById(R.id.layout_pestana_top);
+        bottomLayout = viewInicio.findViewById(R.id.layout_pestana_bottom);
 
-        pestanaFragmentTop = new PestanaFragment();
-
-        pestanaFragmentTop.getTextTitutloHeadPestana().setText("MOVIDOTE");
-
-        topLayout.addView(pestanaFragmentTop.getView());
-
+        pestanaFragmentTop = new InicioDescargaFragment();
         pestanaFragmentBottom = new PestanaFragment();
 
-        pestanaFragmentBottom.getTextTitutloHeadPestana().setText("MOVIDOTE2");
+        pestanaFragmentBottom.setFragmentTab(this);
+        pestanaFragmentTop.setFragmentTab(this);
 
-        bottomLayout.addView(pestanaFragmentBottom.getView());
+        FragmentManager fragMan = getFragmentManager();
+        FragmentTransaction fragTransaction = fragMan.beginTransaction();
+
+        fragTransaction.add(topLayout.getId(), pestanaFragmentTop , "fragment");
+        fragTransaction.add(bottomLayout.getId(), pestanaFragmentBottom , "fragment");
+        fragTransaction.commit();
 
         return viewInicio;
     }
 
+    @Override
+    public void rellenaVariables(TextView textTitutloHeadPestana, ImageView imageHeadPestana, ImageView imageExpandir, FrameLayout layoutRellenoPestana) {
 
+        textTitutloHeadPestana.setText("BICHO");
+    }
 }
