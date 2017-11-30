@@ -1,6 +1,5 @@
 package com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments;
 
-import android.app.Application;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,7 +19,8 @@ public class AmigosFragment extends FragmentTab {
 
     @Override
     public String toString() {
-        return super.toString();
-    }
+        String caca = "caca";
 
+        return caca;
+    }
 }
