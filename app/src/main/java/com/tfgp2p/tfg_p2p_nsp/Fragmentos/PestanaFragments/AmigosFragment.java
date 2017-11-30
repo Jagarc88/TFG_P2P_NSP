@@ -11,8 +11,16 @@ import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
  */
 
 public class AmigosFragment extends FragmentTab {
+
     @Override
     public void rellenaVariables(TextView textTitutloHeadPestana, ImageView imageHeadPestana, ImageView imageExpandir, FrameLayout layoutRellenoPestana) {
         // TODO Rellenar clase con la logica especifica de esta pestanya
+    }
+
+    @Override
+    public String toString() {
+        String caca = "caca";
+
+        return caca;
     }
 }
