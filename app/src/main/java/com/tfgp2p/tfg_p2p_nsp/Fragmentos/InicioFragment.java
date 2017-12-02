@@ -2,7 +2,6 @@ package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
 
 import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,8 +10,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.InicioDescargaFragment;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaInicioAmigos;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaInicioDescarga;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 public class InicioFragment extends FragmentTab {
@@ -37,8 +37,8 @@ public class InicioFragment extends FragmentTab {
         topLayout = viewInicio.findViewById(R.id.layout_pestana_top);
         bottomLayout = viewInicio.findViewById(R.id.layout_pestana_bottom);
 
-        pestanaFragmentTop = new InicioDescargaFragment();
-        pestanaFragmentBottom = new PestanaFragment();
+        pestanaFragmentTop = new PestanaInicioAmigos();
+        pestanaFragmentBottom = new PestanaInicioDescarga();
 
         pestanaFragmentBottom.setFragmentTab(this);
         pestanaFragmentTop.setFragmentTab(this);
@@ -53,9 +53,10 @@ public class InicioFragment extends FragmentTab {
         return viewInicio;
     }
 
-    @Override
-    public void rellenaVariables(TextView textTitutloHeadPestana, ImageView imageHeadPestana, ImageView imageExpandir, FrameLayout layoutRellenoPestana) {
-
-        textTitutloHeadPestana.setText("BICHO");
+    /**
+     * Rellena la pestanya superior con datos
+     */
+    private void rellenaPestanyaSuperior(){
+        pestanaFragmentTop.toString();
     }
 }

@@ -10,7 +10,6 @@ public class AplicacionMain extends Application {
 
     @Override
     public void onCreate() {
-        System.out.println("SOLO CUANDO SE INICIA LA APP");
         super.onCreate();
     }
 }

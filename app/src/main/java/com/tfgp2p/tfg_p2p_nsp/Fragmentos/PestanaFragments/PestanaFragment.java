@@ -16,7 +16,7 @@ import com.tfgp2p.tfg_p2p_nsp.R;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class PestanaFragment extends Fragment {
+public abstract class PestanaFragment extends Fragment {
 
     protected TextView textTitutloHeadPestana;
     protected ImageView imageHeadPestana;
@@ -41,10 +41,15 @@ public class PestanaFragment extends Fragment {
 
         layoutRellenoPestana = viewPestana.findViewById(R.id.pestana_relleno);
 
-        this.fragmentTab.rellenaVariables(textTitutloHeadPestana,imageHeadPestana,imageExpandir,layoutRellenoPestana);
+        rellenaVariables();
 
         return viewPestana;
     }
+
+    /**
+     * Rellena la pestanya con los datos propios
+     */
+    protected abstract void rellenaVariables();
 
     public void setFragmentTab(FragmentTab fragmentTab) {
         this.fragmentTab = fragmentTab;

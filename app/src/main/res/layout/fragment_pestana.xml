@@ -17,7 +17,7 @@
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_gravity="center"
-            android:background="@drawable/ic_file_download_black_24dp" />
+            android:src="@drawable/ic_expand_more_black_24dp" />
 
         <TextView
             android:id="@+id/pestanahead_texto"
