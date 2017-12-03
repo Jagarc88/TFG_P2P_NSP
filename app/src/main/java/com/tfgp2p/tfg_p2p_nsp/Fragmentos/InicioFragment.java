@@ -7,12 +7,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaInicioAmigos;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaInicioDescarga;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaAmigos;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaDescarga;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 public class InicioFragment extends FragmentTab {
@@ -23,11 +21,6 @@ public class InicioFragment extends FragmentTab {
     protected FrameLayout topLayout;
     protected FrameLayout bottomLayout;
 
-    public InicioFragment() {
-        // Required empty public constructor
-    }
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -37,8 +30,8 @@ public class InicioFragment extends FragmentTab {
         topLayout = viewInicio.findViewById(R.id.layout_pestana_top);
         bottomLayout = viewInicio.findViewById(R.id.layout_pestana_bottom);
 
-        pestanaFragmentTop = new PestanaInicioAmigos();
-        pestanaFragmentBottom = new PestanaInicioDescarga();
+        pestanaFragmentTop = new PestanaAmigos();
+        pestanaFragmentBottom = new PestanaDescarga();
 
         pestanaFragmentBottom.setFragmentTab(this);
         pestanaFragmentTop.setFragmentTab(this);

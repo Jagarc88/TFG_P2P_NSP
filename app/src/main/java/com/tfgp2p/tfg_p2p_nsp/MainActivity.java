@@ -1,20 +1,28 @@
 package com.tfgp2p.tfg_p2p_nsp;
 
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.AmigosFragment;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FicherosFragment;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment;
+import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
 
 public class MainActivity extends AppCompatActivity {
 
     FrameLayout frameTabContent;
 
-    FragmentManager fragMan = getFragmentManager();
-    FragmentTransaction fragTransaction = fragMan.beginTransaction();
+    private LinearLayout tabbarInicio;
+    private LinearLayout tabbarAmigos;
+    private LinearLayout tabbarFicheros;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,10 +31,48 @@ public class MainActivity extends AppCompatActivity {
 
         frameTabContent = findViewById(R.id.main_content_layout);
 
-        // TODO: TEMPORAL ----------
-        // CAMBIAR el metodo de generacion de elementos, por ahora solo se vera Inicio
-        fragTransaction.add(frameTabContent.getId(), new InicioFragment(), "fragment");
-        findViewById(R.id.tabbar_tabinicio_layout).setBackgroundResource(R.drawable.tabbar_background_selected);
-        fragTransaction.commit();
+        tabbarInicio = findViewById(R.id.tabbar_tabinicio_layout);
+        tabbarFicheros = findViewById(R.id.tabbar_tabficheros_layout);
+        tabbarAmigos = findViewById(R.id.tabbar_tabamigos_layout);
+
+        //Se inicializa la aplicacion en el tab INICIO
+        changeFrame(new InicioFragment(), tabbarInicio);
     }
+
+    public void onClickTabbar(View view){
+
+        FragmentTab newFragment = null;
+
+        // INICIO
+        if(view == tabbarInicio){
+            newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_INICIO);
+        }
+        // FICHEROS
+        else if(view == tabbarFicheros){
+            newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_FICHEROS);
+        }
+        // AMIGOS
+        else if(view == tabbarAmigos){
+            newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_AMIGOS);
+        }
+
+        changeFrame(newFragment, (LinearLayout)view);
+    }
+
+    private void changeFrame(FragmentTab fragmentTab, LinearLayout tabbarSelected){
+
+        FragmentManager fragMan = getFragmentManager();
+        FragmentTransaction fragTransaction = fragMan.beginTransaction();
+        fragTransaction.replace(frameTabContent.getId(), fragmentTab, "fragment");
+        fragTransaction.commit();
+
+        // Cambia el tabbar seleccionado
+        tabbarInicio.setBackgroundResource(R.drawable.tabbar_background_default);
+        tabbarFicheros.setBackgroundResource(R.drawable.tabbar_background_default);
+        tabbarAmigos.setBackgroundResource(R.drawable.tabbar_background_default);
+
+        tabbarSelected.setBackgroundResource(R.drawable.tabbar_background_selected);
+    }
+
+    // TODO Aplicacion cuando el movil esta horizontal
 }
