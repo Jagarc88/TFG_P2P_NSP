@@ -29,11 +29,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        frameTabContent = findViewById(R.id.main_content_layout);
+        frameTabContent = (FrameLayout) findViewById(R.id.main_content_layout);
 
-        tabbarInicio = findViewById(R.id.tabbar_tabinicio_layout);
-        tabbarFicheros = findViewById(R.id.tabbar_tabficheros_layout);
-        tabbarAmigos = findViewById(R.id.tabbar_tabamigos_layout);
+        tabbarInicio = (LinearLayout) findViewById(R.id.tabbar_tabinicio_layout);
+        tabbarFicheros = (LinearLayout) findViewById(R.id.tabbar_tabficheros_layout);
+        tabbarAmigos = (LinearLayout) findViewById(R.id.tabbar_tabamigos_layout);
 
         //Se inicializa la aplicacion en el tab INICIO
         changeFrame(new InicioFragment(), tabbarInicio);
