@@ -20,7 +20,7 @@ public class AmigosFragment extends FragmentTab {
 
     protected PestanaFragment pestanaFragment;
 
-    protected FrameLayout topLayout;
+    protected FrameLayout mainLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -28,16 +28,17 @@ public class AmigosFragment extends FragmentTab {
         // Inflate the layout for this fragment
         View viewInicio = inflater.inflate(R.layout.fragment_amigos, container, false);
 
-        topLayout = viewInicio.findViewById(R.id.layout_pestana);
+        mainLayout = viewInicio.findViewById(R.id.layout_pestana);
 
         pestanaFragment = new PestanaAmigos();
 
         pestanaFragment.setFragmentTab(this);
+        listaPestanas.add(pestanaFragment);
 
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
 
-        fragTransaction.add(topLayout.getId(), pestanaFragment , "fragment");
+        fragTransaction.add(mainLayout.getId(), pestanaFragment , "fragment");
         fragTransaction.commit();
 
         return viewInicio;

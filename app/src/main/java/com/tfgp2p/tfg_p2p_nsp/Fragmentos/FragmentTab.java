@@ -1,11 +1,15 @@
 package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
 
 import android.app.Fragment;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Deekin on 29/11/2017.
@@ -20,6 +24,11 @@ public abstract class FragmentTab extends Fragment {
     private static FragmentTab inicioTab;
     private static FragmentTab ficherosTab;
     private static FragmentTab amigosTab;
+
+    /**
+     * Lista que se usara para comprobar patrones de todas las pestanyas de forma general
+     */
+    protected List<PestanaFragment> listaPestanas = new ArrayList<>();
 
     public static FragmentTab obtainFragment(int tabID){
         FragmentTab fragmentTab = null;
@@ -46,5 +55,13 @@ public abstract class FragmentTab extends Fragment {
         }
 
         return fragmentTab;
+    }
+
+    public void colapsarPestanyaDada(PestanaFragment pestanaColapsar){
+
+        for (PestanaFragment pestana: listaPestanas ) {
+
+            pestana.colapsarPestanya(pestana == pestanaColapsar);
+        }
     }
 }

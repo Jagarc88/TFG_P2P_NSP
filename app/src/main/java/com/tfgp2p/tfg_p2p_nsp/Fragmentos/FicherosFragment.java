@@ -44,6 +44,9 @@ public class FicherosFragment extends FragmentTab {
         pestanaFragmentBottom.setFragmentTab(this);
         pestanaFragmentTop.setFragmentTab(this);
 
+        listaPestanas.add(pestanaFragmentBottom);
+        listaPestanas.add(pestanaFragmentTop);
+
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
 
