@@ -30,33 +30,42 @@ public abstract class FragmentTab extends Fragment {
      */
     protected List<PestanaFragment> listaPestanas = new ArrayList<>();
 
-    public static FragmentTab obtainFragment(int tabID) {
+    public static FragmentTab obtainFragment(int tabID){
         FragmentTab fragmentTab = null;
 
-        switch (tabID) {
-            case TABNAME_INICIO: {
-                if (inicioTab == null) {
+        switch(tabID){
+            case TABNAME_INICIO:{
+                if(inicioTab == null){
                     inicioTab = new InicioFragment();
                 }
                 fragmentTab = inicioTab;
-            }
-            break;
-            case TABNAME_FICHEROS: {
-                if (ficherosTab == null) {
+            }break;
+            case TABNAME_FICHEROS:{
+                if(ficherosTab == null){
                     ficherosTab = new FicherosFragment();
                 }
                 fragmentTab = ficherosTab;
-            }
-            break;
-            case TABNAME_AMIGOS: {
-                if (amigosTab == null) {
+            }break;
+            case TABNAME_AMIGOS:{
+                if(amigosTab == null){
                     amigosTab = new AmigosFragment();
                 }
                 fragmentTab = amigosTab;
-            }
-            break;
+            }break;
         }
 
         return fragmentTab;
     }
+
+    public void colapsarPestanya(PestanaFragment pestanaFragment){
+
+        for (PestanaFragment pestana: listaPestanas ) {
+            if(pestana == pestanaFragment){
+                pestanaFragment.colapsarPestanya(!pestanaFragment.getColapsed());
+            } else{
+                pestana.colapsarPestanya(false);
+            }
+        }
+    }
+
 }

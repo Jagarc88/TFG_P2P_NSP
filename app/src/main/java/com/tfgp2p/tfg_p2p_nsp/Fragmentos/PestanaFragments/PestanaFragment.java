@@ -24,9 +24,11 @@ public abstract class PestanaFragment extends Fragment {
     protected ImageView imageHeadPestana;
     protected ImageView imageExpandir;
 
+    protected LinearLayout pestanaHeadLayout;
+
     protected LinearLayout layoutRellenoPestana;
 
-    protected View mainLayout;
+    protected LinearLayout mainLayout;
 
     protected FragmentTab fragmentTab;
 
@@ -39,17 +41,34 @@ public abstract class PestanaFragment extends Fragment {
                              Bundle savedInstanceState) {
         View viewPestana = inflater.inflate(R.layout.fragment_pestana, container, false);
 
-        mainLayout = viewPestana;
+        mainLayout = (LinearLayout) viewPestana;
 
         textTitutloHeadPestana = viewPestana.findViewById(R.id.pestanahead_texto);
         imageHeadPestana = viewPestana.findViewById(R.id.pestanahead_image_icon);
         imageExpandir = viewPestana.findViewById(R.id.pestana_button_expandir);
+        pestanaHeadLayout = viewPestana.findViewById(R.id.pestana_head);
+        pestanaHeadLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                extendButtomPressed();
+            }
+        });
 
         layoutRellenoPestana = viewPestana.findViewById(R.id.pestana_relleno);
 
         rellenaVariables();
 
         return viewPestana;
+    }
+
+    public void setExpandable(boolean expandable){
+        imageExpandir.setVisibility(
+                imageExpandir.getVisibility()==LinearLayout.GONE?
+                        LinearLayout.VISIBLE:LinearLayout.GONE);
+    }
+
+    public void extendButtomPressed(){
+        fragmentTab.colapsarPestanya(this);
     }
 
     /**
@@ -59,34 +78,39 @@ public abstract class PestanaFragment extends Fragment {
 
     /**
      * Colapsa o abre la pestanya
-     * @param expandir
+     * @param colapsar
      */
-    public void colapsarPestanya(boolean expandir){
+    public void colapsarPestanya(boolean colapsar){
         int estado;
         int newArrowImage;
-        ViewGroup.LayoutParams mainParams;
+        LinearLayout.LayoutParams mainParams;
 
-        if(expandir){
+        if(!colapsar){
             estado = LinearLayout.VISIBLE;
             newArrowImage = R.drawable.ic_expand_less_black_24dp;
-
-            /*mainParams = new ViewGroup.LayoutParams(
+            mainParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    1.0f);*/
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1.0f);
 
         }else{
             estado = LinearLayout.GONE;
             newArrowImage = R.drawable.ic_expand_more_black_24dp;
-            //mainParams = new ViewGroup.LayoutParams();
+            mainParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 
-        //mainLayout.setLayoutParams(mainParams);
+        mainLayout.setLayoutParams(mainParams);
         imageExpandir.setImageResource(newArrowImage);
         layoutRellenoPestana.setVisibility(estado);
     }
 
     public void setFragmentTab(FragmentTab fragmentTab) {
         this.fragmentTab = fragmentTab;
+    }
+
+    public boolean getColapsed() {
+        return layoutRellenoPestana.getVisibility()==LinearLayout.GONE;
     }
 }
