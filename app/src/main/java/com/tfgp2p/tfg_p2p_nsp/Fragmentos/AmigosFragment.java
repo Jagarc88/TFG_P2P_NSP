@@ -27,7 +27,7 @@ public class AmigosFragment extends FragmentTab {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View viewInicio = inflater.inflate(R.layout.fragment_amigos, container, false);
-
+/*
         mainLayout = viewInicio.findViewById(R.id.layout_pestana);
 
         pestanaFragment = new PestanaAmigos();
@@ -40,7 +40,7 @@ public class AmigosFragment extends FragmentTab {
 
         fragTransaction.add(mainLayout.getId(), pestanaFragment , "fragment");
         fragTransaction.commit();
-
+*/
         return viewInicio;
     }
 }

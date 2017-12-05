@@ -34,7 +34,7 @@ public class FicherosFragment extends FragmentTab {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View viewInicio = inflater.inflate(R.layout.fragment_ficheros, container, false);
-
+/*
         topLayout = viewInicio.findViewById(R.id.layout_pestana_top);
         bottomLayout = viewInicio.findViewById(R.id.layout_pestana_bottom);
 
@@ -53,7 +53,7 @@ public class FicherosFragment extends FragmentTab {
         fragTransaction.add(topLayout.getId(), pestanaFragmentTop , "fragment");
         fragTransaction.add(bottomLayout.getId(), pestanaFragmentBottom , "fragment");
         fragTransaction.commit();
-
+*/
         return viewInicio;
     }
 }
