@@ -47,4 +47,9 @@ public class AmigosFragment extends FragmentTab {
 
         return viewInicio;
     }
+
+    @Override
+    public void setExtendable(PestanaFragment pestanaFragment) {
+        pestanaFragment.setExpandable(false);
+    }
 }

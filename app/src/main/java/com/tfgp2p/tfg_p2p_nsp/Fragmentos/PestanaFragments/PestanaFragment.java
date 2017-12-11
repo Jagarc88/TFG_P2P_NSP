@@ -47,24 +47,33 @@ public abstract class PestanaFragment extends Fragment {
         imageHeadPestana = viewPestana.findViewById(R.id.pestanahead_image_icon);
         imageExpandir = viewPestana.findViewById(R.id.pestana_button_expandir);
         pestanaHeadLayout = viewPestana.findViewById(R.id.pestana_head);
-        pestanaHeadLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                extendButtomPressed();
-            }
-        });
 
         layoutRellenoPestana = viewPestana.findViewById(R.id.pestana_relleno);
 
         rellenaVariables();
+        declareExtendable();
 
         return viewPestana;
     }
 
     public void setExpandable(boolean expandable){
-        imageExpandir.setVisibility(
-                imageExpandir.getVisibility()==LinearLayout.GONE?
-                        LinearLayout.VISIBLE:LinearLayout.GONE);
+        if(expandable) {
+            pestanaHeadLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    extendButtomPressed();
+                }
+            });
+            imageExpandir.setVisibility(LinearLayout.VISIBLE);
+        }else{
+            pestanaHeadLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Hacer nada
+                }
+            });
+            imageExpandir.setVisibility(LinearLayout.GONE);
+        }
     }
 
     public void extendButtomPressed(){
@@ -75,6 +84,14 @@ public abstract class PestanaFragment extends Fragment {
      * Rellena la pestanya con los datos propios
      */
     protected abstract void rellenaVariables();
+
+    /**
+     * Funcion pensada para que el programa avise al FragmentTab para que le avise
+     * si la pestanya es extendible
+     */
+    public void declareExtendable(){
+        fragmentTab.setExtendable(this);
+    }
 
     /**
      * Colapsa o abre la pestanya

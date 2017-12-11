@@ -47,4 +47,11 @@ public class InicioFragment extends FragmentTab {
 
         return viewInicio;
     }
+
+    @Override
+    public void setExtendable(PestanaFragment pestanaFragment) {
+
+        // Todas las pestanyas son colapsables
+        pestanaFragment.setExpandable(true);
+    }
 }

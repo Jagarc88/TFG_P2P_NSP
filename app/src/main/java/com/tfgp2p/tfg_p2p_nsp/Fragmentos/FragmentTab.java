@@ -68,4 +68,5 @@ public abstract class FragmentTab extends Fragment {
         }
     }
 
+    public abstract void setExtendable(PestanaFragment pestanaFragment);
 }

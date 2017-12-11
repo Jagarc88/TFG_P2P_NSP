@@ -54,4 +54,9 @@ public class FicherosFragment extends FragmentTab {
         fragTransaction.commit();
         return viewInicio;
     }
+
+    @Override
+    public void setExtendable(PestanaFragment pestanaFragment) {
+        pestanaFragment.setExpandable(true);
+    }
 }
