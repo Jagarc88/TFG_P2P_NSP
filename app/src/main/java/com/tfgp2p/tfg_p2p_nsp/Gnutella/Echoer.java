@@ -14,10 +14,16 @@ public class Echoer implements Runnable {
 	public DatagramSocket udpSocket=null;
 	public static String ipAddr= null;
 	static boolean isConnect= false;
+
+
 	public Echoer(int tcpPort, int udpPort, int backlog) {
 			try {
 				if((tcpPort >= 1) && (tcpPort <= 60000) &&(udpPort >= 1)&&(udpPort <= 60000)) {
-					
+
+					/*
+					Con tcpPort=0 el constructor genera un puerto automáticamente.
+					El puerto obtenido se puede ver con getLocalPort().
+					 */
 					ServerSocket tcpSocket = new ServerSocket(tcpPort, backlog);
 					udpSocket = new DatagramSocket(udpPort);
 					Socket testSocket= new Socket("8.8.8.8",53);
@@ -51,12 +57,17 @@ public class Echoer implements Runnable {
 			try {
 					//i++;
 					System.out.println();
-					
+
+					/*
+					 - El Echoer creado se queda bloqueado hasta que alguien quiera conectarse a él.
+					 - El AcceptInput es el que enviará los comandos/mensajes.
+					 - El UDPrecv se queda bloqueado hasta que alguien le envíe un datagrama.
+					 */
 					Thread t1 = new Thread((Runnable) new Echoer(s));
 					t1.start();
 					Thread t2= new Thread((Runnable) new AcceptInput());
 					t2.start();
-					Thread t3= new Thread((Runnable)new UDPrecv(udpSocket));
+					Thread t3= new Thread((Runnable) new UDPrecv(udpSocket));
 					t3.start();
 					//start udp listening thread
 				}
@@ -93,11 +104,12 @@ public class Echoer implements Runnable {
 				}
 			}
 		}
-
+/* ***********************************************************************************
 	public static void main(String[] args) {
 		new Echoer(Integer.parseInt(args[0]),Integer.parseInt(args[1]),5);
 		
 	}
+ * ***********************************************************************************/
 }
 
 class AcceptInput implements Runnable {
@@ -123,59 +135,60 @@ class AcceptInput implements Runnable {
 				e.printStackTrace();
 			}
 	}
-			void tokenize(String cmd, int i) {
-				j=0;
-				String[] token= new String[i];
-				st= new StringTokenizer(cmd," ");	
-				while (st.hasMoreElements()) {
-					token [j]=	st.nextToken();
-					j++;
-				}
-				if (token[0].equalsIgnoreCase("connect")) {
-					ConnectionList.AcceptConn(token[1],Integer.parseInt(token[2]));	
-				}
-				else if (token[0].equalsIgnoreCase("show")) {
-					ConnectionList.show();
-				}
-				else if (token[0].equalsIgnoreCase("send")) {
-					int k=2;
-					String s= "";
-					while (token[k] != null) {
-						s = s + token[k] + " ";
-						k++;
-					}
-					ConnectionList.Msg(Integer.parseInt(token[1]), s); //send()
-				}
-				else if (token[0].equalsIgnoreCase("sendto")) {
-					int m=3;
-					String s= "";
-					while (token[m] != null) {
-						s = s + token[m] + " ";
-						m++;
-					}
-					Messaging.send_udp(token[1], Integer.parseInt(token[2]), s);
-				}
-				else if (token[0].equalsIgnoreCase("disconnect")) {
-					ConnectionList.disconnect(Integer.parseInt(token[1]));
-				}
-				else if (token[0].equalsIgnoreCase("exit")) {
-					System.exit(-1);
-				}
-				else if (token[0].equalsIgnoreCase("info")) {
-					ConnectionList.info();
-				}
-				else {
-					System.out.println("No such Commands available, valid commands:");
-					System.out.println("info");
-					System.out.println("connect <ip-address> <tcp-port>");
-					System.out.println("show");
-					System.out.println("send <conn-id> <message>");
-					System.out.println("sendto <ip-address> <udp-port> <message>");
-					System.out.println("disconnect <conn-id>");
-					System.out.println("exit");
-					System.out.println();
-				}
+
+	void tokenize(String cmd, int i) {
+		j=0;
+		String[] token= new String[i];
+		st= new StringTokenizer(cmd," ");
+		while (st.hasMoreElements()) {
+			token [j]=	st.nextToken();
+			j++;
 		}
+		if (token[0].equalsIgnoreCase("connect")) {
+			ConnectionList.AcceptConn(token[1],Integer.parseInt(token[2]));
+		}
+		else if (token[0].equalsIgnoreCase("show")) {
+			ConnectionList.show();
+		}
+		else if (token[0].equalsIgnoreCase("send")) {
+			int k=2;
+			String s= "";
+			while (token[k] != null) {
+				s = s + token[k] + " ";
+				k++;
+			}
+			ConnectionList.Msg(Integer.parseInt(token[1]), s); //send()
+		}
+		else if (token[0].equalsIgnoreCase("sendto")) {
+			int m=3;
+			String s= "";
+			while (token[m] != null) {
+				s = s + token[m] + " ";
+				m++;
+			}
+			Messaging.send_udp(token[1], Integer.parseInt(token[2]), s);
+		}
+		else if (token[0].equalsIgnoreCase("disconnect")) {
+			ConnectionList.disconnect(Integer.parseInt(token[1]));
+		}
+		else if (token[0].equalsIgnoreCase("exit")) {
+			System.exit(-1);
+		}
+		else if (token[0].equalsIgnoreCase("info")) {
+			ConnectionList.info();
+		}
+		else {
+			System.out.println("No such Commands available, valid commands:");
+			System.out.println("info");
+			System.out.println("connect <ip-address> <tcp-port>");
+			System.out.println("show");
+			System.out.println("send <conn-id> <message>");
+			System.out.println("sendto <ip-address> <udp-port> <message>");
+			System.out.println("disconnect <conn-id>");
+			System.out.println("exit");
+			System.out.println();
+		}
+	}
 }
 	
 class Messaging implements Runnable {
@@ -189,40 +202,69 @@ class Messaging implements Runnable {
 	public Messaging (Socket s2) {
 		this.s2=s2;
 	}
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Obtiene la dirección del sdcard en el dispositivo que se encuentra abierto en ese momento.
+	 * @return
+	 */
+	public static File parseMountDirectory() {
+		File dir_00 = new File("/storage/extSdCard");
+		File dir_01 = new File("/storage/sdcard1");
+		File dir_1 = new File("/storage/usbcard1");
+		File dir_2 = new File("/storage/sdcard0");
+		File dir_3 = new File("/mnt/sdcard");
+		return dir_01.exists() ? dir_01 : dir_00.exists() ? dir_00 :
+				dir_1.exists() ? dir_1 : dir_2.exists() ? dir_2 : dir_3.exists() ? dir_3 :
+						null;
+	}
+
+	private File cogerArchivoPrueba(String path){
+		File path = parseMountDirectory();
+		File f = new File(path.getAbsolutePath() + "de_julio.txt");
+		return f;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////
 	void send(){
 		try {
 			DataOutputStream dout= new DataOutputStream(s1.getOutputStream());
-			dout.writeUTF(msg);
+			//dout.writeUTF(msg);
+			///////////////////////////////////////////////////////////////////////////
+			// Escribir los datos del archivo aquí.
+
+			///////////////////////////////////////////////////////////////////////////
 			dout.flush();
 			}
 			catch (IOException e) {
 				e.printStackTrace();
 			}
 	}
-	 static void send_udp(String ipaddr, int udPort, String message)
-	   {
-		   try
-		   {
-			   DatagramSocket clientSocket = new DatagramSocket();
-			   byte[] sendData = new byte[1024];
-			   sendData = message.getBytes();
-			   DatagramPacket sendPacket =  new DatagramPacket(sendData, sendData.length, InetAddress.getByName(ipaddr), udPort);
-			   clientSocket.send(sendPacket);
-			   clientSocket.close();
-		   }
-		   catch(SocketTimeoutException e)
-		   {
-			   System.out.println("Connection not able to established :");
-		   }
-		   catch(UnknownHostException e)
-		   {
-			   e.printStackTrace();
-		   }
-		   catch(IOException e)
-		   {
-			   e.printStackTrace();
-		   }
-	   }
+	static void send_udp(String ipaddr, int udPort, String message)
+	{
+		try
+		{
+			DatagramSocket clientSocket = new DatagramSocket();
+			byte[] sendData = new byte[1024];
+			sendData = message.getBytes();
+			DatagramPacket sendPacket =  new DatagramPacket(sendData, sendData.length, InetAddress.getByName(ipaddr), udPort);
+			clientSocket.send(sendPacket);
+			clientSocket.close();
+		}
+
+		catch(SocketTimeoutException e)
+		{
+			System.out.println("Connection not able to established :");
+		}
+		catch(UnknownHostException e)
+		{
+			e.printStackTrace();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 	public void run() {
 		boolean b=true;
 		while (b) {
@@ -300,20 +342,20 @@ class ConnectionList extends Thread implements Runnable {
 	index--;
 	}
 	static void info()
-	   {
-		   try
-		   {
-			  // String serverIp = InetAddress.getLocalHost().getHostAddress();
-			   String hostName = InetAddress.getLocalHost().getHostName();
-			
-			   System.out.println("IP Address     |  Host Name 	         |    TCP Port  |   UDP Port");
-			   System.out.println(Echoer.ipAddr + "  |   " + hostName + "      |   " + Echoer.tcpPort + "  |    " +Echoer.udpPort);
-		   }
-		   catch(Exception e)
-		   {
-			   e.printStackTrace();
-		   }
-		   }
+	{
+		try
+		{
+			// String serverIp = InetAddress.getLocalHost().getHostAddress();
+			String hostName = InetAddress.getLocalHost().getHostName();
+
+			System.out.println("IP Address     |  Host Name 	         |    TCP Port  |   UDP Port");
+			System.out.println(Echoer.ipAddr + "  |   " + hostName + "      |   " + Echoer.tcpPort + "  |    " +Echoer.udpPort);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
 	public void run () {
 		
 	}
@@ -335,7 +377,7 @@ class UDPrecv implements Runnable
 		{
 			try
 			{
-				byte[] receiveData = new byte[1024];;
+				byte[] receiveData = new byte[1024];
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				udpSock.receive(receivePacket); 
 				String message = new String(receivePacket.getData());
