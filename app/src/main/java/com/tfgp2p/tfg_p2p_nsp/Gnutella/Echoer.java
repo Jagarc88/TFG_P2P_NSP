@@ -113,7 +113,7 @@ public class Echoer implements Runnable {
 }
 
 class AcceptInput implements Runnable {
-	String cmd;
+	String cmd, cmdSend;
 	int i,j;
 	StringTokenizer st= null;
 	String[] cl_ip=new String[20];
@@ -123,17 +123,26 @@ class AcceptInput implements Runnable {
 	int index=0;
 	public void run () {
 		//System.out.println("t2");
-		try {
-			while (true) {
+		//try {
+			//while (true) {
 				BufferedReader br= new BufferedReader(new InputStreamReader(System.in));
-				cmd= br.readLine();
+				//cmd= br.readLine();
+				///////////////////////////////////////////////////////////////////////
+
+				cmd = "connect 192.168.0.13 1103";
+				cmdSend = "send 1 nada";
+
+				///////////////////////////////////////////////////////////////////////
 				i= cmd.length();
 				tokenize(cmd,i);
-				}
-			}
-		catch (IOException e) {
+
+				int j = cmdSend.length();
+				tokenize(cmdSend, j);
+				//}
+			//}
+		/*catch (IOException e) {
 				e.printStackTrace();
-			}
+		}*/
 	}
 
 	void tokenize(String cmd, int i) {
@@ -145,6 +154,7 @@ class AcceptInput implements Runnable {
 			j++;
 		}
 		if (token[0].equalsIgnoreCase("connect")) {
+			//token[1] es la dirección IP del cliente, token[2] su puerto.
 			ConnectionList.AcceptConn(token[1],Integer.parseInt(token[2]));
 		}
 		else if (token[0].equalsIgnoreCase("show")) {
@@ -219,11 +229,6 @@ class Messaging implements Runnable {
 						null;
 	}
 
-	private File cogerArchivoPrueba(String path){
-		File path = parseMountDirectory();
-		File f = new File(path.getAbsolutePath() + "de_julio.txt");
-		return f;
-	}
 	/////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////////////
 	void send(){
@@ -232,9 +237,18 @@ class Messaging implements Runnable {
 			//dout.writeUTF(msg);
 			///////////////////////////////////////////////////////////////////////////
 			// Escribir los datos del archivo aquí.
+			String path = parseMountDirectory().getAbsolutePath() + "/de_julio.txt";
+			FileInputStream fis = new FileInputStream(path);
+			byte[] buffer = new byte[4096];
+
+			while (fis.read(buffer) > 0) {
+				dout.write(buffer);
+			}
+			dout.flush();
+			fis.close();
 
 			///////////////////////////////////////////////////////////////////////////
-			dout.flush();
+			//dout.flush();
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -271,9 +285,27 @@ class Messaging implements Runnable {
 			DataInputStream din;
 			try {
 				din = new DataInputStream(s2.getInputStream()); 
-				String str= din.readUTF();
+				/*String str= din.readUTF();
 				System.out.println(str);
-				//if (str==null) {
+				//if (str==null) {*/
+				/////////////////////////////////////////////////////////////////
+
+				FileOutputStream fos = new FileOutputStream(parseMountDirectory().getAbsolutePath() + "/de_julio.txt");
+				byte[] buffer = new byte[4096];
+
+				int read = 0;
+				int totalRead = 0;
+				int remaining = 1024; //Falta saber cómo mando el tamaño exacto del archivo para no liarla en el envío.
+				while((read = din.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
+					totalRead += read;
+					remaining -= read;
+					System.out.println("read " + totalRead + " bytes.");
+					fos.write(buffer, 0, read);
+				}
+
+				fos.close();
+
+				/////////////////////////////////////////////////////////////////
 				din.close();
 				//}
 			}

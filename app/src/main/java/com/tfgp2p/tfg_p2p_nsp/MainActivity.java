@@ -15,6 +15,7 @@ import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FicherosFragment;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.Gnutella.Echoer;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,6 +35,16 @@ public class MainActivity extends AppCompatActivity {
         tabbarInicio = (LinearLayout) findViewById(R.id.tabbar_tabinicio_layout);
         tabbarFicheros = (LinearLayout) findViewById(R.id.tabbar_tabficheros_layout);
         tabbarAmigos = (LinearLayout) findViewById(R.id.tabbar_tabamigos_layout);
+
+        ////////////////////////////// PRUEBA DEL ECHOER///////////////////////////////
+        //new Echoer(1100, 1101, 5);
+        new Thread(new Runnable(){
+           public void run(){
+               // 1103 al ejecutar en mi movil.
+               new Echoer(1103, 1104, 5);
+           }
+        }).start();
+        ///////////////////////////////////////////////////////////////////////////////
 
         //Se inicializa la aplicacion en el tab INICIO
         changeFrame(new InicioFragment(), tabbarInicio);
