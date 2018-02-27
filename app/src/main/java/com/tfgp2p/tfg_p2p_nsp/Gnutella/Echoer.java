@@ -24,11 +24,14 @@ public class Echoer implements Runnable {
 					Con tcpPort=0 el constructor genera un puerto automáticamente.
 					El puerto obtenido se puede ver con getLocalPort().
 					 */
+					//ServerSocket tcpSocket = new ServerSocket(0, backlog);
 					ServerSocket tcpSocket = new ServerSocket(tcpPort, backlog);
 					udpSocket = new DatagramSocket(udpPort);
 					Socket testSocket= new Socket("8.8.8.8",53);
 					ipAddr= testSocket.getLocalAddress().getHostAddress();
 					Echoer.tcpPort= tcpPort;
+					//Echoer.tcpPort = tcpSocket.getLocalPort();
+					///////////////////////////////////////////
 					Echoer.udpPort= udpPort;
 					System.out.println("Listening on "+ ipAddr + " TCP port- " + tcpPort+" and UDP port- "+ udpPort);
 					this.backlog= backlog;
@@ -129,7 +132,9 @@ class AcceptInput implements Runnable {
 				//cmd= br.readLine();
 				///////////////////////////////////////////////////////////////////////
 
-				cmd = "connect 192.168.0.13 1103";
+				cmd = "connect 192.168.0.11 " + Echoer.tcpPort;
+				//cmd = "connect 10.128.122.160 1103";
+				//cmd = "connect 100.97.28.250 1103";
 				cmdSend = "send 1 nada";
 
 				///////////////////////////////////////////////////////////////////////
