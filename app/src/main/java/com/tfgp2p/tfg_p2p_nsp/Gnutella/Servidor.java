@@ -60,11 +60,11 @@ public class Servidor {
 				El puerto obtenido se puede ver con getLocalPort().
 				 */
 
-				this.clientsSockets = new HashSet<>(20);
+				this.clientsSockets = new HashSet<>(10);
 				// 5 conexiones pendientes como máximo por defecto.
 				this.serverSocket = new ServerSocket(tcpPort, 5);
 				this.listenTcpPort = tcpPort;
-				this.activeClients = new HashMap<>(20);
+				this.activeClients = new HashMap<>(10);
 
 
 			//}

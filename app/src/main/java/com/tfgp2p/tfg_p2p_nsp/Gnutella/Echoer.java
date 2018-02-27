@@ -132,17 +132,17 @@ class AcceptInput implements Runnable {
 				//cmd= br.readLine();
 				///////////////////////////////////////////////////////////////////////
 
-				cmd = "connect 192.168.0.11 " + Echoer.tcpPort;
-				//cmd = "connect 10.128.122.160 1103";
-				//cmd = "connect 100.97.28.250 1103";
+				//cmd = "connect 192.168.0.11 1103";
+				//cmd = "connect 10.141.238.180 62351";
+				cmd = "connect 2.153.114.70 1103";
 				cmdSend = "send 1 nada";
 
 				///////////////////////////////////////////////////////////////////////
 				i= cmd.length();
 				tokenize(cmd,i);
 
-				int j = cmdSend.length();
-				tokenize(cmdSend, j);
+				//int j = cmdSend.length();
+				//tokenize(cmdSend, j);
 				//}
 			//}
 		/*catch (IOException e) {
