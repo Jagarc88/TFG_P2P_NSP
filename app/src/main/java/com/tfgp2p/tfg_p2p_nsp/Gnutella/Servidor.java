@@ -19,21 +19,26 @@ import java.util.HashMap;
  * Clase que implementa la parte servidor de la aplicación.
  */
 
-/*
- * Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta 5
- * proveyendo ficheros (a 5 clientes).
- */
+
+	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta 5 proveyendo ficheros (a 5 clientes).
 public class Servidor {
 
+	// Instancia del objeto Servidor.
 	private static Servidor server = null;
 
 	// Puerto en el que se escucha a conexiones entrantes.
 	private int listenTcpPort;
 	private ServerSocket listenSocket;
-
+	// Puertos posibles en los que va a estar a la escucha el serverSocket.
+	static final int possiblePorts[] = {61516, 62516, 63516, 64516};
+	/*
+	 * Índice del puerto a escoger. Es útil para llamar de nuevo al constructor del objeto
+	 * Servidor si el puerto al que apunta el índice está cerrado o en uso.
+	 */
+	private static int ppIndex = 0;
 	// Colección de sockets conectados a los clientes.
-	// TODO: Pensar mejor el tipo de datos para la colección de sockets.
 	private ArrayList<Socket> clientsSockets;
+	// TODO: Pensar mejor el tipo de datos para la colección de sockets.
 
 	/*
 	 * Conjunto de pares identificador / IP+puerto de los amigos conectados.
@@ -48,12 +53,11 @@ public class Servidor {
 	/**
 	 * Devuelve el objeto servidor. Si este no existe se crea.
 	 *
-	 * @param tcpPort
 	 * @return objeto servidor.
 	 */
-	public static Servidor getInstance(int tcpPort){
+	public static Servidor getInstance(){
 		if (server == null)
-			return new Servidor(tcpPort);
+			return new Servidor(possiblePorts[ppIndex]);
 		else return server;
 	}
 
@@ -67,8 +71,13 @@ public class Servidor {
 			 */
 
 			// 5 conexiones pendientes como máximo por defecto.
-			this.listenSocket = new ServerSocket(tcpPort, 5);
-			this.listenTcpPort = tcpPort;
+			//this.listenSocket = new ServerSocket(tcpPort, 5);
+			// Elegir o generar uno desde el 49152 hasta el 65535.
+			this.listenSocket = new ServerSocket(tcpPort);
+			this.listenSocket.setReuseAddress(true);
+			this.listenTcpPort = this.listenSocket.getLocalPort();
+			//this.listenTcpPort = tcpPort;
+			///////////////////////////////////////////////////
 			this.activeClients = new HashMap<>(10);
 			this.clientsSockets = new ArrayList<>(10);
 
@@ -82,7 +91,10 @@ public class Servidor {
 
 			//}
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (ppIndex < 4)
+				new Servidor(possiblePorts[++ppIndex]);
+			else
+				e.printStackTrace();
 		}
 	}
 
@@ -110,6 +122,9 @@ public class Servidor {
 				}
 				*/
 				manageResponse();
+				// TODO: Dejar el puerto de escucha libre y establecer la conexión desde otro puerto.
+				// TODO: Acordarme de cerrar los puertos en el método que cierre la conexión. Por ahora los cierro aquí.
+				//this.listenSocket.close();
 
 			}
 		} catch (IOException e) {
@@ -140,7 +155,9 @@ public class Servidor {
 			///////////////////////////////////////////
 			din = new DataInputStream(s2.getInputStream());
 
+			//////////////////////////////////////////////
 			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt");
+			/////////////////////////////////////////////
 			byte[] buffer = new byte[4096];
 
 			int read = 0;

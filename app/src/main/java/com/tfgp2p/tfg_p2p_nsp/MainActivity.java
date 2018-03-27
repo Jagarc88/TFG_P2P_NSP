@@ -49,11 +49,10 @@ public class MainActivity extends AppCompatActivity {
         */
         new Thread(new Runnable(){
             public void run(){
-                // 1103 al ejecutar en mi móvil.
 				/*
 				 * PARA LAS PRUEBAS PRIMERO INICIO EL SERVIDOR Y LUEGO EL CLIENTE.
 				 */
-                Servidor.getInstance(1103);
+                //Servidor.getInstance();
 				Cliente.getInstance();
 			}
         }).start();

@@ -24,6 +24,8 @@ public class Cliente {
 	// TODO: Pensar mejor el tipo de datos para la colección de sockets.
 	private ArrayList<Socket> friendsSockets;
 
+	private static int ppIndex = 0;
+
 
 
 
@@ -31,28 +33,29 @@ public class Cliente {
 
 	public static Cliente getInstance(){
 		if (client == null)
-			return new Cliente();
+			return new Cliente(Servidor.possiblePorts[ppIndex]);
 		else return client;
 	}
 
 
-	private Cliente(){
+	// TODO: De momento lo conecto al puerto de escucha y pruebo el envío por ese mismo.
+	private Cliente(int listenPort){
 		try {
 			this.friendsSockets = new ArrayList<>(10);
 
 			//////// Prueba de la conexión al móvil servidor:
-			// Con el constructor que he estado probando hasta ahora:
-			//Socket s = new Socket("192.168.0.11", 1103);
-			// Con el constructor más completo:
-			InetAddress address = InetAddress.getByName("2.153.114.70");
-			Socket s = new Socket(address, 1103);
-			//Socket s = new Socket(address, 1103, dirlocal, puertolocal);
-			//
+			Socket s = new Socket(poner una IP, listenPort);
+			s.setReuseAddress(true);
 
 			this.friendsSockets.add(s);
 			sendFile();
+
 		} catch (IOException e) {
-			e.printStackTrace();
+			if (ppIndex < 4)
+				new Cliente(Servidor.possiblePorts[++ppIndex]);
+			else
+				//TODO: Poner algún tipo de notificación o solución a los puertos cerrados. ¿Abrir otro?
+				e.printStackTrace();
 		}
 
 	}
