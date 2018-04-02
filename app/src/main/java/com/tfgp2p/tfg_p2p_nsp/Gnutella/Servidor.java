@@ -113,20 +113,29 @@ public class Servidor {
 	 */
     public void listen(){
 		try {
-			/*
-			 * Buffer pensado para la solicitud de un archivo o metadatos
-			 * de los archivos de la carpeta compartida.
-			 */
-			//byte[] requestBuffer = new byte[1024];
-			//DatagramPacket requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length);
-
-			byte[] dataBuffer = new byte[1024];
-			DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
-
-
 			while (true){
 				//Socket incomingSocket = listenSocket.accept();
+				//TODO: Crear método que distinga entre byte[] de metadatos y byte[] de datos de un fichero completo.
+
+				////////////////////////////////////////////////////////////////////////////////////
+				// De momento pillo aquí el buffer de metadatos.
+				byte[] metadataBuffer = new byte[100];
+				DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length);
+				///////////////////////////////////////////////////////////////////////////////////
+
+				listenSocket.receive(metadataPacket);
+
+				//byte[] dataBuffer = new byte[1024];
+				byte[] aux = new byte[4];
+				for (int i=0; i<4; i++)
+					aux[i] = metadataBuffer[i];
+				int size = Utils.byteArrayToInt(aux);
+				byte[] dataBuffer = new byte[size];
+				DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
+
+				// TODO: Hacer bucle while para recibir varios paquetes.
 				listenSocket.receive(dataPacket);
+
 				// Probando la conexión:
 
 				//this.clientsSockets.add(incomingSocket);
@@ -142,9 +151,11 @@ public class Servidor {
 					this.clients.remove(incomingSocket);
 				}
 				*/
-				manageResponse(dataPacket);
+
+				String fileName = getFileNameFromBuffer(metadataBuffer);
+				manageResponse(dataPacket, fileName);
 				// TODO: Dejar el puerto de escucha libre y establecer la conexión desde otro puerto.
-				// TODO: Acordarme de cerrar los puertos en el método que cierre la conexión. Por ahora los cierro aquí.
+				// TODO: Acordarme de cerrar el socket en el método que cierre la conexión. Por ahora lo cierro aquí.
 				//this.listenSocket.close();
 
 			}
@@ -154,19 +165,17 @@ public class Servidor {
 	}
 
 
-	/**
-	 * Aquí se gestiona la respuesta. Opciones:
-	 *
-	 * - Si el fichero existe (porque lo sabe el cliente por los metadatos que tiene)
-	 *   se proporciona.
-	 * - Si no, se responde a la consulta, proporcionando el fichero buscado o inundando
-	 *   a los demás con la misma consulta.
-	 */
-	private void manageResponse(DatagramPacket packet){
-		/////////////// Prueba de la recepción del fichero.////////////////////////
-		// Seguramente la recepción de un fichero debería estar implementada en otro método.
 
-		DataInputStream din;
+
+	/**
+	 * Gestiona la respuesta que se le da al cliente.
+	 *
+	 * @param packet
+	 */
+	private void manageResponse(DatagramPacket packet, String name){
+		/////////////// Prueba de la recepción del fichero.////////////////////////
+		//DataInputStream din;
+
 		try {
 			/*if (!this.clientsSockets.contains())
 				throw new Exception("No está el socket");
@@ -198,9 +207,9 @@ public class Servidor {
 			*/
 			//}
 
-			byte[] data = new byte[packet.getLength()];
-			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt");
-
+			byte[] data = packet.getData();
+			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + name);
+			fos.write(data);
 
 		}
 		catch (IOException e) {
@@ -211,6 +220,35 @@ public class Servidor {
 		///////////////////////////////////////////////////////////////////////////
 	}
 
-	// TODO: Pensar en qué hay que hacer cuando un móvil se desconecta del móvil servidor.
+
+
+	/**
+	 * Obtiene el nombre del fichero en un String a partir de un buffer de metadatos.
+	 *
+	 * @param metadataBuffer
+	 * @return
+	 */
+	private String getFileNameFromBuffer(byte[] metadataBuffer) {
+		/*byte[] aux = new byte[metadataBuffer.length - 4];
+		for (int i=0; (i<aux.length) && (metadataBuffer[i+4] != 0); i++) {
+			aux[i] = metadataBuffer[i + 4];
+			++count;
+		}
+		for ()
+			aux2[i] = aux[i];
+		return new String(aux2);*/
+///////////////////////////////////////////////////////////////////////
+		int count = 0;
+		while (metadataBuffer[count+4] != 0) {
+			++count;
+		}
+
+		byte[] aux = new byte[count];
+		for (int j=0; j<aux.length; j++){
+			aux[j] = metadataBuffer[j+4];
+		}
+
+		return new String(aux);
+	}
 
 }

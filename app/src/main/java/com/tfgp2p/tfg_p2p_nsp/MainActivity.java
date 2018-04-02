@@ -49,11 +49,8 @@ public class MainActivity extends AppCompatActivity {
         */
         new Thread(new Runnable(){
             public void run(){
-				/*
-				 * PARA LAS PRUEBAS PRIMERO INICIO EL SERVIDOR Y LUEGO EL CLIENTE.
-				 */
-                //Servidor.getInstance();
-				Cliente.getInstance();
+                Servidor.getInstance();
+				//Cliente.getInstance();
 			}
         }).start();
         ///////////////////////////////////////////////////////////////////////////////
