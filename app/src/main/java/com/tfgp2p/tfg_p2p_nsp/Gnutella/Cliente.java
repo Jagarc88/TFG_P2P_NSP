@@ -53,10 +53,6 @@ public class Cliente {
 			this.datagramSocket = new DatagramSocket(listenPort);
 
 			//////// Prueba de la conexión al móvil servidor:
-			/*Socket s = new Socket(poner una IP, listenPort);
-			s.setReuseAddress(true);
-			this.friendsSockets.add(s);*/
-
 
 			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
 			this.friends.put("Manolito", sa);
@@ -86,12 +82,7 @@ public class Cliente {
 	 */
 	public void sendFile(){
 		try{
-			////////////////////////////////////////
-			//Socket s1 = this.friendsSockets.get(0);
-			////////////////////////////////////////
 			InetSocketAddress addr = this.friends.get("Manolito");
-
-			//DataOutputStream dout= new DataOutputStream(s1.getOutputStream());
 
 			// Escribir los datos del archivo aquí.
 			String path = Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt";
@@ -103,11 +94,7 @@ public class Cliente {
 			// Se envía primero el nombre y el tamaño del archivo.
 			sendMetadata(file, addr, fileLength);
 
-
-			/*ByteBuffer metadataBuffer = ByteBuffer.allocate(file.getName().length() + 4);
-			metadataBuffer.putChar()*/
-
-			// Si el archivo es más grande de 64k va a dar problemas.
+			//TODO: Si el archivo es más grande de 64k va a dar problemas. ¿Por qué?
 			byte[] buffer = new byte[1024];
 			int totalBytesRead = 0;
 			int bytesRead = 0;
@@ -115,15 +102,11 @@ public class Cliente {
 			while ((totalBytesRead < fileLength) && (bytesRead != -1)) {
 				bytesRead = fis.read(buffer, totalBytesRead, 1024);
 				totalBytesRead += bytesRead;
-				DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+				//DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+				DatagramPacket packet = new DatagramPacket(buffer, totalBytesRead, buffer.length, addr.getAddress(), addr.getPort());
 				datagramSocket.send(packet);
 			}
 
-
-
-			/*dout.write(buffer);
-			dout.flush();
-			*/
 			fis.close();
 
 		} catch (IOException e) {

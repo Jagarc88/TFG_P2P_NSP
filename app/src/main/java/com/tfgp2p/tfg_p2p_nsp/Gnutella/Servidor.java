@@ -72,23 +72,13 @@ public class Servidor {
 
 	private Servidor(int port) {
 		try {
-			/*
-			 * Con tcpPort=0 el constructor genera un puerto automáticamente.
-			 * El puerto obtenido se puede ver con getLocalPort().
-			 */
-
-			// 5 conexiones pendientes como máximo por defecto.
-			//this.listenSocket = new ServerSocket(tcpPort, 5);
-			// Elegir o generar uno desde el 49152 hasta el 65535.
-			//this.listenSocket = new ServerSocket(port);
 			this.listenSocket = new DatagramSocket(port);
 			this.listenSocket.setReuseAddress(true);
-			//this.listenTcpPort = this.listenSocket.getLocalPort();
+
 			// Para chequear si asigna bien el puerto:
 			this.listenUDPPort = this.listenSocket.getLocalPort();
-			///////////////////////////////////////////////////
+
 			this.activeClients = new HashMap<>(10);
-			//this.clientsSockets = new ArrayList<>(10);
 
 			// La parte servidor lanza un hilo que se queda a la escucha.
 			new Thread(new Runnable() {
@@ -98,7 +88,6 @@ public class Servidor {
 				}
 			}).start();
 
-			//}
 		} catch (IOException e) {
 			if (ppIndex < 4)
 				new Servidor(possiblePorts[++ppIndex]);
@@ -107,6 +96,7 @@ public class Servidor {
 		}
 	}
 
+
 	/**
 	 * Método principal de la parte servidor. Se queda bloqueado hasta
 	 * que llegue una conexión entrante.
@@ -114,7 +104,6 @@ public class Servidor {
     public void listen(){
 		try {
 			while (true){
-				//Socket incomingSocket = listenSocket.accept();
 				//TODO: Crear método que distinga entre byte[] de metadatos y byte[] de datos de un fichero completo.
 
 				////////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +114,6 @@ public class Servidor {
 
 				listenSocket.receive(metadataPacket);
 
-				//byte[] dataBuffer = new byte[1024];
 				byte[] aux = new byte[4];
 				for (int i=0; i<4; i++)
 					aux[i] = metadataBuffer[i];
@@ -136,27 +124,25 @@ public class Servidor {
 				// TODO: Hacer bucle while para recibir varios paquetes.
 				listenSocket.receive(dataPacket);
 
-				// Probando la conexión:
-
-				//this.clientsSockets.add(incomingSocket);
-
-				/////////////////////////////////////////////////////////////////////////
-
-				/*// Si el que se quiere conectar no está en la lista de clientes activos...
-				if (this.activeClients.containsKey())
-					//this.clients.add(incomingSocket);
-
-				// El que se quiere conectar está pero ha cambiado su IP...
-				else if () {
-					this.clients.remove(incomingSocket);
-				}
-				*/
-
 				String fileName = getFileNameFromBuffer(metadataBuffer);
+				FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName);
+				/*
+				 * Si el offset del paquete es == a la longitud del buffer en el que se almacenan los datos
+				 * entonces es el último paquete.
+				 * Si no, se sigue en bucle recibiendo paquetes.
+				 */
+				if (dataPacket.getOffset() < size){
+					// TODO: Comprobar que es de 1024 bytes.
+					byte[] data = dataPacket.getData();
+					fos.write(data, dataPacket.getOffset(), data.length);
+				}
+				else {
+				}
+
+				/*String fileName = getFileNameFromBuffer(metadataBuffer);
 				manageResponse(dataPacket, fileName);
-				// TODO: Dejar el puerto de escucha libre y establecer la conexión desde otro puerto.
+				*/
 				// TODO: Acordarme de cerrar el socket en el método que cierre la conexión. Por ahora lo cierro aquí.
-				//this.listenSocket.close();
 
 			}
 		} catch (IOException e) {
@@ -172,41 +158,12 @@ public class Servidor {
 	 *
 	 * @param packet
 	 */
+	// TODO: Hacer este método más genérico. Que distinga entre solicitud y envío de metadatos de la carpeta compartida, y envío de un fichero.
+	// TODO: No vale con pasarle 1 packet puesto que pueden venir más.
 	private void manageResponse(DatagramPacket packet, String name){
-		/////////////// Prueba de la recepción del fichero.////////////////////////
-		//DataInputStream din;
+		////////////////BORRAR///// Prueba de la recepción del fichero.////////////////////////
 
 		try {
-			/*if (!this.clientsSockets.contains())
-				throw new Exception("No está el socket");
-			clientsSockets.indexOf();*/
-			////////////////////////////////////////////
-			/*Socket s2 = clientsSockets.get(0);
-			///////////////////////////////////////////
-			din = new DataInputStream(s2.getInputStream());
-
-			//////////////////////////////////////////////
-			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt");
-			/////////////////////////////////////////////
-			byte[] buffer = new byte[4096];
-
-			int read = 0;
-			int totalRead = 0;
-			int remaining = 1024; //Falta saber cómo mando el tamaño exacto del archivo para no liarla en el envío.
-			while((read = din.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
-				totalRead += read;
-				remaining -= read;
-				System.out.println("read " + totalRead + " bytes.");
-				fos.write(buffer, 0, read);
-			}
-
-			fos.close();
-
-			/////////////////////////////////////////////////////////////////
-			din.close();
-			*/
-			//}
-
 			byte[] data = packet.getData();
 			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + name);
 			fos.write(data);
@@ -214,10 +171,7 @@ public class Servidor {
 		}
 		catch (IOException e) {
 			e.printStackTrace();
-			//din.close();
 		}
-
-		///////////////////////////////////////////////////////////////////////////
 	}
 
 
@@ -229,15 +183,6 @@ public class Servidor {
 	 * @return
 	 */
 	private String getFileNameFromBuffer(byte[] metadataBuffer) {
-		/*byte[] aux = new byte[metadataBuffer.length - 4];
-		for (int i=0; (i<aux.length) && (metadataBuffer[i+4] != 0); i++) {
-			aux[i] = metadataBuffer[i + 4];
-			++count;
-		}
-		for ()
-			aux2[i] = aux[i];
-		return new String(aux2);*/
-///////////////////////////////////////////////////////////////////////
 		int count = 0;
 		while (metadataBuffer[count+4] != 0) {
 			++count;
