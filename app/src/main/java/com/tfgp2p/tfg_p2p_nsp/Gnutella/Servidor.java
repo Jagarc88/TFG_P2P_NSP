@@ -2,17 +2,14 @@ package com.tfgp2p.tfg_p2p_nsp.Gnutella;
 
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
-import java.io.DataInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
 
 
 /**
@@ -118,26 +115,31 @@ public class Servidor {
 				for (int i=0; i<4; i++)
 					aux[i] = metadataBuffer[i];
 				int size = Utils.byteArrayToInt(aux);
-				byte[] dataBuffer = new byte[size];
+				byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
 				DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
-				// TODO: Hacer bucle while para recibir varios paquetes.
 				listenSocket.receive(dataPacket);
 
 				String fileName = getFileNameFromBuffer(metadataBuffer);
-				FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName);
-				/*
-				 * Si el offset del paquete es == a la longitud del buffer en el que se almacenan los datos
-				 * entonces es el último paquete.
-				 * Si no, se sigue en bucle recibiendo paquetes.
-				 */
-				if (dataPacket.getOffset() < size){
-					// TODO: Comprobar que es de 1024 bytes.
-					byte[] data = dataPacket.getData();
-					fos.write(data, dataPacket.getOffset(), data.length);
+				// TODO: Quitar lo de +".txt".
+				FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName + ".txt");
+				int n = 0;
+				boolean exit = false;
+
+				while (!exit){
+					//byte[] data = dataPacket.getData();
+					//fos.write(data, dataPacket.getOffset(), data.length);
+					//fos.write(data, n*MAX_BUFF_SIZE, data.length);
+					fos.write(dataBuffer, 0, dataBuffer.length);
+					//++n;
+					// TODO: Comprobar que con esta condición se reciben los datos correspondientes al final del archivo.
+					if(dataPacket.getLength() < MAX_BUFF_SIZE)
+						listenSocket.receive(dataPacket);
+					else
+						exit = true;
 				}
-				else {
-				}
+
+				fos.close();
 
 				/*String fileName = getFileNameFromBuffer(metadataBuffer);
 				manageResponse(dataPacket, fileName);
@@ -146,6 +148,8 @@ public class Servidor {
 
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

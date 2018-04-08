@@ -14,6 +14,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
+import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
+
 
 /**
  * Created by Julio on 25/02/2018.
@@ -85,8 +87,12 @@ public class Cliente {
 			InetSocketAddress addr = this.friends.get("Manolito");
 
 			// Escribir los datos del archivo aquí.
-			String path = Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt";
+			// <1 KB.
+			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt";
+			// >500 KB.
 			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/Resumen ASOR.pdf";
+			// 9 KB.
+			String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
 			File file = new File(path);
 			FileInputStream fis = new FileInputStream(file);
 			int fileLength = (int) file.length();
@@ -94,17 +100,37 @@ public class Cliente {
 			// Se envía primero el nombre y el tamaño del archivo.
 			sendMetadata(file, addr, fileLength);
 
-			//TODO: Si el archivo es más grande de 64k va a dar problemas. ¿Por qué?
-			byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[MAX_BUFF_SIZE];
 			int totalBytesRead = 0;
 			int bytesRead = 0;
 
+			DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+
+			boolean nextIsLast = false;
+			int bytesRemaining = fileLength;
+
 			while ((totalBytesRead < fileLength) && (bytesRead != -1)) {
-				bytesRead = fis.read(buffer, totalBytesRead, 1024);
+				if (buffer == null) {
+					if (!nextIsLast) {
+						buffer = new byte[MAX_BUFF_SIZE];
+						bytesRead = fis.read(buffer, 0, MAX_BUFF_SIZE);
+					}
+					else {
+						buffer = new byte[bytesRemaining];
+						bytesRead = fis.read(buffer, 0, bytesRemaining);
+					}
+				}
+				else bytesRead = fis.read(buffer, 0, MAX_BUFF_SIZE);
 				totalBytesRead += bytesRead;
 				//DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
-				DatagramPacket packet = new DatagramPacket(buffer, totalBytesRead, buffer.length, addr.getAddress(), addr.getPort());
+				//packet.setData(buffer, totalBytesRead-bytesRead, bytesRead);
+				packet.setData(buffer);
 				datagramSocket.send(packet);
+				buffer = null;
+
+				bytesRemaining = fileLength - totalBytesRead;
+				if ((bytesRemaining) < MAX_BUFF_SIZE)
+					nextIsLast = true;
 			}
 
 			fis.close();
@@ -112,6 +138,10 @@ public class Cliente {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e){
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (ArrayIndexOutOfBoundsException e){
 			e.printStackTrace();
 		}
 	}

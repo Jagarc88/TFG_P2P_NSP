@@ -9,6 +9,10 @@ import java.nio.ByteBuffer;
 
 public class Utils {
 
+
+	public static final int MAX_BUFF_SIZE = 1024;
+
+
 	/**
 	 * Obtiene la dirección del sdcard en el dispositivo que se encuentra abierto en ese momento.
 	 * @return
