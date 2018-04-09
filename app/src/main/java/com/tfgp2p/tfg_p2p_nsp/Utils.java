@@ -9,8 +9,22 @@ import java.nio.ByteBuffer;
 
 public class Utils {
 
-
+	/**
+	 * Longitud máxima del buffer de datos que se manejará.
+	 */
 	public static final int MAX_BUFF_SIZE = 1024;
+	/**
+	 * Constante que identifica un paquete como paquete de solicitud de metadatos.
+	 */
+	public static byte METADATA_REQ = 1;
+	/**
+	 * Constante que identifica un paquete como paquete de solicitud de un fichero.
+	 */
+	public static byte FILE_REQ = 2;
+	/**
+	 * Constante que identifica un paquete como paquete de confirmación de recepción de datos.
+	 */
+	public static byte PACKET_ACK = 3;
 
 
 	/**

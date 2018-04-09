@@ -2,11 +2,14 @@ package com.tfgp2p.tfg_p2p_nsp.Gnutella;
 
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
@@ -41,14 +44,14 @@ public class Servidor {
 	private static int ppIndex = 0;
 	// Colección de sockets conectados a los clientes.
 	//private ArrayList<Socket> clientsSockets;
-	// TODO: Pensar mejor el tipo de datos para la colección de sockets.
+	// TODO: Pensar mejor el tipo de datos para la colección de sockets, si la necesitáramos. Si no borrarla.
 	// Puede que ya no sea necesario almacenar los sockets si trabajamos con UDP.
 
 	/*
 	 * Conjunto de pares identificador / IP+puerto de los amigos conectados.
 	 * Cuando un amigo finalice la conexión, también debe ser borrado de esta variable.
 	 */
-	private HashMap<String, InetSocketAddress> activeClients;
+	//private HashMap<String, InetSocketAddress> activeClients;
 
 
 
@@ -61,8 +64,8 @@ public class Servidor {
 	 */
 	public static Servidor getInstance(){
 		if (server == null)
-			return new Servidor(possiblePorts[ppIndex]);
-		else return server;
+			server = new Servidor(possiblePorts[ppIndex]);
+		return server;
 	}
 
 
@@ -75,7 +78,7 @@ public class Servidor {
 			// Para chequear si asigna bien el puerto:
 			this.listenUDPPort = this.listenSocket.getLocalPort();
 
-			this.activeClients = new HashMap<>(10);
+			//this.activeClients = new HashMap<>(10);
 
 			// La parte servidor lanza un hilo que se queda a la escucha.
 			new Thread(new Runnable() {
@@ -97,54 +100,24 @@ public class Servidor {
 	/**
 	 * Método principal de la parte servidor. Se queda bloqueado hasta
 	 * que llegue una conexión entrante.
+	 *
+	 *
+	 * Tipos de conexión que pueden querer hacer los clientes:
+	 *
+	 * 1- De recolección de metadatos de la carpeta compartida para poder ver el contenido
+	 *    del dispositivo servidor en su dispositivo.
+	 *
+	 * 2- De solicitud de descarga de un fichero tras seleccionarlo en su dispositivo después
+	 *    de haber descargado los metadatos de la carptea previamente.
 	 */
     public void listen(){
 		try {
 			while (true){
-				//TODO: Crear método que distinga entre byte[] de metadatos y byte[] de datos de un fichero completo.
-
-				////////////////////////////////////////////////////////////////////////////////////
-				// De momento pillo aquí el buffer de metadatos.
-				byte[] metadataBuffer = new byte[100];
-				DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length);
-				///////////////////////////////////////////////////////////////////////////////////
-
-				listenSocket.receive(metadataPacket);
-
-				byte[] aux = new byte[4];
-				for (int i=0; i<4; i++)
-					aux[i] = metadataBuffer[i];
-				int size = Utils.byteArrayToInt(aux);
-				byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
-				DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
-
-				listenSocket.receive(dataPacket);
-
-				String fileName = getFileNameFromBuffer(metadataBuffer);
-				// TODO: Quitar lo de +".txt".
-				FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName + ".txt");
-				int n = 0;
-				boolean exit = false;
-
-				while (!exit){
-					//byte[] data = dataPacket.getData();
-					//fos.write(data, dataPacket.getOffset(), data.length);
-					//fos.write(data, n*MAX_BUFF_SIZE, data.length);
-					fos.write(dataBuffer, 0, dataBuffer.length);
-					//++n;
-					// TODO: Comprobar que con esta condición se reciben los datos correspondientes al final del archivo.
-					if(dataPacket.getLength() < MAX_BUFF_SIZE)
-						listenSocket.receive(dataPacket);
-					else
-						exit = true;
-				}
-
-				fos.close();
-
-				/*String fileName = getFileNameFromBuffer(metadataBuffer);
-				manageResponse(dataPacket, fileName);
-				*/
-				// TODO: Acordarme de cerrar el socket en el método que cierre la conexión. Por ahora lo cierro aquí.
+				// Se quedará bloqueado con una llamada a receive.
+				waitRequest();
+				// TODO: Usar cconstantes de tipo byte para distinguir entre tipos de conexión. Por ejemplo 1 = METADATA_REQ, 2 = FILE_REQ.
+				// TODO: manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
+				manageResponse();
 
 			}
 		} catch (IOException e) {
@@ -180,24 +153,113 @@ public class Servidor {
 
 
 
+
 	/**
-	 * Obtiene el nombre del fichero en un String a partir de un buffer de metadatos.
+	 * Se envía un archivo al dispositivo remoto.
 	 *
-	 * @param metadataBuffer
-	 * @return
+	 * @param addr Dirección IP y puerto al que se envía el archivo.
 	 */
-	private String getFileNameFromBuffer(byte[] metadataBuffer) {
-		int count = 0;
-		while (metadataBuffer[count+4] != 0) {
-			++count;
-		}
+	public void sendFile(InetSocketAddress addr){
+		try{
+			//InetSocketAddress addr = this.friends.get("Manolito");
 
-		byte[] aux = new byte[count];
-		for (int j=0; j<aux.length; j++){
-			aux[j] = metadataBuffer[j+4];
-		}
+			// Escribir los datos del archivo aquí.
+			// <1 KB.
+			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt";
+			// >500 KB.
+			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/Resumen ASOR.pdf";
+			// 9 KB.
+			String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
+			File file = new File(path);
+			FileInputStream fis = new FileInputStream(file);
+			int fileLength = (int) file.length();
 
-		return new String(aux);
+			// TODO: Se envía primero el tamaño y luego el nombre. No enviar el nombre y reducir el buffer a 4 bytes.
+			sendMetadata(file, addr, fileLength);
+
+			byte[] buffer = new byte[MAX_BUFF_SIZE];
+			int totalBytesRead = 0;
+			int bytesRead = 0;
+
+			DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+
+			boolean nextIsLast = false;
+			int bytesRemaining = fileLength;
+
+			while ((totalBytesRead < fileLength) && (bytesRead != -1)) {
+				if (buffer == null) {
+					if (!nextIsLast) {
+						buffer = new byte[MAX_BUFF_SIZE];
+						bytesRead = fis.read(buffer, 0, MAX_BUFF_SIZE);
+					}
+					else {
+						buffer = new byte[bytesRemaining];
+						bytesRead = fis.read(buffer, 0, bytesRemaining);
+					}
+				}
+				else
+					bytesRead = fis.read(buffer, 0, MAX_BUFF_SIZE);
+
+				totalBytesRead += bytesRead;
+				packet.setData(buffer);
+				listenSocket.send(packet);
+				buffer = null;
+
+				bytesRemaining = fileLength - totalBytesRead;
+				if ((bytesRemaining) < MAX_BUFF_SIZE)
+					nextIsLast = true;
+			}
+
+			fis.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e){
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (ArrayIndexOutOfBoundsException e){
+			e.printStackTrace();
+		}
 	}
+
+
+	/**
+	 * Descripción: Envía el nombre y la longitud de un fichero a un dispositivo remoto.
+	 * Este método es útil para la recolección de metadatos de los archivos de las carpetas compartidas.
+	 *
+	 * IMPORTANTE: El buffer de metadatos está pensado para que los 4 primeros bytes contengan el tamaño
+	 * del fichero (en un int traducido a byte[4]) y en los siguientes el nombre. Por ahora se usa un
+	 * int, por lo que se admite un tamaño máximo de archivo de unos 2 GB.
+	 *
+	 * @param file Fichero al que pertenecer los metadatos.
+	 * @param addr Dirección a la que se envía la información.
+	 * @param fileLength Longitud (tamaño) del archivo.
+	 * @throws IOException
+	 */
+	private void sendMetadata(File file, InetSocketAddress addr, int fileLength) throws IOException{
+		byte[] metadataBuffer = new byte[file.getName().length() + 4];
+
+		// Tamaño del fichero.
+		byte[] len = Utils.intToByteArray(fileLength);
+		for (int i=0; i<4 ;i++)
+			metadataBuffer[i] = len[i];
+
+		// Nombre del fichero.
+		byte[] aux = file.getName().getBytes(Charset.forName("UTF-8"));
+		//byte[] aux = file.getName().getBytes();
+		for (int i=0; i<aux.length; i++)
+			metadataBuffer[i+4] = aux[i];
+
+		DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length, addr.getAddress(), addr.getPort());
+		listenSocket.send(metadataPacket);
+	}
+
+
+
+
+
+
+
 
 }
