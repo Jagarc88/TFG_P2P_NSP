@@ -61,6 +61,7 @@ public class Cliente {
 			this.socket = new DatagramSocket(listenPort);
 
 			//////// Prueba de la conexión al móvil servidor:
+			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
 			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
 			this.amigos.addFriend("Manolito", sa);
@@ -90,11 +91,16 @@ public class Cliente {
 		catch (AlertException e){
 			e.showAlert();
 		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
+
 
 	}
+
+
+	public void sendRequest(){
+		// TODO: Implementar una cola de espera de salida de peticiones para cuando el móvil destino está sin conexión.
+
+	}
+
 
 	/**
 	 * Solicita el fichero seleccionado en la carpeta compartida del amigo y lo descarga.

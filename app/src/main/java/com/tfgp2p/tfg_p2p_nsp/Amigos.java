@@ -8,6 +8,9 @@ import java.util.HashMap;
  */
 public class Amigos {
 
+	// TODO: Implementar el guardado de amigos en un fichero o base de datos local.
+	// TODO: Implementar la carga de amigos.
+
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
 	private HashMap<String, InetSocketAddress> friendsMap;
 
@@ -75,5 +78,11 @@ public class Amigos {
 		else throw new AlertException(name + " no existe.");
 	}
 
+
+	public boolean isFriend(String name, InetSocketAddress addr){
+		// get() Devuelve null si no existe.
+		InetSocketAddress localAddr = friendsMap.get(name);
+		return ((localAddr != null) && (localAddr == addr));
+	}
 
 }

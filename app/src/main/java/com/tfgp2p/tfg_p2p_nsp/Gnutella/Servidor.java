@@ -1,18 +1,26 @@
 package com.tfgp2p.tfg_p2p_nsp.Gnutella;
 
+import com.tfgp2p.tfg_p2p_nsp.AlertException;
+import com.tfgp2p.tfg_p2p_nsp.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 
+import static com.tfgp2p.tfg_p2p_nsp.Utils.FILE_REQ;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ALL;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ONE;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.PACKET_ACK;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.isValidRequest;
+
 
 
 /**
@@ -30,7 +38,7 @@ public class Servidor {
 
 	// Puerto en el que se escucha a conexiones entrantes.
 	//private int listenTCPPort;
-	private int listenUDPPort;
+	private int listenPort;
 
 	//private ServerSocket listenSocket;
 	private DatagramSocket listenSocket;
@@ -76,7 +84,7 @@ public class Servidor {
 			this.listenSocket.setReuseAddress(true);
 
 			// Para chequear si asigna bien el puerto:
-			this.listenUDPPort = this.listenSocket.getLocalPort();
+			this.listenPort = this.listenSocket.getLocalPort();
 
 			//this.activeClients = new HashMap<>(10);
 
@@ -114,40 +122,80 @@ public class Servidor {
 		try {
 			while (true){
 				// Se quedará bloqueado con una llamada a receive.
-				waitRequest();
-				// TODO: Usar cconstantes de tipo byte para distinguir entre tipos de conexión. Por ejemplo 1 = METADATA_REQ, 2 = FILE_REQ.
+				byte request = waitRequest();
 				// TODO: manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
-				manageResponse();
-
+				if ((isValidRequest(request)))
+					manageResponse(request);
+				else
+					throw new AlertException("Error, ID de paquete no válida.");
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (AlertException e){
+			e.showAlert();
 		}
 	}
 
 
+	/**
+	 * La función de este método es esperar algún tipo de petición por parte de los amigos.
+	 * Si la petición se realiza desde un dispositivo que no es amigo se muestra error.
+	 *
+	 * @return Identificador válido de la petición.
+	 */
+	private byte waitRequest(){
+		// TODO: implementar una cola de espera de entrada (como atributo privado de la clase) para las solicitudes entrantes.
+		// TODO: Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
+		// TODO: implementar envío de peticiones desde la parte Cliente.
+		// TODO: Si un dispositivo hace una petición y no es amigo, hay que rechazar la petición.
+		/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch ////////////////
+		try{
+			Amigos amigos = Amigos.getInstance();
+			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
+			amigos.addFriend("Manolito", addr);
+
+		} catch (UnknownHostException e){
+			e.printStackTrace();
+		} catch (AlertException e){
+			e.showAlert();
+		}
+		////////////////////////////////////////////////////////////
+
+		// Valor inicial -1 no válido para provocar fallo en caso de petición incorrecta.
+		byte[] requestByte = new byte[] {-1};
+		try{
+			DatagramPacket reqPacket = new DatagramPacket(requestByte, requestByte.length);
+			listenSocket.receive(reqPacket);
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		return requestByte[0];
+	}
 
 
 	/**
-	 * Gestiona la respuesta que se le da al cliente.
+	 * Gestiona la respuesta que tiene que dar según el tipo de solicitud atendida.
 	 *
-	 * @param packet
+	 * @param request
 	 */
-	// TODO: Hacer este método más genérico. Que distinga entre solicitud y envío de metadatos de la carpeta compartida, y envío de un fichero.
-	// TODO: No vale con pasarle 1 packet puesto que pueden venir más.
-	private void manageResponse(DatagramPacket packet, String name){
-		////////////////BORRAR///// Prueba de la recepción del fichero.////////////////////////
-
-		try {
-			byte[] data = packet.getData();
-			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + name);
-			fos.write(data);
-
-		}
-		catch (IOException e) {
-			e.printStackTrace();
+	private void manageResponse(byte request){
+		switch (request){
+			// TODO: EMPEZAR LEYENDO ESTE COMENTARIO:
+			/*
+			 * Cuando un amigo se conecta a otro y quiere ver su carpeta solicita TODOS los
+			 * metadatos de los ficheros. Si un usuario modifica o elimina un fichero DEBE mandar
+			 * a sus amigos los nuevos metadatos, si están conectados.
+			 */
+			case METADATA_REQ_ONE:
+				break;
+			case METADATA_REQ_ALL:
+				break;
+			case FILE_REQ:
+				break;
+			case PACKET_ACK:
+				break;
+			default:
+				// Petición no admitida.
+				break;
 		}
 	}
 
@@ -238,6 +286,7 @@ public class Servidor {
 	 * @throws IOException
 	 */
 	private void sendMetadata(File file, InetSocketAddress addr, int fileLength) throws IOException{
+		// TODO: Implementar envío de metadatos cada vez que se modifique o borre un fichero.
 		byte[] metadataBuffer = new byte[file.getName().length() + 4];
 
 		// Tamaño del fichero.

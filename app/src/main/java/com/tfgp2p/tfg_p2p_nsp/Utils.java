@@ -2,6 +2,9 @@ package com.tfgp2p.tfg_p2p_nsp;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.InvalidPropertiesFormatException;
 
 /**
  * Created by Julio on 01/03/2018.
@@ -14,17 +17,30 @@ public class Utils {
 	 */
 	public static final int MAX_BUFF_SIZE = 1024;
 	/**
-	 * Constante que identifica un paquete como paquete de solicitud de metadatos.
+	 * Constante que identifica un paquete como paquete de solicitud de metadatos de 1 fichero.
 	 */
-	public static byte METADATA_REQ = 1;
+	public static final byte METADATA_REQ_ONE = 1;
+	/**
+	 * Constante que identifica un paquete como paquete de solicitud de metadatos de todos los
+	 * ficheros de la carpeta compartida.
+	 */
+	public static final byte METADATA_REQ_ALL = 2;
 	/**
 	 * Constante que identifica un paquete como paquete de solicitud de un fichero.
 	 */
-	public static byte FILE_REQ = 2;
+	public static final byte FILE_REQ = 3;
 	/**
 	 * Constante que identifica un paquete como paquete de confirmación de recepción de datos.
 	 */
-	public static byte PACKET_ACK = 3;
+	public static final byte PACKET_ACK = 4;
+
+	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
+	/**
+	 * Constante que se usa para comprobar de manera eficiente si un ID de un paquete
+	 * de solicitud es válido. Se utiliza en el método isValidRequest().
+	 */
+	// TODO: HashSet de byte no vale.
+	private static final HashSet<byte> packetID = new HashSet<>(Arrays.asList(METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, PACKET_ACK));
 
 
 	/**
@@ -69,5 +85,9 @@ public class Utils {
 	}
 
 
+
+	public static boolean isValidRequest(byte req){
+		return (packetID.contains(req));
+	}
 
 }
