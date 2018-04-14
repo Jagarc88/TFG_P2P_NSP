@@ -14,8 +14,8 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 
-import static com.tfgp2p.tfg_p2p_nsp.Utils.FILE_REQ;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.FILE_REQ;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ALL;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ONE;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.PACKET_ACK;
@@ -125,6 +125,8 @@ public class Servidor {
 				byte request = waitRequest();
 				// TODO: manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
 				if ((isValidRequest(request)))
+					// Si la petición es válida se encola. Si es la primera de la cola se atiende en un hilo nuevo.
+					// TODO: Encolar petición y lanzar aquí los thread.
 					manageResponse(request);
 				else
 					throw new AlertException("Error, ID de paquete no válida.");
@@ -144,6 +146,10 @@ public class Servidor {
 	private byte waitRequest(){
 		// TODO: implementar una cola de espera de entrada (como atributo privado de la clase) para las solicitudes entrantes.
 		// TODO: Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
+		/*
+		 * Con la cola de espera estoy forzando a que la peticiones se atiendan de una en una.
+		 * Para que se atiendan todas habría que lanzar un thread por cada petición atendida.
+		 */
 		// TODO: implementar envío de peticiones desde la parte Cliente.
 		// TODO: Si un dispositivo hace una petición y no es amigo, hay que rechazar la petición.
 		/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch ////////////////
@@ -160,10 +166,18 @@ public class Servidor {
 		////////////////////////////////////////////////////////////
 
 		// Valor inicial -1 no válido para provocar fallo en caso de petición incorrecta.
-		byte[] requestByte = new byte[] {-1};
+		// TODO: Hacer que se envíen los bytes justos en la petición desde la parte Cliente, si se puede.
+		byte[] requestByte = new byte[64];
 		try{
 			DatagramPacket reqPacket = new DatagramPacket(requestByte, requestByte.length);
+			// Se recibe el tipo de petición y el nombre del que la realiza.
 			listenSocket.receive(reqPacket);
+
+			String name = new String(requestByte).substring(1);
+
+			if (!Amigos.getInstance().isFriend(name, reqPacket.getAddress())){
+				requestByte[0] = -1;
+			}
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -179,15 +193,19 @@ public class Servidor {
 	 */
 	private void manageResponse(byte request){
 		switch (request){
-			// TODO: EMPEZAR LEYENDO ESTE COMENTARIO:
+			// TODO: BORRAR ESTE COMENTARIO cuando esté implementado:
 			/*
 			 * Cuando un amigo se conecta a otro y quiere ver su carpeta solicita TODOS los
 			 * metadatos de los ficheros. Si un usuario modifica o elimina un fichero DEBE mandar
 			 * a sus amigos los nuevos metadatos, si están conectados.
+			 * No se me ocurre el caso en el que se soliciten los metadatos de sílo 1 fichero.
 			 */
 			case METADATA_REQ_ONE:
+				// TODO: Pensar cuándo puede darse el caso de solicitar metadatos de sólo 1 fichero.
 				break;
 			case METADATA_REQ_ALL:
+				byte[] allMetadata = getMetadataFromSharedFolder();
+				sendAllFilesMetadata(allMetadata);
 				break;
 			case FILE_REQ:
 				break;
@@ -198,8 +216,6 @@ public class Servidor {
 				break;
 		}
 	}
-
-
 
 
 	/**
@@ -222,8 +238,13 @@ public class Servidor {
 			FileInputStream fis = new FileInputStream(file);
 			int fileLength = (int) file.length();
 
-			// TODO: Se envía primero el tamaño y luego el nombre. No enviar el nombre y reducir el buffer a 4 bytes.
-			sendMetadata(file, addr, fileLength);
+			// TODO: Implementar almacenamiento de metadatos de ficheros ajenos.
+			// TODO: ¿Quitar sendFileMetadata() de aquí?
+			/*
+			 * Si el usuario ha seleccionado el fichero que quiere descargar es porque ya tiene
+			 * los metadatos necesarios
+			 */
+			sendFileMetadata(file, addr, fileLength);
 
 			byte[] buffer = new byte[MAX_BUFF_SIZE];
 			int totalBytesRead = 0;
@@ -285,7 +306,7 @@ public class Servidor {
 	 * @param fileLength Longitud (tamaño) del archivo.
 	 * @throws IOException
 	 */
-	private void sendMetadata(File file, InetSocketAddress addr, int fileLength) throws IOException{
+	private void sendFileMetadata(File file, InetSocketAddress addr, int fileLength) throws IOException{
 		// TODO: Implementar envío de metadatos cada vez que se modifique o borre un fichero.
 		byte[] metadataBuffer = new byte[file.getName().length() + 4];
 
@@ -295,8 +316,8 @@ public class Servidor {
 			metadataBuffer[i] = len[i];
 
 		// Nombre del fichero.
-		byte[] aux = file.getName().getBytes(Charset.forName("UTF-8"));
-		//byte[] aux = file.getName().getBytes();
+		//byte[] aux = file.getName().getBytes(Charset.forName("UTF-8"));
+		byte[] aux = file.getName().getBytes();
 		for (int i=0; i<aux.length; i++)
 			metadataBuffer[i+4] = aux[i];
 
@@ -305,10 +326,45 @@ public class Servidor {
 	}
 
 
+	/**
+	 * Escanea la carpeta compartida y devuelve un byte[] con el tamaño y el nombre de todos los ficheros.
+	 * @return tamaño y nombre de los ficheros de la carpeta compartida.
+	 */
+	private byte[] getMetadataFromSharedFolder() {
+		File filesPath =  new File(Utils.parseMountDirectory().getAbsolutePath());
+		File[] files = filesPath.listFiles();
+		int[] sizes = new int[files.length];
+
+		int bufferSize = 0;
+		// Para cada fichero necesitamos 4 bytes para guardar el tamaño + tantos bytes como caracteres tenga el nombre.
+		for (int i=0; i<files.length; i++) {
+			sizes[i] = (int) files[i].length();
+			bufferSize += 4 + files[i].getName().length();
+		}
+		byte[] metadataBuffer = new byte[bufferSize];
+
+		return metadataBuffer;
+	}
 
 
-
-
+	/**
+	 * Envía el tamaño de los ficheros y sus nombres en un solo paquete al amigo para
+	 * que pueda ver el contenido de la carpeta compartida remota.
+	 *
+	 * @param allMetadata metadatos de todos los ficheros de la carpeta compartida local.
+	 */
+	private void sendAllFilesMetadata(byte[] allMetadata) {
+		try {
+			DatagramPacket p = new DatagramPacket(allMetadata, allMetadata.length);
+			// TODO: No vale con usar el listenSocket, hay que usar otro para las comunicaciones.
+			listenSocket.send(p);
+			// TODO: EMPEZAR POR AQUÍ. No sé si me falta algo en este método.
+			asd
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+	}
 
 
 }

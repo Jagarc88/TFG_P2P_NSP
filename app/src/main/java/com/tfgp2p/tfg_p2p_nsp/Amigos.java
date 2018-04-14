@@ -1,5 +1,6 @@
 package com.tfgp2p.tfg_p2p_nsp;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
@@ -8,6 +9,7 @@ import java.util.HashMap;
  */
 public class Amigos {
 
+	// TODO: ¿Cuáles son los pasos para añadir un amigo?
 	// TODO: Implementar el guardado de amigos en un fichero o base de datos local.
 	// TODO: Implementar la carga de amigos.
 
@@ -79,9 +81,9 @@ public class Amigos {
 	}
 
 
-	public boolean isFriend(String name, InetSocketAddress addr){
+	public boolean isFriend(String name, InetAddress addr){
 		// get() Devuelve null si no existe.
-		InetSocketAddress localAddr = friendsMap.get(name);
+		InetAddress localAddr = friendsMap.get(name).getAddress();
 		return ((localAddr != null) && (localAddr == addr));
 	}
 

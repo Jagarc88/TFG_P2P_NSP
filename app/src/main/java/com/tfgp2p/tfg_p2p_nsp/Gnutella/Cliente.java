@@ -31,9 +31,6 @@ public class Cliente {
 	private static Cliente client = null;
 
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
-	// TODO: Pensar mejor el tipo de datos para la colección de sockets.
-	// TODO: borrar de aquí cuando haya terminado de pasar la implementación a la clase Amigos.
-	//private HashMap<String, InetSocketAddress> friends;
 	private Amigos amigos;
 
 	private DatagramSocket socket;
@@ -98,6 +95,7 @@ public class Cliente {
 
 	public void sendRequest(){
 		// TODO: Implementar una cola de espera de salida de peticiones para cuando el móvil destino está sin conexión.
+		// TODO: Enviar en la petición el nombre de mi dispositivo
 
 	}
 

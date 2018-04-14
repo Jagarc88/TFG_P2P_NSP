@@ -33,6 +33,10 @@ public class Utils {
 	 * Constante que identifica un paquete como paquete de confirmación de recepción de datos.
 	 */
 	public static final byte PACKET_ACK = 4;
+	/**
+	 * Constante que identifica un paquete como paquete de envío de metadatos de 1 fichero.
+	 */
+	public static final byte METADATA_SEND_1 = 5;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
@@ -40,7 +44,9 @@ public class Utils {
 	 * de solicitud es válido. Se utiliza en el método isValidRequest().
 	 */
 	// TODO: HashSet de byte no vale.
-	private static final HashSet<byte> packetID = new HashSet<>(Arrays.asList(METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, PACKET_ACK));
+	private static final HashSet<byte> packetID = new HashSet<>(Arrays.asList(
+			METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, PACKET_ACK, METADATA_SEND_1
+	));
 
 
 	/**
