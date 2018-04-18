@@ -56,7 +56,7 @@ public abstract class PestanaFragment extends Fragment {
 
         layoutRellenoPestana = viewPestana.findViewById(R.id.pestana_relleno);
 
-        rellenaVariables();
+        rellenaVariables(viewPestana);
 
         return viewPestana;
     }
@@ -74,7 +74,7 @@ public abstract class PestanaFragment extends Fragment {
     /**
      * Rellena la pestanya con los datos propios
      */
-    protected abstract void rellenaVariables();
+    protected abstract void rellenaVariables(View thisView);
 
     /**
      * Colapsa o abre la pestanya

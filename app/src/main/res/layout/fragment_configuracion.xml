@@ -1,0 +1,68 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_pestana"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.tfgp2p.tfg_p2p_nsp.Fragmentos.ConfiguracionFragment"
+    android:orientation="vertical"
+    android:background="@android:color/white">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="85dp"
+        android:orientation="horizontal"
+        android:background="@drawable/background_config_opt">
+
+
+        <ImageView
+            android:id="@+id/imageIcon"
+            android:layout_width="85dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+
+            android:layout_weight="1"
+            android:src="@drawable/ic_file_download_black_24dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/imageIcon"
+            android:layout_toLeftOf="@+id/button"
+            android:layout_toRightOf="@+id/imageIcon"
+            android:layout_toStartOf="@+id/button"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Carpeta de descarga"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:textSize="18dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10px"
+                android:ellipsize="end"
+                android:maxEms="15"
+                android:singleLine="true"
+                android:hint="No hay direccion" />
+
+        </LinearLayout>
+
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="45dp"
+            android:text="Cambiar"
+            android:onClick="downloadSelectiorWindow"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:id="@+id/button" />
+    </RelativeLayout>
+</LinearLayout>
