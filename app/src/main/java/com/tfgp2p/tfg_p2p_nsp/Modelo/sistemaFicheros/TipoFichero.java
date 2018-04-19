@@ -19,7 +19,11 @@ public enum TipoFichero {
     public static TipoFichero obtainTipoFichero(String nombreFichero){
 
         // Separa el String para tener la terminacion
-        String[] nombreDesglosado = nombreFichero.split(".");
+        String[] nombreDesglosado = nombreFichero.split("\\.");
+
+        for(int i=0;i<nombreDesglosado.length;i++){
+            System.out.println(nombreDesglosado[i]);
+        }
 
         TipoFichero tipoFichero = FOLD;
 

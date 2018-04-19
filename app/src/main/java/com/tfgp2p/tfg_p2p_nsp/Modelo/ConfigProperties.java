@@ -31,24 +31,20 @@ public class ConfigProperties {
         Properties prop = new Properties();
         InputStream input = null;
 
-        configData.put(PROP_FILES_FOLDER,"/sdcard/");
-
-        try {
+//        try {
 
             AssetManager assetManager = context.getAssets();
 
-            InputStream inputStream = assetManager.open("com/tfgp2p/tfg_p2p_nsp/Modelo/config/config.properties");
+//            InputStream inputStream = assetManager.open("com/tfgp2p/tfg_p2p_nsp/Modelo/config/config.properties");
 
-            prop.load(inputStream);
+//            prop.load(inputStream);
 
             // Get the property value and save it
             //configData.put(PROP_FILES_FOLDER,prop.getProperty(PROP_FILES_FOLDER));
 
             isLoaded = true;
 
-            System.out.println(configData.get(PROP_FILES_FOLDER));
-
-        } catch (IOException ex) {
+ /*       } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
             if (input != null) {
@@ -59,6 +55,7 @@ public class ConfigProperties {
                 }
             }
         }
+*/
     }
 
     /**
@@ -87,7 +84,6 @@ public class ConfigProperties {
         OutputStream output = null;
 
         try {
-
             output = new FileOutputStream("config/config.properties");
 
             // Establecemos todas las propiedades
@@ -95,7 +91,6 @@ public class ConfigProperties {
 
             // save properties to project root folder
             prop.store(output, null);
-
         } catch (IOException io) {
             io.printStackTrace();
         } finally {

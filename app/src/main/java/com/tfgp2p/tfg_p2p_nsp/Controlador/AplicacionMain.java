@@ -20,6 +20,7 @@ public class AplicacionMain extends Application {
         super.onCreate();
 
         ConfigProperties.loadConfiguration(this);
+        ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER,"/sdcard/");
 
         //
         gestorSistemaFicheros = GestorSistemaFicheros.getInstance();

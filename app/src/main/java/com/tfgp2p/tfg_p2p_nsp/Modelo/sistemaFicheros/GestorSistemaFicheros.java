@@ -22,11 +22,6 @@ public class GestorSistemaFicheros {
 
     private File currentDir;
     private static List<Fichero> dir;
-    /*
-    private Item itemSelected;
-    */
-    Map<String,Fichero> mapViewItem;
-
 
     /**
      * Se impide que el usuario pueda generar un "new"
@@ -53,9 +48,7 @@ public class GestorSistemaFicheros {
 
             try{
                 for(File ff: dirs){
-                    if(ff.isDirectory()){
-                        dir.add(new Fichero(ff.getName(),ff.getAbsolutePath()));
-                    }
+                    dir.add(new Fichero(ff.getName(),ff.getAbsolutePath()));
                 }
             }catch(Exception e){}
 
@@ -67,26 +60,8 @@ public class GestorSistemaFicheros {
 
     public void fillContent(String Path) throws IOException {
 
-        File file = new File(Path);
-        dir = new ArrayList<>();
-
-        if(file.exists() && file.isDirectory()){
-            currentDir = file;
-
-            // Si no existe creamos la carpeta
-            if(!currentDir.exists()) {
-                currentDir.mkdir();
-            }
-
-            fill(currentDir);
-        } else{
-            throw new IOException("No se ha encontrado la carpeta o no es una carpeta.");
-        }
-    }
-
-    public void reloadDataView() throws IOException {
+        currentDir = new File(Path);
         fill(currentDir);
-
     }
 
     public static List<Fichero> getFiles(){
@@ -95,7 +70,6 @@ public class GestorSistemaFicheros {
     }
 
     public static void reloadCompartiendoCarpetaData() {
-
         for (ICompartiendoDataCambio compart: listICompartiendoDataCambios) {
             compart.reloadCompartiendoCarpetaData();
         }

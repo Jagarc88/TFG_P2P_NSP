@@ -1,12 +1,10 @@
 package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.tfgp2p.tfg_p2p_nsp.ActivitySeleccionCarpeta;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**
@@ -22,11 +20,6 @@ public class ConfiguracionFragment extends FragmentTab {
         View viewInicio = inflater.inflate(R.layout.fragment_configuracion, container, false);
 
         return viewInicio;
-    }
-
-    public void downloadSelectiorWindow(View view){
-        Intent listCarpeta = new Intent(getActivity().getApplicationContext(), ActivitySeleccionCarpeta.class);
-        startActivity(listCarpeta);
     }
 
     @Override

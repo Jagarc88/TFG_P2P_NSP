@@ -31,9 +31,6 @@ public class PestanaCompartiendo extends PestanaFragment implements ICompartiend
         linearLayout_listaCompartiendo = view.findViewById(R.id.pestana_relleno);
 
         draw(createConteiner(linearLayout_listaCompartiendo));
-
-        // Se anyade a los observadores
-        GestorSistemaFicheros.listICompartiendoDataCambios.add(this);
     }
 
     private void draw(LinearLayout linearLayout) {
@@ -46,7 +43,6 @@ public class PestanaCompartiendo extends PestanaFragment implements ICompartiend
         for (Fichero item: dir) {
             if(item.getTipoFichero() != TipoFichero.FOLD) {
                 View newPestanya = crear_pestanya(item.getNombre());
-
                 linearLayout.addView(newPestanya);
             }
         }

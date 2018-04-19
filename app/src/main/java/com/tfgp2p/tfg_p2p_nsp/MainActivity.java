@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         comprobarPermisos();
 
-        ConfigProperties.loadConfiguration(getApplicationContext());
+        //ConfigProperties.loadConfiguration(getApplicationContext());
 
         setContentView(R.layout.activity_main);
 
@@ -104,6 +104,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         changeFrame(newFragment, (LinearLayout)view);
+    }
+
+    public void downloadSelectiorWindow(View view){
+        Intent listCarpeta = new Intent(this, ActivitySeleccionCarpeta.class);
+        startActivity(listCarpeta);
     }
 
     private void changeFrame(FragmentTab fragmentTab, LinearLayout tabbarSelected){

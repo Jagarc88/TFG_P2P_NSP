@@ -10,8 +10,11 @@ import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.TipoFichero;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,7 +77,7 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
     }
 
     private void volverAMenu(){
-        Intent menu = new Intent(getApplicationContext(), MainActivity.class);
+        Intent menu = new Intent(this, MainActivity.class);
         startActivity(menu);
     }
 
@@ -131,7 +134,6 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
         itemSelected = mapViewItem.get(nameFileSelected);
 
         if(itemSelected != null){
-
             fillContent(itemSelected.getPath());
         }
     }
@@ -146,12 +148,21 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
 
             ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, itemSelected.getPath());
 
-            fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
+            try {
+                GestorSistemaFicheros.getInstance().fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+            GestorSistemaFicheros.reloadCompartiendoCarpetaData();
 
+            // Rellena con el nuevo contenido
+            for (Fichero item: dir) {
+                if(item.getTipoFichero() != TipoFichero.FOLD) {
+                    System.out.println(item.getNombre());
+                }
+            }
             volverAMenu();
         }
-
-        System.out.println("URL: "+ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
     }
 
     /**
