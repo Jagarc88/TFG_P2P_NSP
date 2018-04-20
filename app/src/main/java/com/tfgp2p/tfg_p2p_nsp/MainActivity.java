@@ -15,7 +15,9 @@ import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FicherosFragment;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.Gnutella.Cliente;
 import com.tfgp2p.tfg_p2p_nsp.Gnutella.Echoer;
+import com.tfgp2p.tfg_p2p_nsp.Gnutella.Servidor;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,11 +40,18 @@ public class MainActivity extends AppCompatActivity {
 
         ////////////////////////////// PRUEBA DEL ECHOER///////////////////////////////
         //new Echoer(1100, 1101, 5);
-        new Thread(new Runnable(){
+        /*new Thread(new Runnable(){
            public void run(){
                // 1103 al ejecutar en mi movil.
                new Echoer(1103, 1104, 5);
            }
+        }).start();
+        */
+        new Thread(new Runnable(){
+            public void run(){
+                //Servidor.getInstance();
+				Cliente.getInstance();
+			}
         }).start();
         ///////////////////////////////////////////////////////////////////////////////
 
