@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO Clase cuya funcion es gestionar el sistema de ficheros
  * - Singleton
  * - En esta primera version se cachea el contenido directo de la carpeta de descarga
  *
