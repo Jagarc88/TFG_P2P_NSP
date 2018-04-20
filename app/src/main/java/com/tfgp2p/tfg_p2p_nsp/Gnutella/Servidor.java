@@ -1,5 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.Gnutella;
 
+import android.util.Pair;
+
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
@@ -13,12 +15,16 @@ import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Queue;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.FILE_REQ;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ALL;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ONE;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.PACKET_ACK;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.intToByteArray;
 import static com.tfgp2p.tfg_p2p_nsp.Utils.isValidRequest;
 
 
@@ -30,7 +36,7 @@ import static com.tfgp2p.tfg_p2p_nsp.Utils.isValidRequest;
  */
 
 
-	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta 5 proveyendo ficheros (a 5 clientes).
+	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta n (pequeño) proveyendo ficheros (a n clientes).
 public class Servidor {
 
 	// Instancia del objeto Servidor.
@@ -42,6 +48,13 @@ public class Servidor {
 
 	//private ServerSocket listenSocket;
 	private DatagramSocket listenSocket;
+
+	// TODO: Si la info del clienteActivo se comparte entre hilos mejor usar sólo la cola, supongo.
+	private DatagramSocket activeClientSocket;
+
+	// Cola que guarda el nombre del amigo y el tipo de petición.
+	// Integer debería ser un byte.
+	private Queue<Pair<String, Byte[]>> requestQueue;
 
 	// Puertos posibles en los que va a estar a la escucha el serverSocket.
 	static final int possiblePorts[] = {61516, 62516, 63516, 64516};
@@ -86,6 +99,8 @@ public class Servidor {
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
 
+			this.activeClientSocket = null;
+			this.requestQueue = new ArrayDeque<>();
 			//this.activeClients = new HashMap<>(10);
 
 			// La parte servidor lanza un hilo que se queda a la escucha.
@@ -123,10 +138,12 @@ public class Servidor {
 			while (true){
 				// Se quedará bloqueado con una llamada a receive.
 				byte request = waitRequest();
-				// TODO: manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
+				// manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
 				if ((isValidRequest(request)))
 					// Si la petición es válida se encola. Si es la primera de la cola se atiende en un hilo nuevo.
 					// TODO: Encolar petición y lanzar aquí los thread.
+
+					// Hay que pasarle a manage el amigo cogido de la cola y la petición.
 					manageResponse(request);
 				else
 					throw new AlertException("Error, ID de paquete no válida.");
@@ -139,11 +156,12 @@ public class Servidor {
 
 	/**
 	 * La función de este método es esperar algún tipo de petición por parte de los amigos.
+	 * La petición recibida se mete en la cola de espera para atenderla cuando sea su turno.
 	 * Si la petición se realiza desde un dispositivo que no es amigo se muestra error.
 	 *
 	 * @return Identificador válido de la petición.
 	 */
-	private byte waitRequest(){
+	private void waitRequest(){
 		// TODO: implementar una cola de espera de entrada (como atributo privado de la clase) para las solicitudes entrantes.
 		// TODO: Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
 		/*
@@ -167,29 +185,41 @@ public class Servidor {
 
 		// Valor inicial -1 no válido para provocar fallo en caso de petición incorrecta.
 		// TODO: Hacer que se envíen los bytes justos en la petición desde la parte Cliente, si se puede.
-		byte[] requestByte = new byte[64];
+		byte[] request = new byte[64];
 		try{
-			DatagramPacket reqPacket = new DatagramPacket(requestByte, requestByte.length);
+			DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 			// Se recibe el tipo de petición y el nombre del que la realiza.
 			listenSocket.receive(reqPacket);
 
-			String name = new String(requestByte).substring(1);
+			String name = new String(request).substring(1);
 
 			if (!Amigos.getInstance().isFriend(name, reqPacket.getAddress())){
-				requestByte[0] = -1;
+				request[0] = -1;
+			}
+			else {
+				// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
+				// TODO: a cada uno tienen como clienteActivo al correcto y no comparten esa variable.
+				// TODO: Puede que no sea necesario clienteActivo gracias a la cola.
+				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
+				 * de fichero si es eso lo que solicita.
+				 */
+				Byte[] aux = new Byte[request.length];
+				System.arraycopy(request, 0, aux, 0, request.length);
+				this.requestQueue.add(new Pair<>(name, aux));
+				// TODO: ya no es necesario devolver en este método la request entera.
+				// TODO: En el manage() la podemos tomar desde la cola o tomarla antes de la llamada y pasársela.
 			}
 		}
 		catch (IOException e){
 			e.printStackTrace();
 		}
-		return requestByte[0];
 	}
 
 
 	/**
 	 * Gestiona la respuesta que tiene que dar según el tipo de solicitud atendida.
 	 *
-	 * @param request
+	 * @param request Identificador de la solicitud.
 	 */
 	private void manageResponse(byte request){
 		switch (request){
@@ -204,12 +234,15 @@ public class Servidor {
 				// TODO: Pensar cuándo puede darse el caso de solicitar metadatos de sólo 1 fichero.
 				break;
 			case METADATA_REQ_ALL:
-				byte[] allMetadata = getMetadataFromSharedFolder();
-				sendAllFilesMetadata(allMetadata);
+				sendAllFilesMetadata();
 				break;
 			case FILE_REQ:
+				// 1º Usar el socket del clienteActivo para esperar el paquete con el nombre del archivo.
+				// 2º Enviar archivo.
+				sendFile();
 				break;
 			case PACKET_ACK:
+				// TODO: Puede que packetACK no sea útil aquí...
 				break;
 			default:
 				// Petición no admitida.
@@ -307,7 +340,7 @@ public class Servidor {
 	 * @throws IOException
 	 */
 	private void sendFileMetadata(File file, InetSocketAddress addr, int fileLength) throws IOException{
-		// TODO: Implementar envío de metadatos cada vez que se modifique o borre un fichero.
+		// TODO: Llamar a este método cada vez que se modifique o borre un fichero.
 		byte[] metadataBuffer = new byte[file.getName().length() + 4];
 
 		// Tamaño del fichero.
@@ -318,8 +351,7 @@ public class Servidor {
 		// Nombre del fichero.
 		//byte[] aux = file.getName().getBytes(Charset.forName("UTF-8"));
 		byte[] aux = file.getName().getBytes();
-		for (int i=0; i<aux.length; i++)
-			metadataBuffer[i+4] = aux[i];
+		System.arraycopy(aux, 0, metadataBuffer, 4, aux.length);
 
 		DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length, addr.getAddress(), addr.getPort());
 		listenSocket.send(metadataPacket);
@@ -331,6 +363,7 @@ public class Servidor {
 	 * @return tamaño y nombre de los ficheros de la carpeta compartida.
 	 */
 	private byte[] getMetadataFromSharedFolder() {
+		// TODO: Poner bien la carpeta compartida.
 		File filesPath =  new File(Utils.parseMountDirectory().getAbsolutePath());
 		File[] files = filesPath.listFiles();
 		int[] sizes = new int[files.length];
@@ -341,7 +374,22 @@ public class Servidor {
 			sizes[i] = (int) files[i].length();
 			bufferSize += 4 + files[i].getName().length();
 		}
+
 		byte[] metadataBuffer = new byte[bufferSize];
+
+		int i = 0;
+		int j = 0;
+		while ((i < metadataBuffer.length) && (j < files.length)) {
+			byte[] byteArraySize = intToByteArray(sizes[j]);
+			byte[] name = files[j].getName().getBytes();
+			// Copiar Tamaño:
+			System.arraycopy(byteArraySize, 0, metadataBuffer, i, 4);
+			i += 4;
+			// Copiar nombre:
+			System.arraycopy(name, j, metadataBuffer, i, name.length);
+			i += name.length;
+			++j;
+		}
 
 		return metadataBuffer;
 	}
@@ -350,16 +398,15 @@ public class Servidor {
 	/**
 	 * Envía el tamaño de los ficheros y sus nombres en un solo paquete al amigo para
 	 * que pueda ver el contenido de la carpeta compartida remota.
-	 *
-	 * @param allMetadata metadatos de todos los ficheros de la carpeta compartida local.
 	 */
-	private void sendAllFilesMetadata(byte[] allMetadata) {
+	private void sendAllFilesMetadata() {
 		try {
+			byte[] allMetadata = getMetadataFromSharedFolder();
 			DatagramPacket p = new DatagramPacket(allMetadata, allMetadata.length);
 			// TODO: No vale con usar el listenSocket, hay que usar otro para las comunicaciones.
 			listenSocket.send(p);
-			// TODO: EMPEZAR POR AQUÍ. No sé si me falta algo en este método.
-			asd
+			// TODO: Creo que no me falta nada en este método...
+
 		}
 		catch (IOException e){
 			e.printStackTrace();

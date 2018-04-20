@@ -112,7 +112,7 @@ public class Cliente {
 			byte[] fnBuffer = fileName.getBytes();
 			DatagramPacket request = new DatagramPacket(fnBuffer, fnBuffer.length, addr.getAddress(), addr.getPort());
 			socket.send(request);
-			// TODO: Implementar receiveFile(...).
+			// TODO: Implementar receiveFile(...). Debería hacer la llamada a receiveFile desde fuera de requestFile.
 			receiveFile(fileName);
 		}
 		catch (AlertException e){
@@ -204,4 +204,5 @@ public class Cliente {
 	}
 
 
+	// TODO: Implementar cancelación y pausa de descargas.
 }

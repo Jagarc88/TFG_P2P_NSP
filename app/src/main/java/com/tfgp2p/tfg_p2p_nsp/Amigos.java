@@ -41,7 +41,7 @@ public class Amigos {
 	}
 
 
-	public void editFriendName(String name, String newName) throws AlertException{
+	public void updateFriendName(String name, String newName) throws AlertException{
 		if (this.friendsMap.containsKey(name)){
 			InetSocketAddress addr = this.friendsMap.get(name);
 			this.friendsMap.remove(name);
@@ -51,7 +51,7 @@ public class Amigos {
 	}
 
 
-	public void editFriendAddr(String name, InetSocketAddress newAddr) throws AlertException{
+	public void updateFriendAddr(String name, InetSocketAddress newAddr) throws AlertException{
 		if (this.friendsMap.containsKey(name)){
 			this.friendsMap.remove(name);
 			this.friendsMap.put(name, newAddr);
@@ -82,7 +82,7 @@ public class Amigos {
 
 
 	public boolean isFriend(String name, InetAddress addr){
-		// get() Devuelve null si no existe.
+		// get() devuelve null si no existe.
 		InetAddress localAddr = friendsMap.get(name).getAddress();
 		return ((localAddr != null) && (localAddr == addr));
 	}
