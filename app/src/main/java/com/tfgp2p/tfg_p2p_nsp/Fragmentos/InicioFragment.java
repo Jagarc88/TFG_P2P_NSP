@@ -47,4 +47,10 @@ public class InicioFragment extends FragmentTab {
 
         return viewInicio;
     }
+
+
+    @Override
+    public void establecerContenido() {
+
+    }
 }

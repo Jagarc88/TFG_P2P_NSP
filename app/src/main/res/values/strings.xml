@@ -10,4 +10,6 @@
     <string name="pestana_titulo_amigos">Amigos online</string>
     <string name="pestana_titulo_compartiendo">Compartiendo</string>
     <string name="pestana_titulo_descarga">Descargas</string>
+    <string name="pestana_titulo_configuracion">Configuración</string>
+
 </resources>

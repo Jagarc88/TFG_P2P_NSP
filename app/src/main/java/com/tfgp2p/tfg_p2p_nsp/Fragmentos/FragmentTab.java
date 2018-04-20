@@ -1,7 +1,11 @@
 package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
 
 import android.app.Fragment;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,10 +24,12 @@ public abstract class FragmentTab extends Fragment {
     public static final int TABNAME_INICIO = 1;
     public static final int TABNAME_AMIGOS = 2;
     public static final int TABNAME_FICHEROS = 3;
+    public static final int TABNAME_CONFIGURACION = 4;
 
     private static FragmentTab inicioTab;
     private static FragmentTab ficherosTab;
     private static FragmentTab amigosTab;
+    private static FragmentTab configuracionTab;
 
     /**
      * Lista que se usara para comprobar patrones de todas las pestanyas de forma general
@@ -52,6 +58,12 @@ public abstract class FragmentTab extends Fragment {
                 }
                 fragmentTab = amigosTab;
             }break;
+            case TABNAME_CONFIGURACION:{
+                if(configuracionTab == null){
+                    configuracionTab = new ConfiguracionFragment();
+                }
+                fragmentTab = configuracionTab;
+            }break;
         }
 
         return fragmentTab;
@@ -68,4 +80,5 @@ public abstract class FragmentTab extends Fragment {
         }
     }
 
+    public abstract void establecerContenido();
 }

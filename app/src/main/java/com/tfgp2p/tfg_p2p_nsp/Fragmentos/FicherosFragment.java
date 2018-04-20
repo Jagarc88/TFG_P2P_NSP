@@ -52,6 +52,16 @@ public class FicherosFragment extends FragmentTab {
         fragTransaction.add(pestanaLayout.getId(), pestanaFragmentTop, "fragment");
         fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment");
         fragTransaction.commit();
+
+        establecerContenido();
+
         return viewInicio;
+    }
+
+    @Override
+    public void establecerContenido() {
+
+
+
     }
 }

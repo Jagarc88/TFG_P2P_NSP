@@ -1,5 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments;
 
+import android.view.View;
+
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**
@@ -8,7 +10,7 @@ import com.tfgp2p.tfg_p2p_nsp.R;
 
 public class PestanaDescarga extends PestanaFragment{
     @Override
-    protected void rellenaVariables() {
+    protected void rellenaVariables(View view) {
         imageHeadPestana.setImageResource(R.drawable.ic_file_download_black_24dp);
         textTitutloHeadPestana.setText(getText(R.string.pestana_titulo_descarga));
     }
