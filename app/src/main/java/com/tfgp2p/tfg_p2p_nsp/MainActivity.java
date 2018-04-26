@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable(){
             public void run(){
                 //Servidor.getInstance();
-				Cliente.getInstance();
+				//Cliente.getInstance();
 			}
         }).start();
         ///////////////////////////////////////////////////////////////////////////////
