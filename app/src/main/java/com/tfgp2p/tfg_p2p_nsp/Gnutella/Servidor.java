@@ -3,7 +3,7 @@ package com.tfgp2p.tfg_p2p_nsp.Gnutella;
 import android.util.Pair;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
-import com.tfgp2p.tfg_p2p_nsp.Amigos;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.File;
@@ -14,9 +14,7 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.Queue;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
@@ -35,6 +33,7 @@ import static com.tfgp2p.tfg_p2p_nsp.Utils.isValidRequest;
  * Clase que implementa la parte servidor de la aplicación.
  */
 
+	// TODO: Cambiar nombre a carpeta Gnutella.
 
 	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta n (pequeño) proveyendo ficheros (a n clientes).
 public class Servidor {
@@ -52,8 +51,7 @@ public class Servidor {
 	// TODO: Si la info del clienteActivo se comparte entre hilos mejor usar sólo la cola, supongo.
 	private DatagramSocket activeClientSocket;
 
-	// Cola que guarda el nombre del amigo y el tipo de petición.
-	// Integer debería ser un byte.
+	// Cola que guarda el nombre del amigo y la petición.
 	private Queue<Pair<String, Byte[]>> requestQueue;
 
 	// Puertos posibles en los que va a estar a la escucha el serverSocket.
@@ -103,11 +101,18 @@ public class Servidor {
 			this.requestQueue = new ArrayDeque<>();
 			//this.activeClients = new HashMap<>(10);
 
-			// La parte servidor lanza un hilo que se queda a la escucha.
+			// La parte servidor lanza dos hilos: Uno que se queda a la escucha y otro que atiende peticiones encoladas.
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
 					listen();
+				}
+			}).start();
+			// TODO: Lanzar aquí thread atendiendo las peticiones de la cola:
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					serve();
 				}
 			}).start();
 
@@ -131,25 +136,55 @@ public class Servidor {
 	 *    del dispositivo servidor en su dispositivo.
 	 *
 	 * 2- De solicitud de descarga de un fichero tras seleccionarlo en su dispositivo después
-	 *    de haber descargado los metadatos de la carptea previamente.
+	 *    de haber descargado los metadatos de la carpeta previamente.
 	 */
-    public void listen(){
+    private void listen(){
 		try {
 			while (true){
 				// Se quedará bloqueado con una llamada a receive.
-				byte request = 1;// = waitRequest();
+				//byte request = waitRequest();
+				waitRequest();
 				// manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
-				if ((isValidRequest(request)))
-					// Si la petición es válida se encola. Si es la primera de la cola se atiende en un hilo nuevo.
-					// TODO: Encolar petición y lanzar aquí los thread.
+				/*if ((isValidRequest(request)))
+					// Si la petición es válida se encola dentro de waitRequest().
+					// Si es la primera de la cola se atiende en un hilo nuevo.
+					new Thread(new Runnable(){
+						public void run(){
 
-					// Hay que pasarle a manage el amigo cogido de la cola y la petición.
-					manageResponse(request);
+						// Hay que pasarle a manage el amigo cogido de la cola y la petición.
+						manageResponse(friend, request);
+						}
+					}).start();
 				else
 					throw new AlertException("Error, ID de paquete no válida.");
+				*/
 			}
 		} catch (AlertException e){
 			e.showAlert();
+		}
+	}
+
+
+	/**
+	 * Este es el método que irá sirviendo las peticiones que realizaron los amigos y que
+	 * han sido previamente encoladas.
+	 *
+	 * - Mientras no haya peticiones en la cola se bloquea el hilo.
+	 * - Cuando el hilo a la escucha encole una petición se reanuda.
+	 */
+	private void serve(){
+		// TODO: usar wait() y notify(). Mientras la cola esté vacía wait()...
+		try{
+			synchronized (requestQueue) {
+				while (requestQueue.isEmpty())
+					requestQueue.wait();
+
+				Pair<String, Byte[]> req = requestQueue.poll();
+				manageResponse(req.first, req.second);
+			}
+		}
+		catch (InterruptedException e){
+			e.printStackTrace();
 		}
 	}
 
@@ -159,13 +194,13 @@ public class Servidor {
 	 * La petición recibida se mete en la cola de espera para atenderla cuando sea su turno.
 	 * Si la petición se realiza desde un dispositivo que no es amigo se muestra error.
 	 *
-	 * @return Identificador válido de la petición.
+	 * @return Identificador de la petición.
 	 */
-	private void waitRequest(){
+	private void waitRequest() throws AlertException{
 		// TODO: implementar una cola de espera de entrada (como atributo privado de la clase) para las solicitudes entrantes.
 		// TODO: Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
 		/*
-		 * Con la cola de espera estoy forzando a que la peticiones se atiendan de una en una.
+		 * Con la cola de espera estoy forzando a que las peticiones se atiendan de una en una.
 		 * Para que se atiendan todas habría que lanzar un thread por cada petición atendida.
 		 */
 		// TODO: implementar envío de peticiones desde la parte Cliente.
@@ -183,46 +218,58 @@ public class Servidor {
 		}
 		////////////////////////////////////////////////////////////
 
-		// Valor inicial -1 no válido para provocar fallo en caso de petición incorrecta.
 		// TODO: Hacer que se envíen los bytes justos en la petición desde la parte Cliente, si se puede.
-		byte[] request = new byte[64];
+		byte[] request = new byte[128];
+		request[0] = -1;
 		try{
 			DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-			// Se recibe el tipo de petición y el nombre del que la realiza.
+			/* Se recibe el tipo de petición y el nick del que la realiza.
+			 * Si lo que se solicita es un archivo entonces el nombre del archivo
+			 * viene incluído.
+			 */
 			listenSocket.receive(reqPacket);
 
 			String name = new String(request).substring(1);
 
 			if (!Amigos.getInstance().isFriend(name, reqPacket.getAddress())){
+			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
 				request[0] = -1;
+				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.");
+				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos y realizan peticiones a saco.
+				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
+				// TODO: Escribir aquí el código que decide esto.
+
 			}
-			else {
+			else if (isValidRequest(request[0])){
 				// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
 				// TODO: a cada uno tienen como clienteActivo al correcto y no comparten esa variable.
 				// TODO: Puede que no sea necesario clienteActivo gracias a la cola.
 				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
 				 * de fichero si es eso lo que solicita.
 				 */
-				Byte[] aux = new Byte[request.length];
-				System.arraycopy(request, 0, aux, 0, request.length);
-				this.requestQueue.add(new Pair<>(name, aux));
-				// TODO: ya no es necesario devolver en este método la request entera.
-				// TODO: En el manage() la podemos tomar desde la cola o tomarla antes de la llamada y pasársela.
+
+				synchronized (requestQueue) {
+					Byte[] aux = new Byte[request.length];
+					System.arraycopy(request, 0, aux, 0, request.length);
+					requestQueue.add(new Pair<>(name, aux));
+					requestQueue.notify();
+				}
+
 			}
+			else throw new AlertException("Error, petición incorrecta.");
 		}
 		catch (IOException e){
 			e.printStackTrace();
 		}
+
 	}
 
 
 	/**
 	 * Gestiona la respuesta que tiene que dar según el tipo de solicitud atendida.
-	 *
-	 * @param request Identificador de la solicitud.
 	 */
-	private void manageResponse(byte request){
-		switch (request){
+	private void manageResponse(String friend, Byte[] request){
+		switch (request[0]){
 			// TODO: BORRAR ESTE COMENTARIO cuando esté implementado:
 			/*
 			 * Cuando un amigo se conecta a otro y quiere ver su carpeta solicita TODOS los
@@ -233,19 +280,30 @@ public class Servidor {
 			case METADATA_REQ_ONE:
 				// TODO: Pensar cuándo puede darse el caso de solicitar metadatos de sólo 1 fichero.
 				break;
+
 			case METADATA_REQ_ALL:
 				sendAllFilesMetadata();
 				break;
+
 			case FILE_REQ:
-				// 1º Usar el socket del clienteActivo para esperar el paquete con el nombre del archivo.
-				// 2º Enviar archivo.
-				//sendFile();
+				try{
+					InetSocketAddress addr = Amigos.getInstance().getFriendAddr(friend);
+					int fileNamePosition = 1 + friend.length();
+					String fileName = request.toString().substring(fileNamePosition);
+					sendFile(fileName, addr);
+				}
+				catch (AlertException e){
+					e.showAlert();
+				}
 				break;
+
 			case PACKET_ACK:
 				// TODO: Puede que packetACK no sea útil aquí...
 				break;
+
 			default:
 				// Petición no admitida.
+				// TODO: deberíamos hacer que en el destinatario se mostrara un popup de error, por ejemplo con un ERROR_popup.
 				break;
 		}
 	}
@@ -254,9 +312,10 @@ public class Servidor {
 	/**
 	 * Se envía un archivo al dispositivo remoto.
 	 *
+	 * @param fileName Nombre del archivo que se enviará.
 	 * @param addr Dirección IP y puerto al que se envía el archivo.
 	 */
-	public void sendFile(InetSocketAddress addr){
+	public void sendFile(String fileName, InetSocketAddress addr){
 		try{
 			//InetSocketAddress addr = this.friends.get("Manolito");
 
@@ -266,8 +325,14 @@ public class Servidor {
 			// >500 KB.
 			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/Resumen ASOR.pdf";
 			// 9 KB.
-			String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
-			File file = new File(path);
+
+			/*String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
+			File file = new File(path);*/
+			///////////////////////////////////////
+			// TODO: Poner aquí bien la ruta de la carpeta compartida.
+			String sharedFolder = Utils.parseMountDirectory().getAbsolutePath();
+			File file = new File(sharedFolder + '/' + fileName);
+			///////////////////////////////////////
 			FileInputStream fis = new FileInputStream(file);
 			int fileLength = (int) file.length();
 
@@ -304,6 +369,7 @@ public class Servidor {
 
 				totalBytesRead += bytesRead;
 				packet.setData(buffer);
+				// TODO: Utilizar otro socket (otro puerto).
 				listenSocket.send(packet);
 				buffer = null;
 

@@ -1,4 +1,6 @@
-package com.tfgp2p.tfg_p2p_nsp;
+package com.tfgp2p.tfg_p2p_nsp.Modelo;
+
+import com.tfgp2p.tfg_p2p_nsp.AlertException;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -33,7 +35,7 @@ public class Amigos {
 	}
 
 
-	public void addFriend(String name, InetSocketAddress iaddr) throws AlertException{
+	public void addFriend(String name, InetSocketAddress iaddr) throws AlertException {
 		if (!this.friendsMap.containsKey(name))
 			this.friendsMap.put(name, iaddr);
 		else

@@ -1,11 +1,10 @@
 package com.tfgp2p.tfg_p2p_nsp.Gnutella;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
-import com.tfgp2p.tfg_p2p_nsp.Amigos;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -14,8 +13,6 @@ import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.util.HashMap;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
 
@@ -67,7 +64,7 @@ public class Cliente {
 			String name = "Manolito";
 			InetSocketAddress friend = amigos.getFriendAddr(name);
 			requestFile(fileName, name);
-			//sendFile();
+			receiveFile(fileName);
 
 
 
@@ -109,11 +106,24 @@ public class Cliente {
 	private void requestFile(String fileName, String name) {
 		try{
 			InetSocketAddress addr = amigos.getFriendAddr(name);
+			// Hay que enviar en el byte[] FILE_REQ (un 3), el nombre del que hace la petición (el cliente), y el nombre del archivo.
+			byte[] reqType = new byte[1];
+			reqType[0] = Utils.FILE_REQ;
+
+			byte[] nameBuf = name.getBytes();
+
 			byte[] fnBuffer = fileName.getBytes();
-			DatagramPacket request = new DatagramPacket(fnBuffer, fnBuffer.length, addr.getAddress(), addr.getPort());
+
+			ByteArrayOutputStream s = new ByteArrayOutputStream();
+			s.write(reqType);
+			s.write(nameBuf, 1, 1+nameBuf.length);
+			s.write(fnBuffer, 1+nameBuf.length, 1+nameBuf.length+fnBuffer.length);
+
+			byte[] completeBuffer = s.toByteArray();
+
+			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
 			socket.send(request);
-			// TODO: Implementar receiveFile(...). Debería hacer la llamada a receiveFile desde fuera de requestFile.
-			receiveFile(fileName);
+			// TODO: EMPEZAR POR AQUÍ!, PENSAR SI YA HE TERMINADO CON ESTO Y PUEDO PASAR AL RECEIVEFILE().
 		}
 		catch (AlertException e){
 			e.showAlert();
