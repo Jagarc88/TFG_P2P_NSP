@@ -86,7 +86,7 @@ public class Amigos {
 	public boolean isFriend(String name, InetAddress addr){
 		// get() devuelve null si no existe.
 		InetAddress localAddr = friendsMap.get(name).getAddress();
-		return ((localAddr != null) && (localAddr == addr));
+		return (localAddr != null) && (localAddr.equals(addr));
 	}
 
 }

@@ -14,7 +14,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
 
 /**
@@ -57,16 +57,45 @@ public class Cliente {
 			//////// Prueba de la conexión al móvil servidor:
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
-			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
+			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
 			this.amigos.addFriend("Manolito", sa);
 
 			String fileName = "contacts.vcf";
 			String name = "Manolito";
-			InetSocketAddress friend = amigos.getFriendAddr(name);
-			requestFile(fileName, name);
-			receiveFile(fileName);
+			InetSocketAddress friendAddr = amigos.getFriendAddr(name);
+			//////////////////////////////////////////////////////////////////////////////////
+			//////// BORRAR ENVÍO MANUAL DE PETICIÓN DE FICHERO //////////////////////////////
+			// Yo tb me llamo Manolito:
+			try {
+				byte[] nameLen = new byte[] {(byte) name.length()};
+				byte[] nameAux = name.getBytes();
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				baos.write(nameLen);
+				baos.write(nameAux);
+				byte[] nameBuff = baos.toByteArray();
+				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, friendAddr);
+				socket.send(p);
+			}
+			catch (IOException e){
+				e.printStackTrace();
+			}
+			///////////////////////////////////////////////
 
-
+			// TODO: La siguiente comprobación debe ir en el sendRequest(). Ya lo meteré cuando organice el envío de todo tipo de peticiones.
+			try {
+				byte[] resp = new byte[1];
+				DatagramPacket pac = new DatagramPacket(resp, resp.length);
+				socket.receive(pac);
+				if (resp[0] == OK_FRIEND) {
+					requestFile(fileName, name);
+					receiveFile(fileName);
+				}
+				// Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
+				else if (resp[0] == NO_FRIEND) {}
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 
 
 		}
@@ -90,6 +119,15 @@ public class Cliente {
 	}
 
 
+	/* Pasos para hacer una petición:
+	 * 1º) Enviar un paquete con el nombre del cliente para que el servidor pueda comprobar
+	 *     si es amigo (y por tanto atenderle) o no. Se envía longitud del nombre y el nombre.
+	 *
+	 * 2º) En caso de que sea amigo se envía la petición como tal. Los datos enviados son el
+	 *     identificador de la petición (tipo) y otros datos dependiendo del tipo. Los otros datos
+	 *     son, por ejemplo, el nombre de un fichero en el caso de que la petición sea de
+	 *     descarga de ese fichero.
+	 */
 	public void sendRequest(){
 		// TODO: Implementar una cola de espera de salida de peticiones para cuando el móvil destino está sin conexión.
 		// TODO: Enviar en la petición el nombre de mi dispositivo
@@ -99,31 +137,34 @@ public class Cliente {
 
 	/**
 	 * Solicita el fichero seleccionado en la carpeta compartida del amigo y lo descarga.
+	 * El paquete que se envía con la petición contiene la siguiente información en este orden:
+	 * 1º Tipo de petición (FILE_REQ).
+	 * 2º Nombre del usuario que manda la petición.
+	 * 3º Nombre del fichero solicitado.
 	 *
 	 * @param fileName Nombre del fichero solicitado.
 	 * @param name Nombre del amigo que tiene el fichero.
 	 */
 	private void requestFile(String fileName, String name) {
 		try{
+			// TODO FALTA REESCRIBIR BIEN ESTE METODO!!!! edit: puede que así valga.
+			// Se envia FILE_REQ + nombre del archivo.
+
 			InetSocketAddress addr = amigos.getFriendAddr(name);
-			// Hay que enviar en el byte[] FILE_REQ (un 3), el nombre del que hace la petición (el cliente), y el nombre del archivo.
+			// Hay que enviar en el byte[] FILE_REQ (un 3), la longitud del archivo, y el nombre del archivo.
 			byte[] reqType = new byte[1];
 			reqType[0] = Utils.FILE_REQ;
-
-			byte[] nameBuf = name.getBytes();
-
+			byte[] fLength = {(byte) fileName.length()};
 			byte[] fnBuffer = fileName.getBytes();
 
 			ByteArrayOutputStream s = new ByteArrayOutputStream();
 			s.write(reqType);
-			s.write(nameBuf, 1, 1+nameBuf.length);
-			s.write(fnBuffer, 1+nameBuf.length, 1+nameBuf.length+fnBuffer.length);
-
+			s.write(fLength);
+			s.write(fnBuffer);
 			byte[] completeBuffer = s.toByteArray();
 
 			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
 			socket.send(request);
-			// TODO: EMPEZAR POR AQUÍ!, PENSAR SI YA HE TERMINADO CON ESTO Y PUEDO PASAR AL RECEIVEFILE().
 		}
 		catch (AlertException e){
 			e.showAlert();
@@ -141,7 +182,7 @@ public class Cliente {
 		try {
 			///////////////////////  Prueba de la recepción del archivo ///////////////////////////
 			// De momento pillo aquí el buffer de metadatos.
-			// TODO: Para pedir un archivo no hay que devolver el nombre en el metadataBuffer, solo el tamaño.
+			// TODO: Para recibir un archivo no hay que devolver el nombre en el metadataBuffer, solo el tamaño.
 			byte[] metadataBuffer = new byte[100];
 			DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length);
 			///////////////////////////////////////////////////////////////////////////////////
@@ -214,5 +255,5 @@ public class Cliente {
 	}
 
 
-	// TODO: Implementar cancelación y pausa de descargas.
+	// TODO: (Opcional) Implementar cancelación y pausa de descargas.
 }

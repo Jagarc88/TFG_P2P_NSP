@@ -37,6 +37,12 @@ public class Utils {
 	 * Constante que identifica un paquete como paquete de envío de metadatos de 1 fichero.
 	 */
 	public static final byte METADATA_SEND_1 = 5;
+	/**
+	 * Cuando el servidor recibe una petición tiene que comprobar si procede de un amigo.
+	 * En caso afirmativo envía de vuelta OK_FRIEND. En caso negativo envía NO_FRIEND.
+	 */
+	public static final byte OK_FRIEND = 6;
+	public static final byte NO_FRIEND = 7;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
