@@ -192,39 +192,34 @@ public class Cliente {
 			byte[] aux = new byte[4];
 			for (int i = 0; i < 4; i++)
 				aux[i] = metadataBuffer[i];
-			int size = Utils.byteArrayToInt(aux);
+
 			byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
 			DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
 			socket.receive(dataPacket);
 
-			// TODO: no es necesario el nombre...
-			//String fileName = getFileNameFromBuffer(metadataBuffer);
 			// TODO: Quitar lo de +".txt".
 			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName + ".txt");
-			int n = 0;
 			boolean exit = false;
 
 			while (!exit) {
 				//TODO Implementar algún tipo de verificación de paquetes. Por ejemplo, cuando se reciba 1 mandar mensaje de confirmación.
-				//byte[] data = dataPacket.getData();
-				//fos.write(data, dataPacket.getOffset(), data.length);
-				//fos.write(data, n*MAX_BUFF_SIZE, data.length);
-				fos.write(dataBuffer, 0, dataBuffer.length);
-				//++n;
-				// TODO: Comprobar que con esta condición se reciben los datos correspondientes al final del archivo.
+				/* Habría que implementarlo con un nextIsLast como en la parte Servidor, pero así funciona.
+				 * MUY IMPORTANTE USAR dataPacket.getLength() Y NO dataBuffer.length PARA DESCARTAR LO QUE SOBRA
+				 * DEL dataBuffer de escrituras anteriores. Para hacerlo como en la parte Servidor habría que
+				 * limpiar el buffer y así como está no lo estamos haciendo. Si no se limpia el dataBuffer
+				 * tiene la longitud MAX_BUFF_SIZE y, por tanto, datos antiguos sobre los que no se han escrito
+				 * datos nuevos con el último paquete.
+				 */
+				fos.write(dataBuffer, 0, dataPacket.getLength());
+
 				if (dataPacket.getLength() < MAX_BUFF_SIZE)
-					socket.receive(dataPacket);
-				else
 					exit = true;
+				else
+					socket.receive(dataPacket);
 			}
 
 			fos.close();
-
-					/*String fileName = getFileNameFromBuffer(metadataBuffer);
-					manageResponse(dataPacket, fileName);
-					*/
-			///////////////////////////////////////////////////////////////////
 		}
 		catch (IOException e){
 			e.printStackTrace();

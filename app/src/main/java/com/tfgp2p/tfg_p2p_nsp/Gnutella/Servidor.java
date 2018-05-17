@@ -317,8 +317,7 @@ public class Servidor {
 					InetSocketAddress addr = Amigos.getInstance().getFriendAddr(friend);
 					//int fileNamePosition = 1 + friend.length();
 					//String fileName = request.toString().substring(fileNamePosition);
-					String fileName = new String(request).substring(1, request[1]+1);
-					// TODO: SE ESTÁ ENVIANDO MAL EL NOMBRE DEL FICHERO (hay un "\f" raro). REVISAR EL ENVÍO EN EL CLIENTE.
+					String fileName = new String(request).substring(2, 2+request[1]);
 					sendFile(fileName, addr);
 				}
 				catch (AlertException e){
@@ -369,7 +368,7 @@ public class Servidor {
 			// TODO: ¿Quitar sendFileMetadata() de aquí?
 			/*
 			 * Si el usuario ha seleccionado el fichero que quiere descargar es porque ya tiene
-			 * los metadatos necesarios
+			 * los metadatos necesarios.
 			 */
 			sendFileMetadata(file, addr, fileLength);
 
@@ -400,6 +399,13 @@ public class Servidor {
 				packet.setData(buffer);
 				// TODO: Utilizar otro socket (otro puerto).
 				listenSocket.send(packet);
+				//////////////////////////////////////////////
+				/*try {
+					Thread.sleep(1000);
+				}
+				catch(InterruptedException e){ e.printStackTrace();}
+				*/
+				//////////////////////////////////////////////
 				buffer = null;
 
 				bytesRemaining = fileLength - totalBytesRead;
