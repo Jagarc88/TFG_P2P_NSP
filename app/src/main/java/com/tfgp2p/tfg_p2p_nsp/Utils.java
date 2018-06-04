@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.InvalidPropertiesFormatException;
 
 /**
  * Created by Julio on 01/03/2018.
@@ -43,6 +42,10 @@ public class Utils {
 	 */
 	public static final byte OK_FRIEND = 6;
 	public static final byte NO_FRIEND = 7;
+	/**
+	 * Identificador utilizado cuando un dispositivo inicia la app y se conecta al servidor.
+	 */
+	public static final byte SERVER_CONNECT = 10;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
@@ -52,6 +55,7 @@ public class Utils {
 	private static final HashSet<Byte> packetID = new HashSet<>(Arrays.asList(
 			METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, PACKET_ACK, METADATA_SEND_1
 	));
+
 
 
 	/**

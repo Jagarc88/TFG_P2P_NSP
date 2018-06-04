@@ -15,10 +15,7 @@ import android.widget.LinearLayout;
 
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
-import com.tfgp2p.tfg_p2p_nsp.Gnutella.Cliente;
-import com.tfgp2p.tfg_p2p_nsp.Gnutella.Servidor;
+import com.tfgp2p.tfg_p2p_nsp.Conexion.Cliente;
 
 public class MainActivity extends AppCompatActivity {
 
