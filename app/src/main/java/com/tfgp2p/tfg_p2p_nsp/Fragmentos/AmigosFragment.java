@@ -42,7 +42,7 @@ public class AmigosFragment extends FragmentTab {
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
 
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragment, "fragment");
+        fragTransaction.replace(pestanaLayout.getId(), pestanaFragment, "fragment");
         fragTransaction.commit();
 
         return viewInicio;

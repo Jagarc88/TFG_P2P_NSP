@@ -44,7 +44,7 @@ public class Utils {
 	 * de solicitud es válido. Se utiliza en el método isValidRequest().
 	 */
 	// TODO: HashSet de byte no vale.
-	private static final HashSet<byte> packetID = new HashSet<>(Arrays.asList(
+	private static final HashSet<Byte> packetID = new HashSet<>(Arrays.asList(
 			METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, PACKET_ACK, METADATA_SEND_1
 	));
 

@@ -41,7 +41,7 @@ public class InicioFragment extends FragmentTab {
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
 
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentTop, "fragment");
+        fragTransaction.replace(pestanaLayout.getId(), pestanaFragmentTop, "fragment");
         fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment");
         fragTransaction.commit();
 

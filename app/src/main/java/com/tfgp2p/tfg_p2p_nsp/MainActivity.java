@@ -23,18 +23,22 @@ import com.tfgp2p.tfg_p2p_nsp.Gnutella.Servidor;
 
 public class MainActivity extends AppCompatActivity {
 
-    FrameLayout frameTabContent;
+    private FrameLayout frameTabContent;
 
     private LinearLayout tabbarInicio;
     private LinearLayout tabbarAmigos;
     private LinearLayout tabbarFicheros;
     private LinearLayout tabbarConfiguracion;
 
+    private LinearLayout currentTabbar;
+
     public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        int currentLayout = 0;
 
         comprobarPermisos();
 
@@ -57,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
                new Echoer(1103, 1104, 5);
            }
         }).start();
-        */
+
         new Thread(new Runnable(){
             public void run(){
                 //Servidor.getInstance();
@@ -65,9 +69,21 @@ public class MainActivity extends AppCompatActivity {
 			}
         }).start();
         ///////////////////////////////////////////////////////////////////////////////
-
+*/
         //Se inicializa la aplicacion en el tab INICIO
-        changeFrame(new InicioFragment(), tabbarInicio);
+
+        if(savedInstanceState != null) {
+            currentLayout = savedInstanceState.getInt("CURRENT_LAYOUT");
+        }
+
+        changeFrame(getFragmentTabFromNumber(currentLayout), getTabbarFromNumber(currentLayout));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+
+        savedInstanceState.putInt("CURRENT_LAYOUT",getCurrentLayoutNumber());
     }
 
     private void comprobarPermisos(){
@@ -146,7 +162,55 @@ public class MainActivity extends AppCompatActivity {
         tabbarConfiguracion.setBackgroundResource(R.drawable.tabbar_background_default);
 
         tabbarSelected.setBackgroundResource(R.drawable.tabbar_background_selected);
+        currentTabbar = tabbarSelected;
     }
 
-    // TODO Aplicacion cuando el movil esta horizontal
+    public int getCurrentLayoutNumber() {
+
+        int currentLayoutNumber = 0;
+
+        // INICIO
+        // NADA
+
+        // FICHEROS
+        if(currentTabbar == tabbarFicheros){
+            currentLayoutNumber = 1;
+        }
+        // AMIGOS
+        else if(currentTabbar == tabbarAmigos){
+            currentLayoutNumber = 2;
+        }
+        // CONFIGURACION
+        else if(currentTabbar == tabbarConfiguracion){
+            currentLayoutNumber = 3;
+        }
+
+        return currentLayoutNumber;
+    }
+
+    private FragmentTab getFragmentTabFromNumber(int layoutNumber){
+
+        FragmentTab newFragment = null;
+
+        switch(layoutNumber){
+            case 1:{newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_FICHEROS);} break; //FICHEROS
+            case 2:{newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_AMIGOS);} break; //AMIGOS
+            case 3:{newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_CONFIGURACION);} break; //CONFIGURACION
+            default:{newFragment = FragmentTab.obtainFragment(FragmentTab.TABNAME_INICIO);} break; //INICIO
+        }
+        return newFragment;
+    }
+
+    private LinearLayout getTabbarFromNumber(int tabNumber){
+
+        LinearLayout newLayout = null;
+
+        switch(tabNumber){
+            case 1:{newLayout = tabbarFicheros;} break; //FICHEROS
+            case 2:{newLayout = tabbarAmigos;} break; //AMIGOS
+            case 3:{newLayout = tabbarConfiguracion;} break; //CONFIGURACION
+            default:{newLayout = tabbarInicio;} break; //INICIO
+        }
+        return newLayout;
+    }
 }

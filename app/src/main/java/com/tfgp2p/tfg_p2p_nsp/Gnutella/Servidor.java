@@ -137,7 +137,7 @@ public class Servidor {
 		try {
 			while (true){
 				// Se quedará bloqueado con una llamada a receive.
-				byte request = waitRequest();
+				byte request = 0;// = waitRequest();
 				// manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
 				if ((isValidRequest(request)))
 					// Si la petición es válida se encola. Si es la primera de la cola se atiende en un hilo nuevo.
@@ -239,7 +239,7 @@ public class Servidor {
 			case FILE_REQ:
 				// 1º Usar el socket del clienteActivo para esperar el paquete con el nombre del archivo.
 				// 2º Enviar archivo.
-				sendFile();
+				//sendFile();
 				break;
 			case PACKET_ACK:
 				// TODO: Puede que packetACK no sea útil aquí...

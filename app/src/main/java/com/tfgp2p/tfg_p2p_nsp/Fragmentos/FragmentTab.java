@@ -26,11 +26,6 @@ public abstract class FragmentTab extends Fragment {
     public static final int TABNAME_FICHEROS = 3;
     public static final int TABNAME_CONFIGURACION = 4;
 
-    private static FragmentTab inicioTab;
-    private static FragmentTab ficherosTab;
-    private static FragmentTab amigosTab;
-    private static FragmentTab configuracionTab;
-
     /**
      * Lista que se usara para comprobar patrones de todas las pestanyas de forma general
      */
@@ -41,28 +36,16 @@ public abstract class FragmentTab extends Fragment {
 
         switch(tabID){
             case TABNAME_INICIO:{
-                if(inicioTab == null){
-                    inicioTab = new InicioFragment();
-                }
-                fragmentTab = inicioTab;
+                fragmentTab = new InicioFragment();
             }break;
             case TABNAME_FICHEROS:{
-                if(ficherosTab == null){
-                    ficherosTab = new FicherosFragment();
-                }
-                fragmentTab = ficherosTab;
+                fragmentTab = new FicherosFragment();
             }break;
             case TABNAME_AMIGOS:{
-                if(amigosTab == null){
-                    amigosTab = new AmigosFragment();
-                }
-                fragmentTab = amigosTab;
+                fragmentTab = new AmigosFragment();
             }break;
             case TABNAME_CONFIGURACION:{
-                if(configuracionTab == null){
-                    configuracionTab = new ConfiguracionFragment();
-                }
-                fragmentTab = configuracionTab;
+                fragmentTab = new ConfiguracionFragment();
             }break;
         }
 
