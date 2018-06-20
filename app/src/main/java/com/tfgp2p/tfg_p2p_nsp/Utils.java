@@ -38,10 +38,17 @@ public class Utils {
 	public static final byte METADATA_SEND_1 = 5;
 	/**
 	 * Cuando el servidor recibe una petición tiene que comprobar si procede de un amigo.
-	 * En caso afirmativo envía de vuelta OK_FRIEND. En caso negativo envía NO_FRIEND.
+	 * En caso afirmativo envía de vuelta HELLO_FRIEND. En caso negativo envía NO_FRIEND.
 	 */
-	public static final byte OK_FRIEND = 6;
+	public static final byte HELLO_FRIEND = 6;
 	public static final byte NO_FRIEND = 7;
+	/**
+	 * Identificador para la primera comunicación entre 2 dispositivos. Es relevante para la aplicación
+	 * en el servidor, que debe saber que se trata del inicio de una comunicación y no una petición.
+	 * El segundo dispositivo responderá con HELLO_FRIEND o bien NO_FRIEND.
+	 */
+	//TODO: Quitar la comprobación de si es un amigo tras hacer una petición y ponerla tras el saludo.
+	public static final byte HELLO = 8;
 	/**
 	 * Identificador utilizado cuando un dispositivo inicia la app y se conecta al servidor.
 	 */
