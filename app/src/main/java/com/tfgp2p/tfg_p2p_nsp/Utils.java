@@ -43,11 +43,11 @@ public class Utils {
 	public static final byte HELLO_FRIEND = 6;
 	public static final byte NO_FRIEND = 7;
 	/**
-	 * Identificador para la primera comunicación entre 2 dispositivos. Es relevante para la aplicación
-	 * en el servidor, que debe saber que se trata del inicio de una comunicación y no una petición.
+	 * Identificador para la primera comunicación entre 2 dispositivos, también llamado PAQUETE DE SALUDO.
+	 * Es relevante para la aplicación en el servidor, que debe saber que se trata del inicio de una
+	 * comunicación y no una petición.
 	 * El segundo dispositivo responderá con HELLO_FRIEND o bien NO_FRIEND.
 	 */
-	//TODO: Quitar la comprobación de si es un amigo tras hacer una petición y ponerla tras el saludo.
 	public static final byte HELLO = 8;
 	/**
 	 * Identificador utilizado cuando un dispositivo inicia la app y se conecta al servidor.

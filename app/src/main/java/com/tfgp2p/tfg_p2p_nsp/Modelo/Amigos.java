@@ -16,6 +16,7 @@ public class Amigos {
 	// TODO: Implementar la carga de amigos.
 
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
+	// TODO: Quitar dirección de los amigos y poner alguna clave aleatoria.
 	private HashMap<String, InetSocketAddress> friendsMap;
 
 	private static Amigos amigos = null;

@@ -69,15 +69,22 @@ public class Cliente {
 			//////// BORRAR ENVÍO MANUAL DE PETICIÓN DE FICHERO //////////////////////////////
 			// Yo tb me llamo Manolito:
 			try {
-				byte[] nameLen = new byte[] {(byte) name.length()};
-				byte[] nameBytes = name.getBytes();
+				byte[] friendNameBytes = "Manolito".getBytes();
+				byte[] friendNameLen = {(byte) friendNameBytes.length};
+				//byte[] nameLen = new byte[] {(byte) name.length()};
+				//byte[] nameBytes = name.getBytes();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 // TODO: Como ahora hay que pasar por el servidor, en el paquete hay que meter quién es el destino, al menos en el primer paquete.
 // TODO: Puedo guardar los usuarios de la conexión en la clase Connection del programa servidor.
-				// Datos para la primera comunicación: "HOLA, mi nombre es PEPE y tiene esta LONGITUD".
+				/* Datos para la primera comunicación:
+				 * "HOLA, quiero hablar con MANOLITO cuyo nombre tiene esta otra LONGITUD".
+				 */
+				// TODO: Faltaría enviar tb la clave del amigo.
 				baos.write(HELLO);
-				baos.write(nameLen);
-				baos.write(nameBytes);
+				//baos.write(nameLen);
+				//baos.write(nameBytes);
+				baos.write(friendNameLen);
+				baos.write(friendNameBytes);
 				byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, friendAddr);
 				socket.send(p);
@@ -96,7 +103,7 @@ public class Cliente {
 					requestFile(fileName, name);
 					receiveFile(fileName);
 				}
-				// Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
+				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
 				else if (resp[0] == NO_FRIEND) {}
 			}
 			catch (IOException e) {

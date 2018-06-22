@@ -271,7 +271,7 @@ public class Servidor {
 				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
 				 * de fichero si es eso lo que solicita.
 				 */
-				byte[] ok = {OK_FRIEND};
+				byte[] ok = {HELLO_FRIEND};
 				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), listenPort);
 				listenSocket.send(resp);
 
