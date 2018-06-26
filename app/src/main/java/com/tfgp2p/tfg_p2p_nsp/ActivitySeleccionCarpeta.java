@@ -1,6 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -147,6 +148,9 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
         if(itemSelected != null){
 
             ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, itemSelected.getPath());
+            ConfigProperties.saveProperties(getApplicationContext());
+
+            ConfigProperties.loadConfiguration(getApplicationContext());
 
             try {
                 GestorSistemaFicheros.getInstance().fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
@@ -155,12 +159,6 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
             }
             GestorSistemaFicheros.reloadCompartiendoCarpetaData();
 
-            // Rellena con el nuevo contenido
-            for (Fichero item: dir) {
-                if(item.getTipoFichero() != TipoFichero.FOLD) {
-                    System.out.println(item.getNombre());
-                }
-            }
             volverAMenu();
         }
     }

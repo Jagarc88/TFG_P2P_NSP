@@ -54,6 +54,6 @@
         android:layout_height="1dp"
         android:layout_weight="1"
         android:background="@android:color/holo_blue_light"
-        android:orientation="horizontal">
+        android:orientation="vertical">
     </LinearLayout>
 </LinearLayout>

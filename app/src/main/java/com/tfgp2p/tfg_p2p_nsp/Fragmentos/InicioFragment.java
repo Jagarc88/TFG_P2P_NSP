@@ -39,10 +39,12 @@ public class InicioFragment extends FragmentTab {
         listaPestanas.add(pestanaFragmentTop);
 
         FragmentManager fragMan = getFragmentManager();
-        FragmentTransaction fragTransaction = fragMan.beginTransaction();
-
-        fragTransaction.replace(pestanaLayout.getId(), pestanaFragmentTop, "fragment");
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment");
+        FragmentTransaction fragTransaction;
+        fragTransaction = fragMan.beginTransaction();
+        fragTransaction.replace(pestanaLayout.getId(), pestanaFragmentTop, null);
+        fragTransaction.commit();
+        fragTransaction = fragMan.beginTransaction();
+        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, null);
         fragTransaction.commit();
 
         return viewInicio;

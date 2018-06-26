@@ -2,17 +2,16 @@ package com.tfgp2p.tfg_p2p_nsp.Modelo;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.app.Application;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  *
@@ -28,34 +27,25 @@ public class ConfigProperties {
 
     public static void loadConfiguration(Context context){
 
-        Properties prop = new Properties();
-        InputStream input = null;
+        Properties properties = new Properties();
+        AssetManager assetManager = context.getAssets();
 
-//        try {
+        try {
 
-            AssetManager assetManager = context.getAssets();
+            InputStream inputStream = assetManager.open("config");
 
-//            InputStream inputStream = assetManager.open("com/tfgp2p/tfg_p2p_nsp/Modelo/config/config.properties");
+            properties.load(inputStream);
 
-//            prop.load(inputStream);
+            System.out.println("ASDASDASDASD ------ "+properties.getProperty(PROP_FILES_FOLDER));
 
             // Get the property value and save it
-            //configData.put(PROP_FILES_FOLDER,prop.getProperty(PROP_FILES_FOLDER));
+            configData.put(PROP_FILES_FOLDER,properties.getProperty(PROP_FILES_FOLDER));
 
             isLoaded = true;
-
- /*       } catch (IOException ex) {
+            inputStream.close();
+        } catch (IOException ex) {
             ex.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
-*/
     }
 
     /**
@@ -79,28 +69,27 @@ public class ConfigProperties {
     /**
      * Guarda en disco los nuevos valores dados al fichero de configuracion
      */
-    public static void savePropertiesOnharddrive(){
-        Properties prop = new Properties();
-        OutputStream output = null;
+    public static void saveProperties(Context context){
+        FileOutputStream output = null;
+
+        Properties properties = new Properties();
+        AssetManager assetManager = context.getAssets();
 
         try {
-            output = new FileOutputStream("config/config.properties");
+//            output = assetManager.openFd("config").createOutputStream();
+            output = context.openFileOutput("config.properties",
+                    MODE_PRIVATE);
 
+            output.write(5);
             // Establecemos todas las propiedades
-            prop.setProperty(PROP_FILES_FOLDER, configData.get(PROP_FILES_FOLDER));
+            properties.setProperty(PROP_FILES_FOLDER, /*configData.get(PROP_FILES_FOLDER)*/"ASDASDASDASDASD");
 
-            // save properties to project root folder
-            prop.store(output, null);
-        } catch (IOException io) {
+            // Save properties to project root folder
+            properties.store(output, null);
+            output.flush();
+            output.close();
+       } catch (IOException io) {
             io.printStackTrace();
-        } finally {
-            if (output != null) {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }

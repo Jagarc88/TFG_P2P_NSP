@@ -48,8 +48,9 @@ public class FicherosFragment extends FragmentTab {
 
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
-
         fragTransaction.replace(pestanaLayout.getId(), pestanaFragmentTop, "fragment_top");
+        fragTransaction.commit();
+        fragTransaction = fragMan.beginTransaction();
         fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment_bottom");
         fragTransaction.commit();
 
@@ -59,9 +60,5 @@ public class FicherosFragment extends FragmentTab {
     }
 
     @Override
-    public void establecerContenido() {
-
-
-
-    }
+    public void establecerContenido() {}
 }
