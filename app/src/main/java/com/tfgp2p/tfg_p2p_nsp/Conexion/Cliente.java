@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -31,6 +32,7 @@ public class Cliente {
 	private Amigos amigos;
 
 	private DatagramSocket socket;
+	private DatagramSocket socket_to_friend;
 
 	private static int ppIndex = 0;
 
@@ -41,35 +43,41 @@ public class Cliente {
 
 	public static Cliente getInstance(){
 		if (client == null)
-			client = new Cliente(Servidor.possiblePorts[ppIndex]);
+			//client = new Cliente(Servidor.possiblePorts[ppIndex]);
+			client = new Cliente();
 		return client;
 	}
 
 
 	// TODO: Limpiar código del constructor que no debe estar.
-	private Cliente(int listenPort){
+	//private Cliente(int listenPort){
+	private Cliente(){
 		try {
 			//this.friendsSockets = new ArrayList<>(10);
 			//this.friends = new HashMap<>(10);
 			this.amigos = Amigos.getInstance();
-			this.socket = new DatagramSocket(listenPort);
+			//this.socket = new DatagramSocket(listenPort);
+			this.socket = new DatagramSocket();
+			this.socket_to_friend = new DatagramSocket();
 
 			//////// Prueba de la conexión al móvil servidor:
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
-			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
-			this.amigos.addFriend("Manolito", sa);
+			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
+			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), socket.getPort());
+			String friendName = "Manolito";
+			this.amigos.addFriend(friendName, sa);
 
-			//String fileName = "serie";ilffuldlud
+			//String fileName = "serie";
 			String fileName = "5megas.pdf";
 			//String fileName = "de_julio.txt";
+			// Yo tb me llamo Manolito:
 			String name = "Manolito";
 			InetSocketAddress friendAddr = amigos.getFriendAddr(name);
 			//////////////////////////////////////////////////////////////////////////////////
 			//////// BORRAR ENVÍO MANUAL DE PETICIÓN DE FICHERO //////////////////////////////
-			// Yo tb me llamo Manolito:
 			try {
-				byte[] friendNameBytes = "Manolito".getBytes();
+				byte[] friendNameBytes = friendName.getBytes();
 				byte[] friendNameLen = {(byte) friendNameBytes.length};
 				//byte[] nameLen = new byte[] {(byte) name.length()};
 				//byte[] nameBytes = name.getBytes();
@@ -96,6 +104,29 @@ public class Cliente {
 
 			// TODO: La siguiente comprobación debe ir en el sendRequest(). Ya lo meteré cuando organice el envío de todo tipo de peticiones.
 			try {
+				// Recepción de la dirección y puerto de la máquina destino.
+				// Tamaño del buffer: String de la IP y 4 bytes del puerto (int).
+				//byte[] friendInfo = new byte[32];
+				byte[] friendInfo = new byte[8];
+				DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
+				socket.receive(friendInfoPacket);
+				//byte IP_Size = friendInfo[0];
+				//String friendAddrString = new String(friendInfo).substring(1, 1+IP_Size);
+				//InetAddress friendAddr = InetAddress.getByAddress();
+				byte[] IParray = new byte[4];
+				System.arraycopy(friendInfo, 0, IParray, 0, 4);
+				InetAddress friendIP = InetAddress.getByAddress(IParray);
+
+				byte[] portArray = new byte[4];
+				//System.arraycopy(friendInfo, 2+IP_Size, portArray, 0, 4);
+				System.arraycopy(friendInfo, 4, portArray, 0, 4);
+				int friendPort = Utils.byteArrayToInt(portArray);
+				socket_to_friend.connect(friendIP, friendPort);
+				// TODO: falta guardar la dirección y puerto del destino en variables de clase y probarlo.
+				// TODO: falta implementar esto mismo en la parte servidora pero con la info del cliente.
+
+
+				///////////////////////////////////////////////////////////
 				byte[] resp = new byte[1];
 				DatagramPacket pac = new DatagramPacket(resp, resp.length);
 				socket.receive(pac);
@@ -104,20 +135,23 @@ public class Cliente {
 					receiveFile(fileName);
 				}
 				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
-				else if (resp[0] == NO_FRIEND) {}
+				else if (resp[0] == NO_FRIEND) {
+					throw new AlertException(friendName + " no es tu amigo.");
+				}
 			}
 			catch (IOException e) {
 				e.printStackTrace();
 			}
-
-
 		}
 		catch (SocketException e){
 			e.printStackTrace();
 		}
 		catch (IllegalArgumentException e) {
 			if (ppIndex < 4)
-				new Cliente(Servidor.possiblePorts[++ppIndex]);
+				//new Cliente(Servidor.possiblePorts[++ppIndex]);
+				// TODO: Seguramente no haga falta usar puertos predeterminados por el programador. Debería bastar con el puerto
+				// TODO: elegido al azar al crear el socket con el constructor del socket sin argumentos.
+				new Cliente();
 			else
 				e.printStackTrace();
 		}
