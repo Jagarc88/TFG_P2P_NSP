@@ -31,7 +31,7 @@ public class Cliente {
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
 	private Amigos amigos;
 
-	private DatagramSocket socket;
+	private DatagramSocket socket_to_server;
 	private DatagramSocket socket_to_friend;
 
 	private static int ppIndex = 0;
@@ -57,14 +57,14 @@ public class Cliente {
 			//this.friends = new HashMap<>(10);
 			this.amigos = Amigos.getInstance();
 			//this.socket = new DatagramSocket(listenPort);
-			this.socket = new DatagramSocket();
+			this.socket_to_server = new DatagramSocket();
 			this.socket_to_friend = new DatagramSocket();
 
 			//////// Prueba de la conexión al móvil servidor:
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
 			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
-			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), socket.getPort());
+			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), socket_to_server.getPort());
 			String friendName = "Manolito";
 			this.amigos.addFriend(friendName, sa);
 
@@ -95,41 +95,37 @@ public class Cliente {
 				baos.write(friendNameBytes);
 				byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, friendAddr);
-				socket.send(p);
+				socket_to_server.send(p);
 			}
 			catch (IOException e){
 				e.printStackTrace();
 			}
 			///////////////////////////////////////////////
 
-			// TODO: La siguiente comprobación debe ir en el sendRequest(). Ya lo meteré cuando organice el envío de todo tipo de peticiones.
+			// TODO: La petición debe ir en el sendRequest(). Ya lo meteré cuando organice el envío de todo tipo de peticiones.
 			try {
-				// Recepción de la dirección y puerto de la máquina destino.
-				// Tamaño del buffer: String de la IP y 4 bytes del puerto (int).
-				//byte[] friendInfo = new byte[32];
-				byte[] friendInfo = new byte[8];
-				DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-				socket.receive(friendInfoPacket);
-				//byte IP_Size = friendInfo[0];
-				//String friendAddrString = new String(friendInfo).substring(1, 1+IP_Size);
-				//InetAddress friendAddr = InetAddress.getByAddress();
-				byte[] IParray = new byte[4];
-				System.arraycopy(friendInfo, 0, IParray, 0, 4);
-				InetAddress friendIP = InetAddress.getByAddress(IParray);
-
-				byte[] portArray = new byte[4];
-				//System.arraycopy(friendInfo, 2+IP_Size, portArray, 0, 4);
-				System.arraycopy(friendInfo, 4, portArray, 0, 4);
-				int friendPort = Utils.byteArrayToInt(portArray);
-				socket_to_friend.connect(friendIP, friendPort);
-				// TODO: falta guardar la dirección y puerto del destino en variables de clase y probarlo.
-				// TODO: falta implementar esto mismo en la parte servidora pero con la info del cliente.
-
+				// Este método se bloquea hasta que recibe la dirección y el puerto de la máquina destino.
+				connect_to_friend();
 
 				///////////////////////////////////////////////////////////
+				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
+				byte[] myName = Amigos.getMyName().getBytes();
+				byte[] myNameLen = {(byte) myName.length};
+				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
+				nameBAOS.write(myNameLen);
+				nameBAOS.write(myName);
+				byte[] buff = nameBAOS.toByteArray();
+
+				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
+						socket_to_friend.getInetAddress(), socket_to_friend.getPort());
+				socket_to_friend.send(hey_its_me);
+
+
 				byte[] resp = new byte[1];
 				DatagramPacket pac = new DatagramPacket(resp, resp.length);
-				socket.receive(pac);
+				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
+				//socket.receive(pac);
+				socket_to_friend.receive(pac);
 				if (resp[0] == HELLO_FRIEND) {
 					requestFile(fileName, name);
 					receiveFile(fileName);
@@ -163,6 +159,34 @@ public class Cliente {
 		}
 
 
+	}
+
+
+	/**
+	 * Conectar al amigo. Sólo se debe llamar a este método cuando se espera que el servidor
+	 * envíe a este dispositivo la IP y el puerto del amigo.
+	 * Con la llamada a connect nos aseguramos de que cuando creamos el paquete
+	 * con los datos lo enviamos al destino correcto. Si la dirección o el puerto
+	 * puesto en la creación del paquete es distinto a los asignados al socket
+	 * con la llamada a connect, saltará una IllegalArgumentException.
+	 *
+	 * @throws IOException
+	 */
+	private void connect_to_friend() throws IOException {
+		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
+		byte[] friendInfo = new byte[8];
+		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
+		socket_to_server.receive(friendInfoPacket);
+
+		byte[] IParray = new byte[4];
+		System.arraycopy(friendInfo, 0, IParray, 0, 4);
+		InetAddress friendIP = InetAddress.getByAddress(IParray);
+
+		byte[] portArray = new byte[4];
+		System.arraycopy(friendInfo, 4, portArray, 0, 4);
+		int friendPort = Utils.byteArrayToInt(portArray);
+
+		socket_to_friend.connect(friendIP, friendPort);
 	}
 
 
@@ -211,7 +235,7 @@ public class Cliente {
 			byte[] completeBuffer = s.toByteArray();
 
 			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
-			socket.send(request);
+			socket_to_friend.send(request);
 		}
 		catch (AlertException e){
 			e.showAlert();
@@ -234,7 +258,7 @@ public class Cliente {
 			DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length);
 			///////////////////////////////////////////////////////////////////////////////////
 
-			socket.receive(metadataPacket);
+			socket_to_friend.receive(metadataPacket);
 
 			byte[] aux = new byte[4];
 			for (int i = 0; i < 4; i++)
@@ -243,7 +267,7 @@ public class Cliente {
 			byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
 			DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
-			socket.receive(dataPacket);
+			socket_to_friend.receive(dataPacket);
 
 			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName);
 			boolean exit = false;
@@ -262,7 +286,7 @@ public class Cliente {
 				if (dataPacket.getLength() < MAX_BUFF_SIZE)
 					exit = true;
 				else
-					socket.receive(dataPacket);
+					socket_to_friend.receive(dataPacket);
 			}
 
 			fos.close();

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayDeque;
@@ -41,9 +42,8 @@ public class Servidor {
 
 	//private ServerSocket listenSocket;
 	private DatagramSocket listenSocket;
-
-	// TODO: Si la info del clienteActivo se comparte entre hilos mejor usar sólo la cola, supongo.
-	private DatagramSocket activeClientSocket;
+	// TODO: Pensar si se debe usar un cerrojo para esta variable o si es suficiente con el cerrojo de la cola:
+	private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
 	private Queue<Pair<String, byte[]>> requestQueue;
@@ -66,13 +66,8 @@ public class Servidor {
 	 */
 	//private HashMap<String, InetSocketAddress> activeClients;
 
-	// TODO: Reubicar el atributo que guarda el nombre del dueño del dispositivo en una clase mejor:
-	final String owner = "Manolito";
-
-	public static final InetSocketAddress serverInfo;
-
-
-
+	// TODO: Debería ser final, pero en android no me permite dejarla en blanco e inicializarla en el constructor por ejemplo...
+	private static InetSocketAddress serverInfo;
 
 
 	/**
@@ -82,28 +77,30 @@ public class Servidor {
 	 */
 	public static Servidor getInstance(){
 		if (server == null)
-			server = new Servidor(possiblePorts[ppIndex]);
+			//server = new Servidor(possiblePorts[ppIndex]);
+			server = new Servidor();
 		return server;
 	}
 
 
 
-	private Servidor(int port) {
+	//private Servidor(int port) {
+	private Servidor(){
 		try {
-			this.listenSocket = new DatagramSocket(port);
+			// TODO: poner la direccion del servidor.
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), 61516);
+			//this.listenSocket = new DatagramSocket(port);
+			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
 
-			this.activeClientSocket = null;
+			this.socket_to_client = null;
 			this.requestQueue = new ArrayDeque<>();
 			//this.activeClients = new HashMap<>(10);
 
-			// TODO: DESCOMENTAR TRAS IMPLEMENTAR EL SERVIDOR:
-			//loginServer();
-			// TODO: poner IP al hacer las pruebas.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), 61516);
+			loginServer();
 
 			// La parte servidor lanza dos hilos: Uno que se queda a la escucha y otro que atiende peticiones encoladas.
 			new Thread(new Runnable() {
@@ -121,7 +118,8 @@ public class Servidor {
 
 		} catch (IOException e) {
 			if (ppIndex < 4)
-				new Servidor(possiblePorts[++ppIndex]);
+				//new Servidor(possiblePorts[++ppIndex]);
+				new Servidor();
 			else
 				e.printStackTrace();
 		}
@@ -129,16 +127,24 @@ public class Servidor {
 
 
 	/**
-	 * Implementa la conexión al servidor nada más abrir la aplicación para que
-	 * este dispositivo quede registrado en el servidor y a disposición de las
-	 * solicitudes de los amigos.
+	 * Implementa la conexión al servidor nada más abrir la aplicación para que este dispositivo
+	 * quede registrado en el servidor y a disposición de las solicitudes de los amigos.
+	 *
+	 * La información enviada es SERVER_CONNECT, el tamaño del nombre del cliente y el nombre del cliente.
 	 */
 	private void loginServer(){
-		byte[] connectionBuffer = new byte[1+owner.length()];
+		String myName = Amigos.getMyName();
+		byte[] connectionBuffer = new byte[2+myName.length()];
 		connectionBuffer[0] = SERVER_CONNECT;
-		System.arraycopy(owner.getBytes(), 0, connectionBuffer, 1, owner.length());
-		DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length, serverAddr, serverPort);
-
+		connectionBuffer[1] = (byte) myName.length();
+		System.arraycopy(myName.getBytes(), 0, connectionBuffer, 2, myName.length());
+		DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+				serverInfo.getAddress(), serverInfo.getPort());
+		try {
+			listenSocket.send(p);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 
@@ -222,7 +228,7 @@ public class Servidor {
 		// TODO: implementar envío de peticiones desde la parte Cliente.
 		// TODO: Si un dispositivo hace una petición y no es amigo, hay que rechazar la petición.
 		/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch ////////////////
-		try{
+		/*try{
 			Amigos amigos = Amigos.getInstance();
 			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
 			amigos.addFriend("Manolito", addr);
@@ -231,13 +237,15 @@ public class Servidor {
 			e.printStackTrace();
 		} catch (AlertException e){
 			e.showAlert();
-		}
+		}*/
 		////////////////////////////////////////////////////////////
 
-		byte[] requestorFriendName = new byte[32];
-		byte[] request = new byte[64];
-		request[0] = -1;
 		try{
+			connect_to_friend();
+
+			byte[] requestorFriendName = new byte[32];
+			byte[] request = new byte[64];
+			request[0] = -1;
 			/*
 			Hacer las peticiones de archivos en 2 pasos:
 			1 - Soy Manolito
@@ -249,7 +257,8 @@ public class Servidor {
 			 * y después el nombre.
 			 */
 			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
-			listenSocket.receive(reqFriendPacket);
+			//listenSocket.receive(reqFriendPacket);
+			socket_to_client.receive(reqFriendPacket);
 			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 			byte nameSize = requestorFriendName[0];
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
@@ -259,8 +268,10 @@ public class Servidor {
 			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
 				request[0] = -1;
 				byte[] no = {NO_FRIEND};
-				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), listenPort);
-				listenSocket.send(resp);
+				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
+				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+				//listenSocket.send(resp);
+				socket_to_client.send(resp);
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.");
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos y realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
@@ -272,11 +283,12 @@ public class Servidor {
 				 * de fichero si es eso lo que solicita.
 				 */
 				byte[] ok = {HELLO_FRIEND};
-				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), listenPort);
-				listenSocket.send(resp);
+				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
+				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+				socket_to_client.send(resp);
 
 				DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-				listenSocket.receive(reqPacket);
+				socket_to_client.receive(reqPacket);
 
 				if (isValidRequest(request[0])){
 					// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
@@ -302,6 +314,35 @@ public class Servidor {
 			e.printStackTrace();
 		}
 
+	}
+
+
+
+	/**
+	 * Conectar al amigo. Sólo se debe llamar a este método cuando se espera que el servidor
+	 * envíe a este dispositivo la IP y el puerto del amigo.
+	 * Con la llamada a connect nos aseguramos de que cuando creamos el paquete
+	 * con los datos lo enviamos al destino correcto. Si la dirección o el puerto
+	 * puesto en la creación del paquete es distinto a los asignados al socket
+	 * con la llamada a connect, saltará una IllegalArgumentException.
+	 *
+	 * @throws IOException
+	 */
+	private void connect_to_friend() throws IOException {
+		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
+		byte[] friendInfo = new byte[8];
+		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
+		listenSocket.receive(friendInfoPacket);
+
+		byte[] IParray = new byte[4];
+		System.arraycopy(friendInfo, 0, IParray, 0, 4);
+		InetAddress friendIP = InetAddress.getByAddress(IParray);
+
+		byte[] portArray = new byte[4];
+		System.arraycopy(friendInfo, 4, portArray, 0, 4);
+		int friendPort = Utils.byteArrayToInt(portArray);
+
+		socket_to_client.connect(friendIP, friendPort);
 	}
 
 
@@ -441,6 +482,12 @@ public class Servidor {
 		} catch (ArrayIndexOutOfBoundsException e){
 			e.printStackTrace();
 		}
+	}
+
+
+
+	public static InetSocketAddress getServerInfo(){
+		return serverInfo;
 	}
 
 

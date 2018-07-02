@@ -11,6 +11,8 @@ import java.util.HashMap;
  */
 public class Amigos {
 
+	private static String myName;
+
 	// TODO: ¿Cuáles son los pasos para añadir un amigo?
 	// TODO: Implementar el guardado de amigos en un fichero o base de datos local.
 	// TODO: Implementar la carga de amigos.
@@ -31,6 +33,12 @@ public class Amigos {
 
 
 	private Amigos(){
+		/* De momento ponemos nuestro nombre desde el código. Habría que poner una opción en la
+		 * configuración de la aplicación. Tb deberíamos hacer que el usuario introduzca su nombre
+		 * la primera vez que ejecuta el programa.
+		 */
+		myName = "Pedro";
+
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();
 	}
@@ -89,5 +97,17 @@ public class Amigos {
 		InetAddress localAddr = friendsMap.get(name).getAddress();
 		return (localAddr != null) && (localAddr.equals(addr));
 	}
+
+
+	public static String getMyName(){
+		return myName;
+	}
+
+
+	public static void setMyName(String newname){
+		myName = newname;
+	}
+
+
 
 }
