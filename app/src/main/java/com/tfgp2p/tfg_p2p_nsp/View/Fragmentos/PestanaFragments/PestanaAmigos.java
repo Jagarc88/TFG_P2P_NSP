@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments;
 
 import android.view.View;
 

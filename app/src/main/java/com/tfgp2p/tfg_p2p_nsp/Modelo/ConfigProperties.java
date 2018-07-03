@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.app.Application;
 
+import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DHConfiguration;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DatabaseHelper;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,26 +28,18 @@ public class ConfigProperties {
 
     private static Map<String,String> configData = new HashMap<>();
 
-    public static void loadConfiguration(Context context){
-
-        Properties properties = new Properties();
-        AssetManager assetManager = context.getAssets();
-
-        try {
-
-            InputStream inputStream = assetManager.open("config");
-
-            properties.load(inputStream);
-
-            System.out.println("ASDASDASDASD ------ "+properties.getProperty(PROP_FILES_FOLDER));
-
-            // Get the property value and save it
-            configData.put(PROP_FILES_FOLDER,properties.getProperty(PROP_FILES_FOLDER));
-
-            isLoaded = true;
-            inputStream.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
+    /**
+     * Carga la base de datos, devuelve el numero de elementos cargados
+     * @param context
+     * @return
+     */
+    public static int loadConfig(Context context){
+        Map<String,Object> mapLoaded=DAO.databaseConfiguration(context).getDataByID(PROP_FILES_FOLDER);
+        if(mapLoaded!=null) {
+            configData.put(PROP_FILES_FOLDER, (String) mapLoaded.get(DHConfiguration.COL_VALUE));
+            return mapLoaded.size();
+        }else{
+            return 0;
         }
     }
 
@@ -70,26 +65,10 @@ public class ConfigProperties {
      * Guarda en disco los nuevos valores dados al fichero de configuracion
      */
     public static void saveProperties(Context context){
-        FileOutputStream output = null;
-
-        Properties properties = new Properties();
-        AssetManager assetManager = context.getAssets();
-
-        try {
-//            output = assetManager.openFd("config").createOutputStream();
-            output = context.openFileOutput("config.properties",
-                    MODE_PRIVATE);
-
-            output.write(5);
-            // Establecemos todas las propiedades
-            properties.setProperty(PROP_FILES_FOLDER, /*configData.get(PROP_FILES_FOLDER)*/"ASDASDASDASDASD");
-
-            // Save properties to project root folder
-            properties.store(output, null);
-            output.flush();
-            output.close();
-       } catch (IOException io) {
-            io.printStackTrace();
-        }
+        // Establecemos todas las propiedades
+        DAO.databaseConfiguration(context).updateData(
+                new String[]{DHConfiguration.COL_ID_PROPERTY_NAME,DHConfiguration.COL_VALUE},
+                new Object[]{PROP_FILES_FOLDER,configData.get(PROP_FILES_FOLDER)},
+                new int[]{DatabaseHelper.FIELD_TYPE_STRING,DatabaseHelper.FIELD_TYPE_STRING});
     }
 }

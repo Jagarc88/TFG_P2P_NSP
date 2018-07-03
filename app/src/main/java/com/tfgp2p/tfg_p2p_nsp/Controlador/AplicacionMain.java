@@ -3,6 +3,7 @@ package com.tfgp2p.tfg_p2p_nsp.Controlador;
 import android.app.Application;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.DAO;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 
@@ -23,7 +24,12 @@ public class AplicacionMain extends Application {
     public void onCreate() {
         super.onCreate();
 
-        ConfigProperties.loadConfiguration(this);
+
+        if(ConfigProperties.loadConfig(this)==0) {
+            //TODO Crear un metodo para cargar un directorio creado por la aplicacion
+            ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, "/sdcard/");
+            ConfigProperties.saveProperties(getApplicationContext());
+        }
         gestorSistemaFicheros = GestorSistemaFicheros.getInstance();
 
         try {
@@ -34,7 +40,7 @@ public class AplicacionMain extends Application {
 
         //ANYADIMOS LOS FICHEROS INCOMPLETOS DE PRUEBA
         List<Fichero> ficheroList = new ArrayList<>();
-        for(int i=0;i<5;i++){
+        for(int i=0;i<=5;i++){
             Fichero fichero = new Fichero("INCOMPLETO_"+i+".tfg",ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
             fichero.setIncompleto(true);
             fichero.setTamanyoTotal(5);
@@ -42,5 +48,6 @@ public class AplicacionMain extends Application {
             ficheroList.add(fichero);
         }
         GestorSistemaFicheros.addFilesDir(ficheroList);
+
     }
 }

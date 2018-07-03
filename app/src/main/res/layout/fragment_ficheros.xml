@@ -3,7 +3,7 @@
     android:id="@+id/layout_pestana"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.tfgp2p.tfg_p2p_nsp.Fragmentos.FicherosFragment"
+    tools:context=".View.Fragmentos.FicherosFragment"
     android:orientation="vertical">
 
 </LinearLayout>

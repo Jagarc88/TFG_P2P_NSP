@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -8,8 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaAmigos;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaAmigos;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaFragment;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**

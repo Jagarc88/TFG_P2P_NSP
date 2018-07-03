@@ -1,17 +1,15 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentElements.pestanaDescarga;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentElements.pestanaDescarga;
 
-import android.app.Fragment;
-import android.os.Bundle;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
-public class FragmentElementFicheroDescarga extends Fragment {
+public class LayoutElementFicheroDescarga extends android.support.constraint.ConstraintLayout {
 
     private static Fichero ficheroCargado;
 
@@ -20,28 +18,35 @@ public class FragmentElementFicheroDescarga extends Fragment {
     private TextView text_descarga_nombrefichero;
     private ProgressBar progressBar_descarga;
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    private boolean isLoaded;
+    private View viewInicio;
+
+    public LayoutElementFicheroDescarga(Context context) {
+        super(context);
+        isLoaded = false;
+        ficheroCargado = null;
+
         // Inflate the layout for this fragment
-        View viewInicio = inflater.inflate(R.layout.download_file_layout, container, false);
+        viewInicio = LayoutInflater.from(context).inflate(R.layout.download_file_layout, this, false);
+        this.addView(viewInicio);
 
         text_indicador_numerador = viewInicio.findViewById(R.id.text_indicador_numerador);
         text_indicador_denominador = viewInicio.findViewById(R.id.text_indicador_denominador);
         text_descarga_nombrefichero = viewInicio.findViewById(R.id.test_descarga_nombrefichero);
         progressBar_descarga = viewInicio.findViewById(R.id.progressBar_descarga);
 
+        isLoaded = true;
         loadData();
-
-        return viewInicio;
     }
 
     public void loadData(){
-        text_indicador_numerador.setText(Long.toString(ficheroCargado.getCantidadDescargada()));
-        text_indicador_denominador.setText(Long.toString(ficheroCargado.getTamanyoTotal()));
-        progressBar_descarga.setMax(100);
-        progressBar_descarga.setProgress(Math.round(ficheroCargado.getProcentageDescargado()));
-        text_descarga_nombrefichero.setText(ficheroCargado.getNombre());
+        if(isLoaded && ficheroCargado!=null) {
+            text_indicador_numerador.setText(Long.toString(ficheroCargado.getCantidadDescargada()));
+            text_indicador_denominador.setText(Long.toString(ficheroCargado.getTamanyoTotal()));
+            progressBar_descarga.setMax(100);
+            progressBar_descarga.setProgress(Math.round(ficheroCargado.getProcentageDescargado()));
+            text_descarga_nombrefichero.setText(ficheroCargado.getNombre());
+        }
     }
 
     public TextView getText_indicador_numerador() {

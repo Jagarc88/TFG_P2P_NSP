@@ -14,7 +14,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".View.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,7 +24,7 @@
         </activity>
 
         <activity
-            android:name=".ActivitySeleccionCarpeta"
+            android:name=".View.Activity.ActivitySeleccionCarpeta"
             android:label="Selecciona nueva carpeta"
             android:screenOrientation="portrait">
         </activity>

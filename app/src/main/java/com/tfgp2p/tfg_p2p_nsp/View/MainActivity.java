@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp;
+package com.tfgp2p.tfg_p2p_nsp.View;
 
 import android.Manifest;
 import android.app.FragmentManager;
@@ -13,13 +13,9 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
-import com.tfgp2p.tfg_p2p_nsp.Gnutella.Cliente;
-import com.tfgp2p.tfg_p2p_nsp.Gnutella.Echoer;
-import com.tfgp2p.tfg_p2p_nsp.Gnutella.Servidor;
+import com.tfgp2p.tfg_p2p_nsp.View.Activity.ActivitySeleccionCarpeta;
+import com.tfgp2p.tfg_p2p_nsp.R;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
 
 public class MainActivity extends AppCompatActivity {
 
