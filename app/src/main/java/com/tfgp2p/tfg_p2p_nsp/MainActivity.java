@@ -13,9 +13,11 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import com.tfgp2p.tfg_p2p_nsp.Conexion.Servidor;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.Fragmentos.InicioFragment;
 import com.tfgp2p.tfg_p2p_nsp.Conexion.Cliente;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +27,10 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout tabbarAmigos;
     private LinearLayout tabbarFicheros;
     private LinearLayout tabbarConfiguracion;
+
+    private Servidor server;
+    private Cliente client;
+    private Amigos amigos;
 
     public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
@@ -56,8 +62,9 @@ public class MainActivity extends AppCompatActivity {
         */
         new Thread(new Runnable(){
             public void run(){
-                //Servidor.getInstance();
-				Cliente.getInstance();
+            	amigos = Amigos.getInstance();
+                server = Servidor.getInstance();
+				client = Cliente.getInstance();
 			}
 		}).start();
         ///////////////////////////////////////////////////////////////////////////////

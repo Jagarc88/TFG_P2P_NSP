@@ -37,7 +37,8 @@ public class Amigos {
 		 * configuración de la aplicación. Tb deberíamos hacer que el usuario introduzca su nombre
 		 * la primera vez que ejecuta el programa.
 		 */
-		myName = "Pedro";
+		//myName = "Pedro";
+		myName = "Manolito";
 
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();

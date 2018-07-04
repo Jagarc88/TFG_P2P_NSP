@@ -43,7 +43,7 @@ public class Utils {
 	public static final byte HELLO_FRIEND = 6;
 	public static final byte NO_FRIEND = 7;
 	/**
-	 * Identificador para la primera comunicación entre 2 dispositivos, también llamado PAQUETE DE SALUDO.
+	 * Identificador para la primera comunicación entre 2 dispositivos, se le puede llamar PAQUETE DE SALUDO.
 	 * Es relevante para la aplicación en el servidor, que debe saber que se trata del inicio de una
 	 * comunicación y no una petición.
 	 * El segundo dispositivo responderá con HELLO_FRIEND o bien NO_FRIEND.

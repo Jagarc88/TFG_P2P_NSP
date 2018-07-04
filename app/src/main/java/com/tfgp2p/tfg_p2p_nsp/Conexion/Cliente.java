@@ -64,16 +64,17 @@ public class Cliente {
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
 			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
-			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), socket_to_server.getPort());
+			// TODO: El puerto del amigo al que me conecto de momento está mal.
+			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName(""), 50000);
 			String friendName = "Manolito";
 			this.amigos.addFriend(friendName, sa);
 
 			//String fileName = "serie";
 			String fileName = "5megas.pdf";
 			//String fileName = "de_julio.txt";
-			// Yo tb me llamo Manolito:
-			String name = "Manolito";
-			InetSocketAddress friendAddr = amigos.getFriendAddr(name);
+
+			//String name = "Manolito";
+			//InetSocketAddress friendAddr = amigos.getFriendAddr(name);
 			//////////////////////////////////////////////////////////////////////////////////
 			//////// BORRAR ENVÍO MANUAL DE PETICIÓN DE FICHERO //////////////////////////////
 			try {
@@ -94,7 +95,7 @@ public class Cliente {
 				baos.write(friendNameLen);
 				baos.write(friendNameBytes);
 				byte[] nameBuff = baos.toByteArray();
-				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, friendAddr);
+				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
 				socket_to_server.send(p);
 			}
 			catch (IOException e){
@@ -127,7 +128,7 @@ public class Cliente {
 				//socket.receive(pac);
 				socket_to_friend.receive(pac);
 				if (resp[0] == HELLO_FRIEND) {
-					requestFile(fileName, name);
+					requestFile(fileName, friendName);
 					receiveFile(fileName);
 				}
 				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.

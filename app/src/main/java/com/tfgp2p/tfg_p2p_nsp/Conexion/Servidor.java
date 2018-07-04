@@ -14,7 +14,6 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -241,6 +240,7 @@ public class Servidor {
 		////////////////////////////////////////////////////////////
 
 		try{
+			// TODO: Para hacerlo mejor, recibir tb el nombre en el connect_to_friend y guardarlo en una variable privada.
 			connect_to_friend();
 
 			byte[] requestorFriendName = new byte[32];
