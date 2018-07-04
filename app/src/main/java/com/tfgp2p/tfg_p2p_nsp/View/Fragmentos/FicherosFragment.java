@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos;
 
 
 import android.app.FragmentManager;
@@ -7,15 +7,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaAmigos;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaCompartiendo;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaDescarga;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaCompartiendo;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaDescarga;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaFragment;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**
@@ -48,9 +44,10 @@ public class FicherosFragment extends FragmentTab {
 
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
-
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentTop, "fragment");
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment");
+        fragTransaction.replace(pestanaLayout.getId(), pestanaFragmentTop, "fragment_top");
+        fragTransaction.commit();
+        fragTransaction = fragMan.beginTransaction();
+        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment_bottom");
         fragTransaction.commit();
 
         establecerContenido();
@@ -59,9 +56,5 @@ public class FicherosFragment extends FragmentTab {
     }
 
     @Override
-    public void establecerContenido() {
-
-
-
-    }
+    public void establecerContenido() {}
 }

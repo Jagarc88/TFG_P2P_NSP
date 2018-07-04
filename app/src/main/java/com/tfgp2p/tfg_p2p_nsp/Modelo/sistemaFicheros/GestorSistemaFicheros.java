@@ -58,9 +58,18 @@ public class GestorSistemaFicheros {
     }
 
     public void fillContent(String Path) throws IOException {
-
         currentDir = new File(Path);
         fill(currentDir);
+    }
+
+    /**
+     * ESTA FUNCION SOLO SE USARA EN CASOS DE TEST
+     * @param anyadir
+     */
+    public static void addFilesDir(List<Fichero> anyadir){
+        if(dir != null){
+            dir.addAll(anyadir);
+        }
     }
 
     public static List<Fichero> getFiles(){
@@ -72,5 +81,20 @@ public class GestorSistemaFicheros {
         for (ICompartiendoDataCambio compart: listICompartiendoDataCambios) {
             compart.reloadCompartiendoCarpetaData();
         }
+    }
+
+    /**
+     * Devuelve una lista solo con los ficheros incompletos en la carpeta actual
+     * @return
+     */
+    public static List<Fichero> extraerIncompletos(){
+        List<Fichero> ficheroList = new ArrayList<>();
+
+        for (Fichero fichero: dir) {
+            if(fichero.isIncompleto()){
+                ficheroList.add(fichero);
+            }
+        }
+        return ficheroList;
     }
 }

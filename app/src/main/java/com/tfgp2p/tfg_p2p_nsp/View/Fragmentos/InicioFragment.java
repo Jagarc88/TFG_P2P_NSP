@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos;
 
 import android.app.FragmentTransaction;
 import android.os.Bundle;
@@ -6,12 +6,11 @@ import android.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaAmigos;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaDescarga;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaAmigos;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaDescarga;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 public class InicioFragment extends FragmentTab {
@@ -39,10 +38,12 @@ public class InicioFragment extends FragmentTab {
         listaPestanas.add(pestanaFragmentTop);
 
         FragmentManager fragMan = getFragmentManager();
-        FragmentTransaction fragTransaction = fragMan.beginTransaction();
-
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentTop, "fragment");
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, "fragment");
+        FragmentTransaction fragTransaction;
+        fragTransaction = fragMan.beginTransaction();
+        fragTransaction.replace(pestanaLayout.getId(), pestanaFragmentTop, null);
+        fragTransaction.commit();
+        fragTransaction = fragMan.beginTransaction();
+        fragTransaction.add(pestanaLayout.getId(), pestanaFragmentBottom, null);
         fragTransaction.commit();
 
         return viewInicio;

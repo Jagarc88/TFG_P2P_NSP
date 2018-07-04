@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layout_pestana"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.Fragmentos.InicioFragment"
+    tools:context=".View.Fragmentos.FicherosFragment"
     android:orientation="vertical">
 
 </LinearLayout>

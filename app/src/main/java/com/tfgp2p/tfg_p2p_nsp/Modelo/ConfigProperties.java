@@ -2,17 +2,19 @@ package com.tfgp2p.tfg_p2p_nsp.Modelo;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.app.Application;
 
-import java.io.File;
-import java.io.FileInputStream;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DHConfiguration;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DatabaseHelper;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  *
@@ -26,36 +28,19 @@ public class ConfigProperties {
 
     private static Map<String,String> configData = new HashMap<>();
 
-    public static void loadConfiguration(Context context){
-
-        Properties prop = new Properties();
-        InputStream input = null;
-
-//        try {
-
-            AssetManager assetManager = context.getAssets();
-
-//            InputStream inputStream = assetManager.open("com/tfgp2p/tfg_p2p_nsp/Modelo/config/config.properties");
-
-//            prop.load(inputStream);
-
-            // Get the property value and save it
-            //configData.put(PROP_FILES_FOLDER,prop.getProperty(PROP_FILES_FOLDER));
-
-            isLoaded = true;
-
- /*       } catch (IOException ex) {
-            ex.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+    /**
+     * Carga la base de datos, devuelve el numero de elementos cargados
+     * @param context
+     * @return
+     */
+    public static int loadConfig(Context context){
+        Map<String,Object> mapLoaded=DAO.databaseConfiguration(context).getDataByID(PROP_FILES_FOLDER);
+        if(mapLoaded!=null) {
+            configData.put(PROP_FILES_FOLDER, (String) mapLoaded.get(DHConfiguration.COL_VALUE));
+            return mapLoaded.size();
+        }else{
+            return 0;
         }
-*/
     }
 
     /**
@@ -79,28 +64,11 @@ public class ConfigProperties {
     /**
      * Guarda en disco los nuevos valores dados al fichero de configuracion
      */
-    public static void savePropertiesOnharddrive(){
-        Properties prop = new Properties();
-        OutputStream output = null;
-
-        try {
-            output = new FileOutputStream("config/config.properties");
-
-            // Establecemos todas las propiedades
-            prop.setProperty(PROP_FILES_FOLDER, configData.get(PROP_FILES_FOLDER));
-
-            // save properties to project root folder
-            prop.store(output, null);
-        } catch (IOException io) {
-            io.printStackTrace();
-        } finally {
-            if (output != null) {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    public static void saveProperties(Context context){
+        // Establecemos todas las propiedades
+        DAO.databaseConfiguration(context).updateData(
+                new String[]{DHConfiguration.COL_ID_PROPERTY_NAME,DHConfiguration.COL_VALUE},
+                new Object[]{PROP_FILES_FOLDER,configData.get(PROP_FILES_FOLDER)},
+                new int[]{DatabaseHelper.FIELD_TYPE_STRING,DatabaseHelper.FIELD_TYPE_STRING});
     }
 }

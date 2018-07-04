@@ -2,22 +2,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="61dp"
+    android:layout_height="36dp"
     android:layout_weight="1"
     android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/pestana_head"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="35dp"
         android:background="@drawable/background_pestana_head"
         android:orientation="horizontal">
 
         <ImageView
             android:layout_marginLeft="3dp"
             android:id="@+id/pestanahead_image_icon"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_expand_more_black_24dp" />
 

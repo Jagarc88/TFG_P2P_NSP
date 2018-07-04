@@ -9,7 +9,7 @@ import com.tfgp2p.tfg_p2p_nsp.R;
 public enum TipoFichero {
 
     // Solo estos dos por ahora, en el futuro habra mas
-    MP3, AVI, FOLD;
+    MP3, AVI, FOLD, DOWNLOADING;
 
     /**
      * Devuelve el tipo fichero apartir del nombre del fichero
@@ -32,6 +32,7 @@ public enum TipoFichero {
             switch (nombreDesglosado[nombreDesglosado.length-1]) {
                 case "mp3": tipoFichero = MP3; break;
                 case "avi": tipoFichero = AVI; break;
+                case "tfg": tipoFichero = DOWNLOADING; break;
                 default: tipoFichero = FOLD; break;
             }
         }

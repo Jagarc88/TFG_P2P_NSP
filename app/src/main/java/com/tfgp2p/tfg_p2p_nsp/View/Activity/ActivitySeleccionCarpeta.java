@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp;
+package com.tfgp2p.tfg_p2p_nsp.View.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,13 +8,13 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.tfgp2p.tfg_p2p_nsp.View.MainActivity;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.TipoFichero;
+import com.tfgp2p.tfg_p2p_nsp.R;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,7 +102,7 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
 
         Collections.sort(dir);
 
-        if(parent != null){
+        if(parent!=null && parent.listFiles()!=null && parent.listFiles().length>0){
             item =  new Fichero("/..",parent.getAbsolutePath());
 
             if(!dir.isEmpty()){
@@ -125,16 +125,22 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
         return pestanya;
     }
 
+    /**
+     * Cuando se pulsa un elemento de la lista de carpetas
+     * @param view
+     */
     public void seleccionarListaCarpetas(View view){
 
         String nameFileSelected;
 
         nameFileSelected = (String) ((TextView)view.findViewById(R.id.name_file)).getText();
 
-        itemSelected = mapViewItem.get(nameFileSelected);
+        Fichero selectedFile = mapViewItem.get(nameFileSelected);
 
-        if(itemSelected != null){
-            fillContent(itemSelected.getPath());
+        if(selectedFile != null){
+            // Rellena la lista
+            fillContent(selectedFile.getPath());
+            itemSelected = selectedFile;
         }
     }
 
@@ -147,20 +153,10 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
         if(itemSelected != null){
 
             ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, itemSelected.getPath());
+            ConfigProperties.saveProperties(getApplicationContext());
 
-            try {
-                GestorSistemaFicheros.getInstance().fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
-            }catch (IOException e){
-                e.printStackTrace();
-            }
             GestorSistemaFicheros.reloadCompartiendoCarpetaData();
 
-            // Rellena con el nuevo contenido
-            for (Fichero item: dir) {
-                if(item.getTipoFichero() != TipoFichero.FOLD) {
-                    System.out.println(item.getNombre());
-                }
-            }
             volverAMenu();
         }
     }
@@ -171,16 +167,6 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
      * @return
      */
     public Fichero getItemSelected() {
-
-        Fichero itemFileSelected = null;
-        String nameFileSelected;
-/*
-        if(selected != null){
-            nameFileSelected = (String) ((TextView)selected.findViewById(R.id.name_file)).getText();
-            itemFileSelected = mapViewItem.get(nameFileSelected);
-        }
-*/
-        return itemFileSelected;
-
+        return itemSelected;
     }
 }

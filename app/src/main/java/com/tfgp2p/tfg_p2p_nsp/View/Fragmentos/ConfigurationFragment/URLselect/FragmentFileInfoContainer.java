@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos.ConfigurationFragment.URLselect;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.ConfigurationFragment.URLselect;
 
 import android.app.Fragment;
 import android.os.Bundle;

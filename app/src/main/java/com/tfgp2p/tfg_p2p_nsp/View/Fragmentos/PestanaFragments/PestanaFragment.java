@@ -1,18 +1,16 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments;
 
 
 import android.os.Bundle;
 import android.app.Fragment;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.FragmentTab;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**
@@ -31,6 +29,8 @@ public abstract class PestanaFragment extends Fragment {
     protected LinearLayout mainLayout;
 
     protected FragmentTab fragmentTab;
+
+    protected boolean isExpandable = true;
 
     public PestanaFragment() {
         // Required empty public constructor
@@ -58,13 +58,16 @@ public abstract class PestanaFragment extends Fragment {
 
         rellenaVariables(viewPestana);
 
+        setExpandable(isExpandable);
+
         return viewPestana;
     }
 
     public void setExpandable(boolean expandable){
-        imageExpandir.setVisibility(
-                imageExpandir.getVisibility()==LinearLayout.GONE?
-                        LinearLayout.VISIBLE:LinearLayout.GONE);
+        if(imageExpandir != null) {
+            imageExpandir.setVisibility(expandable ? LinearLayout.VISIBLE : LinearLayout.GONE);
+        }
+        isExpandable = expandable;
     }
 
     public void extendButtomPressed(){
@@ -85,25 +88,26 @@ public abstract class PestanaFragment extends Fragment {
         int newArrowImage;
         LinearLayout.LayoutParams mainParams;
 
-        if(!colapsar){
-            estado = LinearLayout.VISIBLE;
-            newArrowImage = R.drawable.ic_expand_less_black_24dp;
-            mainParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1.0f);
+        if(isExpandable) {
+            if (!colapsar) {
+                estado = LinearLayout.VISIBLE;
+                newArrowImage = R.drawable.ic_expand_less_black_24dp;
+                mainParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1.0f);
+            } else {
+                estado = LinearLayout.GONE;
+                newArrowImage = R.drawable.ic_expand_more_black_24dp;
+                mainParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
 
-        }else{
-            estado = LinearLayout.GONE;
-            newArrowImage = R.drawable.ic_expand_more_black_24dp;
-            mainParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            mainLayout.setLayoutParams(mainParams);
+            imageExpandir.setImageResource(newArrowImage);
+            layoutRellenoPestana.setVisibility(estado);
         }
-
-        mainLayout.setLayoutParams(mainParams);
-        imageExpandir.setImageResource(newArrowImage);
-        layoutRellenoPestana.setVisibility(estado);
     }
 
     public void setFragmentTab(FragmentTab fragmentTab) {

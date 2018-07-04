@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.Fragmentos;
+package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -6,12 +6,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaAmigos;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaDescarga;
-import com.tfgp2p.tfg_p2p_nsp.Fragmentos.PestanaFragments.PestanaFragment;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaAmigos;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaFragment;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 /**
@@ -19,7 +17,6 @@ import com.tfgp2p.tfg_p2p_nsp.R;
  */
 
 public class AmigosFragment extends FragmentTab {
-
 
     protected PestanaFragment pestanaFragment;
 
@@ -36,13 +33,14 @@ public class AmigosFragment extends FragmentTab {
         pestanaFragment = new PestanaAmigos();
 
         pestanaFragment.setFragmentTab(this);
+        pestanaFragment.setExpandable(false);
 
         listaPestanas.add(pestanaFragment);
 
         FragmentManager fragMan = getFragmentManager();
         FragmentTransaction fragTransaction = fragMan.beginTransaction();
 
-        fragTransaction.add(pestanaLayout.getId(), pestanaFragment, "fragment");
+        fragTransaction.replace(pestanaLayout.getId(), pestanaFragment, "fragment");
         fragTransaction.commit();
 
         return viewInicio;

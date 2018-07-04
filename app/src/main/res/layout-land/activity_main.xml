@@ -7,7 +7,7 @@
     tools:context="com.tfgp2p.tfg_p2p_nsp.View.MainActivity"
     android:columnCount="1">
     <GridLayout
-        android:layout_height="75dp"
+        android:layout_height="45dp"
         android:layout_width="match_parent"
         android:columnCount="5"
         android:id="@+id/tabbar_layout">
