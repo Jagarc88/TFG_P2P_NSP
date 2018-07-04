@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.View;
+package com.tfgp2p.tfg_p2p_nsp.View.Utils;
 
 import android.content.Context;
 import android.widget.LinearLayout;

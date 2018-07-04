@@ -11,7 +11,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="85dp"
+        android:layout_height="65dp"
         android:orientation="horizontal"
         android:background="@drawable/background_config_opt">
 
@@ -28,9 +28,11 @@
             android:src="@drawable/ic_file_download_black_24dp" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="322dp"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginRight="16dp"
             android:layout_toEndOf="@+id/imageIcon"
             android:layout_toLeftOf="@+id/button"
             android:layout_toRightOf="@+id/imageIcon"
@@ -42,28 +44,28 @@
                 android:layout_height="wrap_content"
                 android:text="Carpeta de descarga"
                 android:textColor="@android:color/black"
-                android:textStyle="bold"
-                android:textSize="18dp" />
+                android:textSize="18dp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10px"
                 android:ellipsize="end"
+                android:hint="No hay direccion"
                 android:maxEms="15"
-                android:singleLine="true"
-                android:hint="No hay direccion" />
+                android:singleLine="true" />
 
         </LinearLayout>
 
         <Button
-            android:layout_width="100dp"
+            android:id="@+id/button"
+            android:layout_width="150dp"
             android:layout_height="45dp"
-            android:text="Cambiar"
-            android:onClick="downloadSelectiorWindow"
-            android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:id="@+id/button" />
+            android:layout_marginRight="19dp"
+            android:onClick="downloadSelectiorWindow"
+            android:text="Cambiar" />
     </RelativeLayout>
 </LinearLayout>

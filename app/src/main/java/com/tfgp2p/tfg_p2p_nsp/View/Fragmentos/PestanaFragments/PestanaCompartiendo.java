@@ -1,11 +1,9 @@
 package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
@@ -13,7 +11,7 @@ import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.ICompartiendoDataCambio;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.TipoFichero;
 import com.tfgp2p.tfg_p2p_nsp.R;
-import com.tfgp2p.tfg_p2p_nsp.View.ViewUtils;
+import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
 
 import java.util.List;
 

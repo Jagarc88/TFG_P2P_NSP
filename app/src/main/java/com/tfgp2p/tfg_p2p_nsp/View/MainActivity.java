@@ -9,15 +9,18 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.tfgp2p.tfg_p2p_nsp.View.Activity.ActivitySeleccionCarpeta;
 import com.tfgp2p.tfg_p2p_nsp.R;
 import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
+import com.tfgp2p.tfg_p2p_nsp.View.Utils.SimpleGestureFilter;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SimpleGestureFilter.SimpleGestureListener{
 
     private FrameLayout frameTabContent;
 
@@ -29,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout currentTabbar;
 
     public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+
+    private SimpleGestureFilter detector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
         tabbarFicheros = (LinearLayout) findViewById(R.id.tabbar_tabficheros_layout);
         tabbarAmigos = (LinearLayout) findViewById(R.id.tabbar_tabamigos_layout);
         tabbarConfiguracion = (LinearLayout) findViewById(R.id.tabbar_tabopciones_layout);
+
+        detector = new SimpleGestureFilter(this,this);
 
         ////////////////////////////// PRUEBA DEL ECHOER///////////////////////////////
         //new Echoer(1100, 1101, 5);
@@ -109,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 } else {
+                    System.exit(1);
                 }
                 return;
             }
@@ -208,5 +216,40 @@ public class MainActivity extends AppCompatActivity {
             default:{newLayout = tabbarInicio;} break; //INICIO
         }
         return newLayout;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent me){
+        // Call onTouchEvent of SimpleGestureFilter class
+        this.detector.onTouchEvent(me);
+        return super.dispatchTouchEvent(me);
+    }
+
+    @Override
+    public void onSwipe(int direction) {
+        int currentLayoutNumber=getCurrentLayoutNumber();
+
+        switch (direction) {
+
+            case SimpleGestureFilter.SWIPE_RIGHT : {
+                currentLayoutNumber--;
+                if(currentLayoutNumber<0){
+                    currentLayoutNumber=3;
+                }
+                changeFrame(getFragmentTabFromNumber(currentLayoutNumber), getTabbarFromNumber(currentLayoutNumber));
+            }break;
+            case SimpleGestureFilter.SWIPE_LEFT :  {
+                currentLayoutNumber++;
+                if(currentLayoutNumber>3){
+                    currentLayoutNumber=0;
+                }
+                changeFrame(getFragmentTabFromNumber(currentLayoutNumber), getTabbarFromNumber(currentLayoutNumber));
+            }break;
+        }
+    }
+
+    @Override
+    public void onDoubleTap() {
+
     }
 }
