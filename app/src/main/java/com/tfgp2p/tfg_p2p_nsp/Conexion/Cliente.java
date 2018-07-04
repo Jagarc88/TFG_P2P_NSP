@@ -96,7 +96,7 @@ public class Cliente {
 				baos.write(friendNameBytes);
 				byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
-				socket_to_server.send(p);
+				//socket_to_server.send(p);
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -109,6 +109,7 @@ public class Cliente {
 				connect_to_friend();
 
 				///////////////////////////////////////////////////////////
+				/*
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
 				byte[] myNameLen = {(byte) myName.length};
@@ -134,7 +135,7 @@ public class Cliente {
 				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
 				else if (resp[0] == NO_FRIEND) {
 					throw new AlertException(friendName + " no es tu amigo.");
-				}
+				}*/
 			}
 			catch (IOException e) {
 				e.printStackTrace();
