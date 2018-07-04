@@ -1,4 +1,6 @@
-package com.tfgp2p.tfg_p2p_nsp;
+package com.tfgp2p.tfg_p2p_nsp.Modelo;
+
+import com.tfgp2p.tfg_p2p_nsp.AlertException;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -9,11 +11,14 @@ import java.util.HashMap;
  */
 public class Amigos {
 
+	private static String myName;
+
 	// TODO: ¿Cuáles son los pasos para añadir un amigo?
 	// TODO: Implementar el guardado de amigos en un fichero o base de datos local.
 	// TODO: Implementar la carga de amigos.
 
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
+	// TODO: Quitar dirección de los amigos y poner alguna clave aleatoria.
 	private HashMap<String, InetSocketAddress> friendsMap;
 
 	private static Amigos amigos = null;
@@ -28,12 +33,19 @@ public class Amigos {
 
 
 	private Amigos(){
+		/* De momento ponemos nuestro nombre desde el código. Habría que poner una opción en la
+		 * configuración de la aplicación. Tb deberíamos hacer que el usuario introduzca su nombre
+		 * la primera vez que ejecuta el programa.
+		 */
+		//myName = "Pedro";
+		myName = "Manolito";
+
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();
 	}
 
 
-	public void addFriend(String name, InetSocketAddress iaddr) throws AlertException{
+	public void addFriend(String name, InetSocketAddress iaddr) throws AlertException {
 		if (!this.friendsMap.containsKey(name))
 			this.friendsMap.put(name, iaddr);
 		else
@@ -84,7 +96,19 @@ public class Amigos {
 	public boolean isFriend(String name, InetAddress addr){
 		// get() devuelve null si no existe.
 		InetAddress localAddr = friendsMap.get(name).getAddress();
-		return ((localAddr != null) && (localAddr == addr));
+		return (localAddr != null) && (localAddr.equals(addr));
 	}
+
+
+	public static String getMyName(){
+		return myName;
+	}
+
+
+	public static void setMyName(String newname){
+		myName = newname;
+	}
+
+
 
 }

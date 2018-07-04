@@ -1,9 +1,9 @@
-package com.tfgp2p.tfg_p2p_nsp.Gnutella;
+package com.tfgp2p.tfg_p2p_nsp.Conexion;
 
 import android.util.Pair;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
-import com.tfgp2p.tfg_p2p_nsp.Amigos;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.File;
@@ -12,20 +12,12 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.Queue;
 
-import static com.tfgp2p.tfg_p2p_nsp.Utils.MAX_BUFF_SIZE;
-import static com.tfgp2p.tfg_p2p_nsp.Utils.FILE_REQ;
-import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ALL;
-import static com.tfgp2p.tfg_p2p_nsp.Utils.METADATA_REQ_ONE;
-import static com.tfgp2p.tfg_p2p_nsp.Utils.PACKET_ACK;
-import static com.tfgp2p.tfg_p2p_nsp.Utils.intToByteArray;
-import static com.tfgp2p.tfg_p2p_nsp.Utils.isValidRequest;
+import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
 
 
@@ -35,6 +27,7 @@ import static com.tfgp2p.tfg_p2p_nsp.Utils.isValidRequest;
  * Clase que implementa la parte servidor de la aplicación.
  */
 
+	// TODO: Cambiar nombre a carpeta Gnutella.
 
 	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta n (pequeño) proveyendo ficheros (a n clientes).
 public class Servidor {
@@ -48,13 +41,11 @@ public class Servidor {
 
 	//private ServerSocket listenSocket;
 	private DatagramSocket listenSocket;
+	// TODO: Pensar si se debe usar un cerrojo para esta variable o si es suficiente con el cerrojo de la cola:
+	private DatagramSocket socket_to_client;
 
-	// TODO: Si la info del clienteActivo se comparte entre hilos mejor usar sólo la cola, supongo.
-	private DatagramSocket activeClientSocket;
-
-	// Cola que guarda el nombre del amigo y el tipo de petición.
-	// Integer debería ser un byte.
-	private Queue<Pair<String, Byte[]>> requestQueue;
+	// Cola que guarda el nombre del amigo y la petición.
+	private Queue<Pair<String, byte[]>> requestQueue;
 
 	// Puertos posibles en los que va a estar a la escucha el serverSocket.
 	static final int possiblePorts[] = {61516, 62516, 63516, 64516};
@@ -74,8 +65,8 @@ public class Servidor {
 	 */
 	//private HashMap<String, InetSocketAddress> activeClients;
 
-
-
+	// TODO: Debería ser final, pero en android no me permite dejarla en blanco e inicializarla en el constructor por ejemplo...
+	private static InetSocketAddress serverInfo;
 
 
 	/**
@@ -85,37 +76,73 @@ public class Servidor {
 	 */
 	public static Servidor getInstance(){
 		if (server == null)
-			server = new Servidor(possiblePorts[ppIndex]);
+			//server = new Servidor(possiblePorts[ppIndex]);
+			server = new Servidor();
 		return server;
 	}
 
 
 
-	private Servidor(int port) {
+	//private Servidor(int port) {
+	private Servidor(){
 		try {
-			this.listenSocket = new DatagramSocket(port);
+			// TODO: poner la direccion del servidor.
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), 61516);
+			//this.listenSocket = new DatagramSocket(port);
+			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
 
-			this.activeClientSocket = null;
+			this.socket_to_client = null;
 			this.requestQueue = new ArrayDeque<>();
 			//this.activeClients = new HashMap<>(10);
 
-			// La parte servidor lanza un hilo que se queda a la escucha.
+			loginServer();
+
+			// La parte servidor lanza dos hilos: Uno que se queda a la escucha y otro que atiende peticiones encoladas.
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
 					listen();
 				}
 			}).start();
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					serve();
+				}
+			}).start();
 
 		} catch (IOException e) {
 			if (ppIndex < 4)
-				new Servidor(possiblePorts[++ppIndex]);
+				//new Servidor(possiblePorts[++ppIndex]);
+				new Servidor();
 			else
 				e.printStackTrace();
+		}
+	}
+
+
+	/**
+	 * Implementa la conexión al servidor nada más abrir la aplicación para que este dispositivo
+	 * quede registrado en el servidor y a disposición de las solicitudes de los amigos.
+	 *
+	 * La información enviada es SERVER_CONNECT, el tamaño del nombre del cliente y el nombre del cliente.
+	 */
+	private void loginServer(){
+		String myName = Amigos.getMyName();
+		byte[] connectionBuffer = new byte[2+myName.length()];
+		connectionBuffer[0] = SERVER_CONNECT;
+		connectionBuffer[1] = (byte) myName.length();
+		System.arraycopy(myName.getBytes(), 0, connectionBuffer, 2, myName.length());
+		DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+				serverInfo.getAddress(), serverInfo.getPort());
+		try {
+			listenSocket.send(p);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -131,25 +158,55 @@ public class Servidor {
 	 *    del dispositivo servidor en su dispositivo.
 	 *
 	 * 2- De solicitud de descarga de un fichero tras seleccionarlo en su dispositivo después
-	 *    de haber descargado los metadatos de la carptea previamente.
+	 *    de haber descargado los metadatos de la carpeta previamente.
 	 */
-    public void listen(){
+    private void listen(){
 		try {
 			while (true){
 				// Se quedará bloqueado con una llamada a receive.
-				byte request = waitRequest();
+				//byte request = waitRequest();
+				waitRequest();
 				// manageResponse se encargará de responder adecuadamente según el tipo de solicitud.
-				if ((isValidRequest(request)))
-					// Si la petición es válida se encola. Si es la primera de la cola se atiende en un hilo nuevo.
-					// TODO: Encolar petición y lanzar aquí los thread.
+				/*if ((isValidRequest(request)))
+					// Si la petición es válida se encola dentro de waitRequest().
+					// Si es la primera de la cola se atiende en un hilo nuevo.
+					new Thread(new Runnable(){
+						public void run(){
 
-					// Hay que pasarle a manage el amigo cogido de la cola y la petición.
-					manageResponse(request);
+						// Hay que pasarle a manage el amigo cogido de la cola y la petición.
+						manageResponse(friend, request);
+						}
+					}).start();
 				else
 					throw new AlertException("Error, ID de paquete no válida.");
+				*/
 			}
 		} catch (AlertException e){
 			e.showAlert();
+		}
+	}
+
+
+	/**
+	 * Este es el método que irá sirviendo las peticiones que realizaron los amigos y que
+	 * han sido previamente encoladas.
+	 *
+	 * - Mientras no haya peticiones en la cola se bloquea el hilo.
+	 * - Cuando el hilo a la escucha encole una petición se reanuda.
+	 */
+	private void serve(){
+		// TODO: usar wait() y notify(). Mientras la cola esté vacía wait()...
+		try{
+			synchronized (requestQueue) {
+				while (requestQueue.isEmpty())
+					requestQueue.wait();
+
+				Pair<String, byte[]> req = requestQueue.poll();
+				manageResponse(req.first, req.second);
+			}
+		}
+		catch (InterruptedException e){
+			e.printStackTrace();
 		}
 	}
 
@@ -159,19 +216,18 @@ public class Servidor {
 	 * La petición recibida se mete en la cola de espera para atenderla cuando sea su turno.
 	 * Si la petición se realiza desde un dispositivo que no es amigo se muestra error.
 	 *
-	 * @return Identificador válido de la petición.
+	 * @return Identificador de la petición.
 	 */
-	private void waitRequest(){
-		// TODO: implementar una cola de espera de entrada (como atributo privado de la clase) para las solicitudes entrantes.
-		// TODO: Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
+	private void waitRequest() throws AlertException{
+		// Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
 		/*
-		 * Con la cola de espera estoy forzando a que la peticiones se atiendan de una en una.
+		 * Con la cola de espera estoy forzando a que las peticiones se atiendan de una en una.
 		 * Para que se atiendan todas habría que lanzar un thread por cada petición atendida.
 		 */
 		// TODO: implementar envío de peticiones desde la parte Cliente.
 		// TODO: Si un dispositivo hace una petición y no es amigo, hay que rechazar la petición.
 		/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch ////////////////
-		try{
+		/*try{
 			Amigos amigos = Amigos.getInstance();
 			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
 			amigos.addFriend("Manolito", addr);
@@ -180,49 +236,121 @@ public class Servidor {
 			e.printStackTrace();
 		} catch (AlertException e){
 			e.showAlert();
-		}
+		}*/
 		////////////////////////////////////////////////////////////
 
-		// Valor inicial -1 no válido para provocar fallo en caso de petición incorrecta.
-		// TODO: Hacer que se envíen los bytes justos en la petición desde la parte Cliente, si se puede.
-		byte[] request = new byte[64];
 		try{
-			DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-			// Se recibe el tipo de petición y el nombre del que la realiza.
-			listenSocket.receive(reqPacket);
+			// TODO: Para hacerlo mejor, recibir tb el nombre en el connect_to_friend y guardarlo en una variable privada.
+			connect_to_friend();
 
-			String name = new String(request).substring(1);
+			byte[] requestorFriendName = new byte[32];
+			byte[] request = new byte[64];
+			request[0] = -1;
+			/*
+			Hacer las peticiones de archivos en 2 pasos:
+			1 - Soy Manolito
+			2 - Quiero un archivo y es este
+			 */
 
-			if (!Amigos.getInstance().isFriend(name, reqPacket.getAddress())){
+			/* Primero hay que recibir el nombre del amigo que hará la petición.
+			 * Se recibe en reqFriendPacket el primer byte con la longitud del nombre
+			 * y después el nombre.
+			 */
+			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
+			//listenSocket.receive(reqFriendPacket);
+			socket_to_client.receive(reqFriendPacket);
+			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
+			byte nameSize = requestorFriendName[0];
+			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
+
+			Amigos amigos = Amigos.getInstance();
+			if (!amigos.isFriend(friendName, reqFriendPacket.getAddress())){
+			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
 				request[0] = -1;
+				byte[] no = {NO_FRIEND};
+				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
+				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+				//listenSocket.send(resp);
+				socket_to_client.send(resp);
+				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.");
+				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos y realizan peticiones a saco.
+				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
+				// TODO: Escribir aquí el código que decide esto.
+
 			}
-			else {
-				// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
-				// TODO: a cada uno tienen como clienteActivo al correcto y no comparten esa variable.
-				// TODO: Puede que no sea necesario clienteActivo gracias a la cola.
+			else{
 				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
 				 * de fichero si es eso lo que solicita.
 				 */
-				Byte[] aux = new Byte[request.length];
-				System.arraycopy(request, 0, aux, 0, request.length);
-				this.requestQueue.add(new Pair<>(name, aux));
-				// TODO: ya no es necesario devolver en este método la request entera.
-				// TODO: En el manage() la podemos tomar desde la cola o tomarla antes de la llamada y pasársela.
+				byte[] ok = {HELLO_FRIEND};
+				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
+				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+				socket_to_client.send(resp);
+
+				DatagramPacket reqPacket = new DatagramPacket(request, request.length);
+				socket_to_client.receive(reqPacket);
+
+				if (isValidRequest(request[0])){
+					// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
+					// TODO: a cada uno tienen como clienteActivo al correcto y no comparten esa variable.
+					// TODO: Puede que no sea necesario clienteActivo gracias a la cola.
+
+					synchronized (requestQueue) {
+						//Byte[] aux = new Byte[request.length];
+						byte[] aux = new byte[request.length];
+						System.arraycopy(request, 0, aux, 0, request.length);
+						requestQueue.add(new Pair<>(friendName, aux));
+						requestQueue.notify();
+					}
+
+				}
+				else throw new AlertException("Error, petición incorrecta.");
 			}
 		}
 		catch (IOException e){
 			e.printStackTrace();
 		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
+
+	}
+
+
+
+	/**
+	 * Conectar al amigo. Sólo se debe llamar a este método cuando se espera que el servidor
+	 * envíe a este dispositivo la IP y el puerto del amigo.
+	 * Con la llamada a connect nos aseguramos de que cuando creamos el paquete
+	 * con los datos lo enviamos al destino correcto. Si la dirección o el puerto
+	 * puesto en la creación del paquete es distinto a los asignados al socket
+	 * con la llamada a connect, saltará una IllegalArgumentException.
+	 *
+	 * @throws IOException
+	 */
+	private void connect_to_friend() throws IOException {
+		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
+		byte[] friendInfo = new byte[8];
+		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
+		listenSocket.receive(friendInfoPacket);
+
+		byte[] IParray = new byte[4];
+		System.arraycopy(friendInfo, 0, IParray, 0, 4);
+		InetAddress friendIP = InetAddress.getByAddress(IParray);
+
+		byte[] portArray = new byte[4];
+		System.arraycopy(friendInfo, 4, portArray, 0, 4);
+		int friendPort = Utils.byteArrayToInt(portArray);
+
+		socket_to_client.connect(friendIP, friendPort);
 	}
 
 
 	/**
 	 * Gestiona la respuesta que tiene que dar según el tipo de solicitud atendida.
-	 *
-	 * @param request Identificador de la solicitud.
 	 */
-	private void manageResponse(byte request){
-		switch (request){
+	private void manageResponse(String friend, byte[] request){
+		switch (request[0]){
 			// TODO: BORRAR ESTE COMENTARIO cuando esté implementado:
 			/*
 			 * Cuando un amigo se conecta a otro y quiere ver su carpeta solicita TODOS los
@@ -233,19 +361,35 @@ public class Servidor {
 			case METADATA_REQ_ONE:
 				// TODO: Pensar cuándo puede darse el caso de solicitar metadatos de sólo 1 fichero.
 				break;
+
 			case METADATA_REQ_ALL:
 				sendAllFilesMetadata();
 				break;
+
 			case FILE_REQ:
-				// 1º Usar el socket del clienteActivo para esperar el paquete con el nombre del archivo.
-				// 2º Enviar archivo.
-				sendFile();
+				try{
+					/* request[0] : Tipo de petición.
+					 * request[1] = N : Longitud del nombre del fichero.
+					 * request[2..N] : Nombre del fichero.
+					 */
+					InetSocketAddress addr = Amigos.getInstance().getFriendAddr(friend);
+					//int fileNamePosition = 1 + friend.length();
+					//String fileName = request.toString().substring(fileNamePosition);
+					String fileName = new String(request).substring(2, 2+request[1]);
+					sendFile(fileName, addr);
+				}
+				catch (AlertException e){
+					e.showAlert();
+				}
 				break;
+
 			case PACKET_ACK:
 				// TODO: Puede que packetACK no sea útil aquí...
 				break;
+
 			default:
 				// Petición no admitida.
+				// TODO: deberíamos hacer que en el destinatario se mostrara un popup de error, por ejemplo con un ERROR_popup.
 				break;
 		}
 	}
@@ -254,9 +398,10 @@ public class Servidor {
 	/**
 	 * Se envía un archivo al dispositivo remoto.
 	 *
+	 * @param fileName Nombre del archivo que se enviará.
 	 * @param addr Dirección IP y puerto al que se envía el archivo.
 	 */
-	public void sendFile(InetSocketAddress addr){
+	public void sendFile(String fileName, InetSocketAddress addr){
 		try{
 			//InetSocketAddress addr = this.friends.get("Manolito");
 
@@ -266,8 +411,14 @@ public class Servidor {
 			// >500 KB.
 			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/Resumen ASOR.pdf";
 			// 9 KB.
-			String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
-			File file = new File(path);
+
+			/*String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
+			File file = new File(path);*/
+			///////////////////////////////////////
+			// TODO: Poner aquí bien la ruta de la carpeta compartida.
+			String sharedFolder = Utils.parseMountDirectory().getAbsolutePath();
+			File file = new File(sharedFolder + '/' + fileName);
+			///////////////////////////////////////
 			FileInputStream fis = new FileInputStream(file);
 			int fileLength = (int) file.length();
 
@@ -275,7 +426,7 @@ public class Servidor {
 			// TODO: ¿Quitar sendFileMetadata() de aquí?
 			/*
 			 * Si el usuario ha seleccionado el fichero que quiere descargar es porque ya tiene
-			 * los metadatos necesarios
+			 * los metadatos necesarios.
 			 */
 			sendFileMetadata(file, addr, fileLength);
 
@@ -304,7 +455,15 @@ public class Servidor {
 
 				totalBytesRead += bytesRead;
 				packet.setData(buffer);
+				// TODO: Utilizar otro socket (otro puerto).
 				listenSocket.send(packet);
+				//////////////////////////////////////////////
+				/*try {
+					Thread.sleep(1000);
+				}
+				catch(InterruptedException e){ e.printStackTrace();}
+				*/
+				//////////////////////////////////////////////
 				buffer = null;
 
 				bytesRemaining = fileLength - totalBytesRead;
@@ -326,9 +485,16 @@ public class Servidor {
 	}
 
 
+
+	public static InetSocketAddress getServerInfo(){
+		return serverInfo;
+	}
+
+
 	/**
 	 * Descripción: Envía el nombre y la longitud de un fichero a un dispositivo remoto.
 	 * Este método es útil para la recolección de metadatos de los archivos de las carpetas compartidas.
+	 * Se debería llamar a este método cada vez que se modifique un fichero.
 	 *
 	 * IMPORTANTE: El buffer de metadatos está pensado para que los 4 primeros bytes contengan el tamaño
 	 * del fichero (en un int traducido a byte[4]) y en los siguientes el nombre. Por ahora se usa un
@@ -340,7 +506,6 @@ public class Servidor {
 	 * @throws IOException
 	 */
 	private void sendFileMetadata(File file, InetSocketAddress addr, int fileLength) throws IOException{
-		// TODO: Llamar a este método cada vez que se modifique o borre un fichero.
 		byte[] metadataBuffer = new byte[file.getName().length() + 4];
 
 		// Tamaño del fichero.
