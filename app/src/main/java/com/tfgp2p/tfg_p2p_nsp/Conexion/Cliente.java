@@ -64,10 +64,10 @@ public class Cliente {
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
 			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
-			// TODO: El puerto del amigo al que me conecto de momento está mal.
-			InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName(""), 50000);
+			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName(""), 50000);
 			String friendName = "Manolito";
-			this.amigos.addFriend(friendName, sa);
+			//this.amigos.addFriend(friendName, sa);
+
 
 			//String fileName = "serie";
 			String fileName = "5megas.pdf";
@@ -96,7 +96,7 @@ public class Cliente {
 				baos.write(friendNameBytes);
 				byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
-				//socket_to_server.send(p);
+				socket_to_server.send(p);
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -109,7 +109,7 @@ public class Cliente {
 				connect_to_friend();
 
 				///////////////////////////////////////////////////////////
-				/*
+
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
 				byte[] myNameLen = {(byte) myName.length};
@@ -135,7 +135,7 @@ public class Cliente {
 				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
 				else if (resp[0] == NO_FRIEND) {
 					throw new AlertException(friendName + " no es tu amigo.");
-				}*/
+				}
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -153,13 +153,12 @@ public class Cliente {
 			else
 				e.printStackTrace();
 		}
-		catch (UnknownHostException e){
+		/*catch (UnknownHostException e){
 			e.printStackTrace();
-		}
+		}*/
 		catch (AlertException e){
 			e.showAlert();
 		}
-
 
 	}
 
@@ -192,18 +191,9 @@ public class Cliente {
 	}
 
 
-	/* Pasos para hacer una petición:
-	 * 1º) Enviar un paquete con el nombre del cliente para que el servidor pueda comprobar
-	 *     si es amigo (y por tanto atenderle) o no. Se envía longitud del nombre y el nombre.
-	 *
-	 * 2º) En caso de que sea amigo se envía la petición como tal. Los datos enviados son el
-	 *     identificador de la petición (tipo) y otros datos dependiendo del tipo. Los otros datos
-	 *     son, por ejemplo, el nombre de un fichero en el caso de que la petición sea de
-	 *     descarga de ese fichero.
-	 */
+
 	public void sendRequest(){
 		// TODO: Implementar una cola de espera de salida de peticiones para cuando el móvil destino está sin conexión.
-		// TODO: Enviar en la petición el nombre de mi dispositivo
 
 	}
 

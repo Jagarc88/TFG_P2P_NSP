@@ -41,23 +41,10 @@ public class Servidor {
 
 	//private ServerSocket listenSocket;
 	private DatagramSocket listenSocket;
-	// TODO: Pensar si se debe usar un cerrojo para esta variable o si es suficiente con el cerrojo de la cola:
 	private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
 	private Queue<Pair<String, byte[]>> requestQueue;
-
-	// Puertos posibles en los que va a estar a la escucha el serverSocket.
-	static final int possiblePorts[] = {61516, 62516, 63516, 64516};
-	/*
-	 * Índice del puerto a escoger. Es útil para llamar de nuevo al constructor del objeto
-	 * Servidor si el puerto al que apunta el índice está cerrado o en uso.
-	 */
-	private static int ppIndex = 0;
-	// Colección de sockets conectados a los clientes.
-	//private ArrayList<Socket> clientsSockets;
-	// TODO: Pensar mejor el tipo de datos para la colección de sockets, si la necesitáramos. Si no borrarla.
-	// Puede que ya no sea necesario almacenar los sockets si trabajamos con UDP.
 
 	/*
 	 * Conjunto de pares identificador / IP+puerto de los amigos conectados.
@@ -76,19 +63,16 @@ public class Servidor {
 	 */
 	public static Servidor getInstance(){
 		if (server == null)
-			//server = new Servidor(possiblePorts[ppIndex]);
 			server = new Servidor();
 		return server;
 	}
 
 
 
-	//private Servidor(int port) {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), 61516);
-			//this.listenSocket = new DatagramSocket(port);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 61516);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 
@@ -116,11 +100,7 @@ public class Servidor {
 			}).start();
 
 		} catch (IOException e) {
-			if (ppIndex < 4)
-				//new Servidor(possiblePorts[++ppIndex]);
-				new Servidor();
-			else
-				e.printStackTrace();
+			new Servidor();
 		}
 	}
 
@@ -140,6 +120,7 @@ public class Servidor {
 		DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 				serverInfo.getAddress(), serverInfo.getPort());
 		try {
+			listenSocket.connect(serverInfo.getAddress(), serverInfo.getPort());
 			listenSocket.send(p);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -568,7 +549,6 @@ public class Servidor {
 		try {
 			byte[] allMetadata = getMetadataFromSharedFolder();
 			DatagramPacket p = new DatagramPacket(allMetadata, allMetadata.length);
-			// TODO: No vale con usar el listenSocket, hay que usar otro para las comunicaciones.
 			listenSocket.send(p);
 			// TODO: Creo que no me falta nada en este método...
 
