@@ -95,6 +95,7 @@ public class Amigos {
 
 	public boolean isFriend(String name, InetAddress addr){
 		// get() devuelve null si no existe.
+		// TODO: Capturar la NullPointerException si salta y en ese caso devolver false.
 		InetAddress localAddr = friendsMap.get(name).getAddress();
 		return (localAddr != null) && (localAddr.equals(addr));
 	}

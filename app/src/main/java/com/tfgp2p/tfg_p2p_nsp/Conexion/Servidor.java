@@ -40,7 +40,7 @@ public class Servidor {
 	private int listenPort;
 
 	//private ServerSocket listenSocket;
-	private DatagramSocket listenSocket;
+	private static DatagramSocket listenSocket;
 	private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
@@ -79,7 +79,7 @@ public class Servidor {
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
 
-			this.socket_to_client = null;
+			this.socket_to_client = new DatagramSocket();
 			this.requestQueue = new ArrayDeque<>();
 			//this.activeClients = new HashMap<>(10);
 
@@ -221,6 +221,15 @@ public class Servidor {
 		////////////////////////////////////////////////////////////
 
 		try{
+			// Mientras el servidor no envíe aviso de nueva petición el hilo no avanza.
+			byte[] new_req = new byte[1];
+			DatagramPacket p = new DatagramPacket(new_req, new_req.length);
+			while (new_req[0] != NEW_REQ){
+				new_req[0] = 0;
+				listenSocket.receive(p);
+			}
+
+
 			// TODO: Para hacerlo mejor, recibir tb el nombre en el connect_to_friend y guardarlo en una variable privada.
 			connect_to_friend();
 
@@ -239,7 +248,8 @@ public class Servidor {
 			 */
 			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
 			//listenSocket.receive(reqFriendPacket);
-			socket_to_client.receive(reqFriendPacket);
+			//socket_to_client.receive(reqFriendPacket);
+			listenSocket.receive(reqFriendPacket);
 			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 			byte nameSize = requestorFriendName[0];
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
@@ -252,7 +262,8 @@ public class Servidor {
 				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
 				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 				//listenSocket.send(resp);
-				socket_to_client.send(resp);
+				//socket_to_client.send(resp);
+				listenSocket.send(resp);
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.");
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos y realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
@@ -266,10 +277,12 @@ public class Servidor {
 				byte[] ok = {HELLO_FRIEND};
 				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
 				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				socket_to_client.send(resp);
+				//socket_to_client.send(resp);
+				listenSocket.send(resp);
 
 				DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-				socket_to_client.receive(reqPacket);
+				//socket_to_client.receive(reqPacket);
+				listenSocket.receive(reqPacket);
 
 				if (isValidRequest(request[0])){
 					// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
@@ -323,7 +336,8 @@ public class Servidor {
 		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		socket_to_client.connect(friendIP, friendPort);
+		//socket_to_client.connect(friendIP, friendPort);
+		listenSocket.connect(friendIP, friendPort);
 	}
 
 
@@ -556,6 +570,11 @@ public class Servidor {
 		catch (IOException e){
 			e.printStackTrace();
 		}
+	}
+
+
+	public static DatagramSocket getServerSocket(){
+		return listenSocket;
 	}
 
 

@@ -50,6 +50,11 @@ public class Utils {
 	 */
 	public static final byte HELLO = 8;
 	/**
+	 * Identificador que la aplicación del servidor debe enviar en primer lugar cuando se detecte que
+	 * el cliente quiere realizar algún tipo de petición.
+	 */
+	public static final byte NEW_REQ = 9;
+	/**
 	 * Identificador utilizado cuando un dispositivo inicia la app y se conecta al servidor.
 	 */
 	public static final byte SERVER_CONNECT = 10;
