@@ -1,19 +1,24 @@
-package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentElements.pestanaAmigos;
+package com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.PestanaAmigos;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
 import com.tfgp2p.tfg_p2p_nsp.R;
+import com.tfgp2p.tfg_p2p_nsp.View.Activity.ActivityPopupFileWindow;
 
-public class LayoutElementAmigos extends LinearLayout{
+public class LayoutElementAmigos extends LinearLayout {
 
-    private Button buttonExplore;
+    public static final int STATE_USER_OFFLINE = 0;
+    public static final int STATE_USER_ONLINE = 1;
+
+    public static Amigo selectedAmigo;
+
     private TextView textViewFriendName;
     private ImageView imageViewStateIcon;
 
@@ -26,13 +31,16 @@ public class LayoutElementAmigos extends LinearLayout{
         viewInicio = LayoutInflater.from(context).inflate(R.layout.element_amigo_lista, this, false);
         this.addView(viewInicio);
 
-        buttonExplore = viewInicio.findViewById(R.id.element_fragment_element_amigos);
         textViewFriendName = viewInicio.findViewById(R.id.test_descarga_nombrepersona);
         imageViewStateIcon = viewInicio.findViewById(R.id.test_imageview_fragment_element_amigos);
-    }
 
-    public static final int STATE_USER_OFFLINE = 0;
-    public static final int STATE_USER_ONLINE = 1;
+        viewInicio.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onClickExplore();
+            }
+        });
+    }
 
     public void setIconState(int state){
         switch (state){
@@ -49,7 +57,16 @@ public class LayoutElementAmigos extends LinearLayout{
         return amigo;
     }
 
-    public void setAmigo(Amigo amigo) {
+    public void setData(Amigo amigo) {
         this.amigo = amigo;
+
+        textViewFriendName.setText(amigo.getNombreAmigo());
+        setIconState(amigo.getState());
+    }
+
+    public void onClickExplore(){
+        selectedAmigo = amigo;
+        Intent listCarpeta = new Intent(getContext(), ActivityPopupFileWindow.class);
+        getContext().startActivity(listCarpeta);
     }
 }

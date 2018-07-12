@@ -8,11 +8,11 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.tfgp2p.tfg_p2p_nsp.View.MainActivity;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.R;
+import com.tfgp2p.tfg_p2p_nsp.View.MainActivity;
 
 import java.io.File;
 import java.util.ArrayList;

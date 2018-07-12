@@ -8,9 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaFragment;
 import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaDescarga;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments.PestanaFragment;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 public class InicioFragment extends FragmentTab {

@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentElements.pestanaDescarga;
+package com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.PestanaDescarga;
 
 import android.content.Context;
 import android.view.LayoutInflater;

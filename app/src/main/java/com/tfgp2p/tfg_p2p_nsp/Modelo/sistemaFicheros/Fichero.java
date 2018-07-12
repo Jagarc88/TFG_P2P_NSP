@@ -1,5 +1,6 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros;
 
+
 public class Fichero implements Comparable<Fichero>{
 
     private TipoFichero tipoFichero;
@@ -94,7 +95,5 @@ public class Fichero implements Comparable<Fichero>{
         if(tipoFichero == TipoFichero.DOWNLOADING){
             incompleto = true;
         }
-
-        // TODO Determinar la extraccion de la información de los datos
     }
 }

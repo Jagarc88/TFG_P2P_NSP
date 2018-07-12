@@ -19,10 +19,6 @@ import com.tfgp2p.tfg_p2p_nsp.View.Activity.ActivitySeleccionCarpeta;
 import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.SimpleGestureFilter;
 
-import com.tfgp2p.tfg_p2p_nsp.Conexion.Cliente;
-import com.tfgp2p.tfg_p2p_nsp.Conexion.Servidor;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
-
 public class MainActivity extends AppCompatActivity implements SimpleGestureFilter.SimpleGestureListener{
 
     private FrameLayout frameTabContent;
@@ -31,10 +27,6 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
     private LinearLayout tabbarAmigos;
     private LinearLayout tabbarFicheros;
     private LinearLayout tabbarConfiguracion;
-
-    private Servidor server;
-    private Cliente client;
-    private Amigos amigos;
 
     private LinearLayout currentTabbar;
 
@@ -50,8 +42,6 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
 
         comprobarPermisos();
 
-        //ConfigProperties.loadConfiguration(getApplicationContext());
-
         setContentView(R.layout.activity_main);
 
         frameTabContent = (FrameLayout) findViewById(R.id.main_content_layout);
@@ -63,26 +53,7 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
 
         detector = new SimpleGestureFilter(this,this);
 
-        ////////////////////////////// PRUEBA DEL ECHOER///////////////////////////////
-        //new Echoer(1100, 1101, 5);
-        /*new Thread(new Runnable(){
-           public void run(){
-               // 1103 al ejecutar en mi movil.
-               new Echoer(1103, 1104, 5);
-           }
-        }).start();
-        */
-        new Thread(new Runnable(){
-            public void run(){
-            	amigos = Amigos.getInstance();
-                server = Servidor.getInstance();
-				client = Cliente.getInstance();
-			}
-		}).start();
-        ///////////////////////////////////////////////////////////////////////////////
-
         //Se inicializa la aplicacion en el tab INICIO
-
         if(savedInstanceState != null) {
             currentLayout = savedInstanceState.getInt("CURRENT_LAYOUT");
         }
@@ -128,6 +99,18 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
                 return;
             }
         }
+    }
+
+    /**
+     * Cuando el usuario pulsa el boton de retroceso en la actividad principal cierra la aplicacion
+     */
+    @Override
+    public void onBackPressed() {
+        exitApplication(0);
+    }
+
+    public static void exitApplication(int state){
+        System.exit(state);
     }
 
     public void onClickTabbar(View view){
@@ -256,7 +239,5 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
     }
 
     @Override
-    public void onDoubleTap() {
-
-    }
+    public void onDoubleTap() {}
 }

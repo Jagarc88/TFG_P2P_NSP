@@ -1,20 +1,12 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.app.Application;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DHConfiguration;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DatabaseHelper;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
-
-import static android.content.Context.MODE_PRIVATE;
 
 /**
  *

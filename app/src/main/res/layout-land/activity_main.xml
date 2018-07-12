@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.tfgp2p.tfg_p2p_nsp.View.MainActivity"
+    tools:context="com.tfgp2p.tfg_p2p_nsp.view.MainActivity"
     android:columnCount="1">
     <GridLayout
         android:layout_height="45dp"

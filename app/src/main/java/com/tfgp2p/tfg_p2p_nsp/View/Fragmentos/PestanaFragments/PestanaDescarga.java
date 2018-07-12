@@ -3,10 +3,10 @@ package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentElements.pestanaDescarga.LayoutElementFicheroDescarga;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.R;
+import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.PestanaDescarga.LayoutElementFicheroDescarga;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
 
 import java.util.ArrayList;

@@ -10,8 +10,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.R;
+import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
 
 /**
  * A simple {@link Fragment} subclass.

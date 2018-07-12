@@ -1,24 +1,22 @@
 package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments;
 
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.ICompartiendoDataCambio;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.TipoFichero;
-import com.tfgp2p.tfg_p2p_nsp.R;
+import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutElementFichero;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
+import com.tfgp2p.tfg_p2p_nsp.R;
 
 import java.util.List;
 
 /**
  * Created by Deekin on 03/12/2017.
  */
-public class PestanaCompartiendo extends PestanaFragment implements ICompartiendoDataCambio{
+public class PestanaCompartiendo extends PestanaFragment implements ICompartiendoDataCambio {
 
     LinearLayout linearLayout_listaCompartiendo;
 
@@ -41,21 +39,16 @@ public class PestanaCompartiendo extends PestanaFragment implements ICompartiend
         // Rellena con el nuevo contenido
         for (Fichero item: dir) {
             if(item.getTipoFichero() != TipoFichero.FOLD) {
-                View newPestanya = crear_pestanya(item.getNombre());
+                View newPestanya = crear_pestanya(item);
                 linearLayout.addView(newPestanya);
             }
         }
     }
 
-    public View crear_pestanya(String name){
-        LayoutInflater inflater = LayoutInflater.from(getActivity());
-        View elementFileslot = inflater.inflate(R.layout.elemento_fileslot_small, null, false);
+    public View crear_pestanya(Fichero fichero){
+        LayoutElementFichero elementFileslot = new LayoutElementFichero(getActivity());
 
-        TextView textName = elementFileslot.findViewById(R.id.fileslot_small_nameFile);
-        ImageView iconView = elementFileslot.findViewById(R.id.fileslot_small_icon);
-
-        textName.setText(name);
-        iconView.setImageDrawable(TipoFichero.obtainDrawable(TipoFichero.obtainTipoFichero(name), getActivity()));
+        elementFileslot.fillData(fichero);
 
         return elementFileslot;
     }

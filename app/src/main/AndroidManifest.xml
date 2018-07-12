@@ -17,16 +17,18 @@
         <activity android:name=".View.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-
             </intent-filter>
         </activity>
-
         <activity
             android:name=".View.Activity.ActivitySeleccionCarpeta"
-            android:label="Selecciona nueva carpeta"
-            android:screenOrientation="portrait">
+            android:theme="@style/Base.Theme.AppCompat.Light"
+            android:label="Selecciona nueva carpeta">
+        </activity>
+        <activity
+            android:name=".View.Activity.ActivityPopupFileWindow"
+            android:theme="@style/Base.Theme.AppCompat.Light"
+            android:label="Selecciona la  descarga">
         </activity>
     </application>
 
