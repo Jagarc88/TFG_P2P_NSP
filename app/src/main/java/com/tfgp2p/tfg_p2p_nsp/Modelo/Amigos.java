@@ -45,9 +45,11 @@ public class Amigos {
 	}
 
 
-	public void addFriend(String name, InetSocketAddress iaddr) throws AlertException {
-		if (!this.friendsMap.containsKey(name))
+	public void addFriend(String name, InetAddress addr, int port) throws AlertException {
+		if (!this.friendsMap.containsKey(name)) {
+			InetSocketAddress iaddr = new InetSocketAddress(addr, port);
 			this.friendsMap.put(name, iaddr);
+		}
 		else
 			throw new AlertException(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.");
 	}
@@ -94,10 +96,13 @@ public class Amigos {
 
 
 	public boolean isFriend(String name, InetAddress addr){
-		// get() devuelve null si no existe.
-		// TODO: Capturar la NullPointerException si salta y en ese caso devolver false.
-		InetAddress localAddr = friendsMap.get(name).getAddress();
-		return (localAddr != null) && (localAddr.equals(addr));
+		try {
+			InetAddress localAddr = friendsMap.get(name).getAddress();
+			return localAddr.equals(addr);
+		}
+		catch (NullPointerException e){
+			return false;
+		}
 	}
 
 

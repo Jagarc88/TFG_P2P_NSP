@@ -255,6 +255,9 @@ public class Servidor {
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
 
 			Amigos amigos = Amigos.getInstance();
+			//////////////////// BORRAR AÑADIDO MANUAL DEL AMIGO //////////////////////
+			amigos.addFriend(friendName, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+			///////////////////////////////////////////////////////////////////////////
 			if (!amigos.isFriend(friendName, reqFriendPacket.getAddress())){
 			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
 				request[0] = -1;
@@ -275,7 +278,7 @@ public class Servidor {
 				 * de fichero si es eso lo que solicita.
 				 */
 				byte[] ok = {HELLO_FRIEND};
-				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
+				// TODO: Repasar la dicección y el puerto que estoy poniendo en este paquete.
 				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 				//socket_to_client.send(resp);
 				listenSocket.send(resp);
@@ -285,10 +288,6 @@ public class Servidor {
 				listenSocket.receive(reqPacket);
 
 				if (isValidRequest(request[0])){
-					// TODO: Comprobar con 2 peticiones de 2 móviles que los 2 thread lanzados para atender
-					// TODO: a cada uno tienen como clienteActivo al correcto y no comparten esa variable.
-					// TODO: Puede que no sea necesario clienteActivo gracias a la cola.
-
 					synchronized (requestQueue) {
 						//Byte[] aux = new Byte[request.length];
 						byte[] aux = new byte[request.length];
@@ -296,7 +295,6 @@ public class Servidor {
 						requestQueue.add(new Pair<>(friendName, aux));
 						requestQueue.notify();
 					}
-
 				}
 				else throw new AlertException("Error, petición incorrecta.");
 			}
