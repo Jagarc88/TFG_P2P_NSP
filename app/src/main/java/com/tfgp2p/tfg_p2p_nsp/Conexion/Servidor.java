@@ -72,7 +72,7 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 61516);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 62001);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 

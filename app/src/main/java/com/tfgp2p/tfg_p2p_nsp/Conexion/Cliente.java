@@ -48,6 +48,33 @@ public class Cliente {
 		return client;
 	}
 
+	/**
+	 * Necesitamos enviar el puerto del socket del cliente para que la tabla NAT
+	 * tras la que está el contrario lo guarde y pueda pasar los paquetes que se
+	 * reciban a su destino.
+	 */
+	private void loginServer(){
+		try {
+			String myName = Amigos.getMyName();
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			baos.write(SERVER_CONNECT);
+			baos.write((byte) myName.length());
+			baos.write(myName.getBytes());
+			baos.write(IS_CLIENT_SOCKET);
+			// Aquí se escribe el puerto del socket que se conectará al amigo.
+			baos.write(intToByteArray(socket_to_friend.getPort()));
+
+			byte[] connectionBuffer = baos.toByteArray();
+			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+
+			socket_to_server.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			socket_to_server.send(p);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	// TODO: Limpiar código del constructor que no debe estar.
 	//private Cliente(int listenPort){
@@ -58,8 +85,11 @@ public class Cliente {
 			this.amigos = Amigos.getInstance();
 			//this.socket = new DatagramSocket(listenPort);
 			//this.socket_to_server = new DatagramSocket();
-			socket_to_server = Servidor.getServerSocket();
-			this.socket_to_friend = new DatagramSocket();
+			//socket_to_server = Servidor.getServerSocket();
+			socket_to_server = new DatagramSocket();
+			socket_to_friend = new DatagramSocket();
+
+			loginServer();
 
 			//////// Prueba de la conexión al móvil servidor:
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////

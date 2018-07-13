@@ -58,6 +58,7 @@ public class Utils {
 	 * Identificador utilizado cuando un dispositivo inicia la app y se conecta al servidor.
 	 */
 	public static final byte SERVER_CONNECT = 10;
+	public static final byte IS_CLIENT_SOCKET = 11;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
