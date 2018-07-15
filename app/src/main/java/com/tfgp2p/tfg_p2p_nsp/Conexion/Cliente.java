@@ -31,8 +31,9 @@ public class Cliente {
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
 	private Amigos amigos;
 
-	private static DatagramSocket socket_to_server;
-	private DatagramSocket socket_to_friend;
+	//private DatagramSocket socket_to_server;
+	//private DatagramSocket socket_to_friend;
+	private DatagramSocket socket;
 
 	private static int ppIndex = 0;
 
@@ -62,14 +63,16 @@ public class Cliente {
 			baos.write(myName.getBytes());
 			baos.write(IS_CLIENT_SOCKET);
 			// Aquí se escribe el puerto del socket que se conectará al amigo.
-			baos.write(intToByteArray(socket_to_friend.getPort()));
+			//baos.write(intToByteArray(socket_to_friend.getPort()));
 
 			byte[] connectionBuffer = baos.toByteArray();
 			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 
-			socket_to_server.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-			socket_to_server.send(p);
+			//socket_to_server.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			//socket_to_server.send(p);
+			socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			socket.send(p);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -86,8 +89,9 @@ public class Cliente {
 			//this.socket = new DatagramSocket(listenPort);
 			//this.socket_to_server = new DatagramSocket();
 			//socket_to_server = Servidor.getServerSocket();
-			socket_to_server = new DatagramSocket();
-			socket_to_friend = new DatagramSocket();
+			//socket_to_server = new DatagramSocket();
+			//socket_to_friend = new DatagramSocket();
+			socket = new DatagramSocket();
 
 			loginServer();
 
@@ -127,7 +131,8 @@ public class Cliente {
 				baos.write(friendNameBytes);
 				byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
-				socket_to_server.send(p);
+				//socket_to_server.send(p);
+				socket.send(p);
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -154,9 +159,12 @@ public class Cliente {
 				socket_to_friend.send(hey_its_me);
 				*/
 				//////////////////////////////////////////////
-				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
+				/*DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
 						socket_to_server.getInetAddress(), socket_to_server.getPort());
-				socket_to_server.send(hey_its_me);
+				socket_to_server.send(hey_its_me);*/
+				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
+						socket.getInetAddress(), socket.getPort());
+				socket.send(hey_its_me);
 				/////////////////////////////////////////////
 
 				byte[] resp = new byte[1];
@@ -164,7 +172,8 @@ public class Cliente {
 				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
 				//socket.receive(pac);
 				//socket_to_friend.receive(pac);
-				socket_to_server.receive(pac);
+				//socket_to_server.receive(pac);
+				socket.receive(pac);
 				if (resp[0] == HELLO_FRIEND) {
 					requestFile(fileName, friendName);
 					receiveFile(fileName);
@@ -210,11 +219,15 @@ public class Cliente {
 	 *
 	 * @throws IOException
 	 */
-	private void connect_to_friend() throws IOException {
+	private void connect_to_friend() throws IOException, AlertException {
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-		socket_to_server.receive(friendInfoPacket);
+		//socket_to_server.receive(friendInfoPacket);
+		socket.receive(friendInfoPacket);
+
+		if (friendInfo[0] == NO_FRIEND)
+			throw new AlertException("Ha habido un problema en la comunicación.");
 
 		byte[] IParray = new byte[4];
 		System.arraycopy(friendInfo, 0, IParray, 0, 4);
@@ -225,7 +238,9 @@ public class Cliente {
 		int friendPort = Utils.byteArrayToInt(portArray);
 
 		//socket_to_friend.connect(friendIP, friendPort);
-		socket_to_server.connect(friendIP, friendPort);
+		//socket_to_server.connect(friendIP, friendPort);
+		// TODO: COMPROBAR QUE CUANDO SE HACE LA LLAMADA A CONNECT CAMBIA EL PUERTO (se borra el del servidor y se guarda el del amigo).
+		socket.connect(friendIP, friendPort);
 		// En principio la conexión sale bien.
 	}
 
@@ -267,7 +282,8 @@ public class Cliente {
 
 			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
 			//socket_to_friend.send(request);
-			socket_to_server.send(request);
+			//socket_to_server.send(request);
+			socket.send(request);
 		}
 		catch (AlertException e){
 			e.showAlert();
@@ -291,7 +307,8 @@ public class Cliente {
 			///////////////////////////////////////////////////////////////////////////////////
 
 			//socket_to_friend.receive(metadataPacket);
-			socket_to_server.receive(metadataPacket);
+			//socket_to_server.receive(metadataPacket);
+			socket.receive(metadataPacket);
 
 			byte[] aux = new byte[4];
 			for (int i = 0; i < 4; i++)
@@ -301,9 +318,11 @@ public class Cliente {
 			DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
 			//socket_to_friend.receive(dataPacket);
-			socket_to_server.receive(dataPacket);
+			//socket_to_server.receive(dataPacket);
+			socket.receive(dataPacket);
 
-			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName);
+			// TODO: quitar lo de "copia de".
+			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia de " + fileName);
 			boolean exit = false;
 
 			while (!exit) {
@@ -321,7 +340,8 @@ public class Cliente {
 					exit = true;
 				else
 					//socket_to_friend.receive(dataPacket);
-					socket_to_server.receive(dataPacket);
+					//socket_to_server.receive(dataPacket);
+					socket.receive(dataPacket);
 			}
 
 			fos.close();

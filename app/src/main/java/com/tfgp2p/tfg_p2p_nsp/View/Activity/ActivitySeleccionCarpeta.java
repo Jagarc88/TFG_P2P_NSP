@@ -38,7 +38,7 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
 
         mapViewItem = new HashMap<>();
         itemSelected = null;
-        linearLayout_listaSelected = findViewById(R.id.selecter_lista);
+        //linearLayout_listaSelected = findViewById(R.id.selecter_lista);
 
         fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
     }

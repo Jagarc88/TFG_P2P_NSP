@@ -40,7 +40,7 @@ public class Servidor {
 	private int listenPort;
 
 	//private ServerSocket listenSocket;
-	private static DatagramSocket listenSocket;
+	private DatagramSocket listenSocket;
 	private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
@@ -72,7 +72,7 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 62001);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 
@@ -196,8 +196,6 @@ public class Servidor {
 	 * La función de este método es esperar algún tipo de petición por parte de los amigos.
 	 * La petición recibida se mete en la cola de espera para atenderla cuando sea su turno.
 	 * Si la petición se realiza desde un dispositivo que no es amigo se muestra error.
-	 *
-	 * @return Identificador de la petición.
 	 */
 	private void waitRequest() throws AlertException{
 		// Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
@@ -571,9 +569,9 @@ public class Servidor {
 	}
 
 
-	public static DatagramSocket getServerSocket(){
+	/*public static DatagramSocket getServerSocket(){
 		return listenSocket;
-	}
+	}*/
 
 
 }
