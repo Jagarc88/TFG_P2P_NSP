@@ -164,7 +164,17 @@ public class Cliente {
 				socket_to_server.send(hey_its_me);*/
 				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
 						socket.getInetAddress(), socket.getPort());
+				// Preguntar a Julio por qué se envía 2 veces.
 				socket.send(hey_its_me);
+				socket.send(hey_its_me);
+				/////////////////////////
+				// Comprobación de que haya salido el hole punching con éxito.
+				/*byte[] hpbuf = new byte[1];
+				DatagramPacket hp = new DatagramPacket(hpbuf, 1);
+				socket.receive(hp);
+				if (buff[0] != PUNCHED)
+					socket.send(hey_its_me);
+				*/
 				/////////////////////////////////////////////
 
 				byte[] resp = new byte[1];

@@ -247,7 +247,20 @@ public class Servidor {
 			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
 			//listenSocket.receive(reqFriendPacket);
 			//socket_to_client.receive(reqFriendPacket);
+
+			/*while (requestorFriendName[0] != PUNCHED) {
+				requestorFriendName = null;
+				requestorFriendName = new byte[32];
+				listenSocket.receive(reqFriendPacket);
+			}*/
+			///////////////////////////////////////
+			byte[] bb = {PUNCHED};
+			DatagramPacket pp = new DatagramPacket(bb, 1, listenSocket.getInetAddress(), listenSocket.getPort());
+			listenSocket.send(pp);
+			//listenSocket.send(pp);
+			///////////////////////////////////////
 			listenSocket.receive(reqFriendPacket);
+
 			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 			byte nameSize = requestorFriendName[0];
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
