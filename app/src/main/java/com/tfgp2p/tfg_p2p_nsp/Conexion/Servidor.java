@@ -72,7 +72,7 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), );
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 
@@ -254,11 +254,7 @@ public class Servidor {
 				listenSocket.receive(reqFriendPacket);
 			}*/
 			///////////////////////////////////////
-			byte[] bb = {PUNCHED};
-			DatagramPacket pp = new DatagramPacket(bb, 1, listenSocket.getInetAddress(), listenSocket.getPort());
-			listenSocket.send(pp);
-			//listenSocket.send(pp);
-			///////////////////////////////////////
+
 			listenSocket.receive(reqFriendPacket);
 
 			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
@@ -347,6 +343,29 @@ public class Servidor {
 
 		//socket_to_client.connect(friendIP, friendPort);
 		listenSocket.connect(friendIP, friendPort);
+
+		/* Ahora entra en acción el Hole Punching. Se deben enviar 2 paquetes:
+		 *
+		 * El primero es el que abre el camino. Cuando el router toma este paquete para reenviarlo
+		 * crea en su tabla NAT la traducción IP_origen/puerto_origen ; IP_destino/puerto_destino.
+		 * Así cuando reciba un paquete desde el destino hasta el origen registrados lo pasará.
+		 *
+		 * El segundo paquete tiene como objetivo asegurarse de que la NAT del otro dispositivo
+		 * ya tiene guardada la traducción correspondiente en su tabla de traducciones y que desde
+		 * el momento que obtiene respuesta ya se puede comenzar con la comunicación de los datos
+		 * que nos interesan.
+		 */
+		byte[] sendPunchArray = {PUNCH};
+		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, listenSocket.getInetAddress(), listenSocket.getPort());
+		listenSocket.send(sendPunch);
+		//listenSocket.send(sendPunch);
+		byte[] receivePunchArray = {0};
+		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
+		while(){
+			listenSocket.receive(receivePunch);
+		}
+		///////////////////////////////////////
+		//Pensar en cómo trato el 2º paquete que llegue con PUNCH.
 	}
 
 
