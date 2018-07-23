@@ -92,6 +92,8 @@ public class Cliente {
 			//socket_to_server = new DatagramSocket();
 			//socket_to_friend = new DatagramSocket();
 			socket = new DatagramSocket();
+			// TODO: Volver a activar el timeout.
+			//socket.setSoTimeout(2000);
 
 			loginServer();
 
@@ -173,7 +175,15 @@ public class Cliente {
 				//socket.receive(pac);
 				//socket_to_friend.receive(pac);
 				//socket_to_server.receive(pac);
-				socket.receive(pac);
+				/*int retries = 2;
+				resp[0] = PUNCH;
+				while ((resp[0]==PUNCH) && (retries>=0)) {
+					socket.receive(pac);
+					--retries;
+				}
+				if (retries < 0)
+					throw new AlertException("No se ha recibido respuesta del otro dispositivo");
+				*/
 				if (resp[0] == HELLO_FRIEND) {
 					requestFile(fileName, friendName);
 					receiveFile(fileName);
@@ -237,11 +247,23 @@ public class Cliente {
 		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		//socket_to_friend.connect(friendIP, friendPort);
-		//socket_to_server.connect(friendIP, friendPort);
-		// TODO: COMPROBAR QUE CUANDO SE HACE LA LLAMADA A CONNECT CAMBIA EL PUERTO (se borra el del servidor y se guarda el del amigo).
 		socket.connect(friendIP, friendPort);
-		// En principio la conexión sale bien.
+
+		byte[] sendPunchArray = {PUNCH};
+		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket.getInetAddress(), socket.getPort());
+		socket.send(sendPunch);
+
+		byte[] receivePunchArray = new byte[10];
+		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
+
+		int retriesLeft = 7;
+		while((receivePunchArray[0]!=PUNCH) && (retriesLeft>0)){
+			socket.send(sendPunch);
+			socket.receive(receivePunch);
+			--retriesLeft;
+		}
+
+		if (retriesLeft == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
 	}
 
 

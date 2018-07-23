@@ -27,8 +27,6 @@ import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
  * Clase que implementa la parte servidor de la aplicación.
  */
 
-	// TODO: Cambiar nombre a carpeta Gnutella.
-
 	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta n (pequeño) proveyendo ficheros (a n clientes).
 public class Servidor {
 
@@ -72,9 +70,11 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), );
+			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 61001);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
+			// TODO: Volver a activar el timeout.
+			//this.listenSocket.setSoTimeout(2000);
 
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
@@ -245,7 +245,7 @@ public class Servidor {
 			 * y después el nombre.
 			 */
 			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
-			//listenSocket.receive(reqFriendPacket);
+			listenSocket.receive(reqFriendPacket);
 			//socket_to_client.receive(reqFriendPacket);
 
 			/*while (requestorFriendName[0] != PUNCHED) {
@@ -255,7 +255,15 @@ public class Servidor {
 			}*/
 			///////////////////////////////////////
 
-			listenSocket.receive(reqFriendPacket);
+			/*int retries = 2;
+			requestorFriendName[0] = PUNCH;
+			while ((requestorFriendName[0]==PUNCH) && (retries>0)) {
+				listenSocket.receive(reqFriendPacket);
+				--retries;
+			}
+			if (retries < 0)
+				throw new AlertException("No se ha recibido respuesta del otro dispositivo");
+			*/
 
 			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 			byte nameSize = requestorFriendName[0];
@@ -275,7 +283,7 @@ public class Servidor {
 				//socket_to_client.send(resp);
 				listenSocket.send(resp);
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.");
-				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos y realizan peticiones a saco.
+				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos o sí y/o realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
 				// TODO: Escribir aquí el código que decide esto.
 
@@ -327,7 +335,7 @@ public class Servidor {
 	 *
 	 * @throws IOException
 	 */
-	private void connect_to_friend() throws IOException {
+	private void connect_to_friend() throws IOException, AlertException{
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
@@ -358,14 +366,20 @@ public class Servidor {
 		byte[] sendPunchArray = {PUNCH};
 		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, listenSocket.getInetAddress(), listenSocket.getPort());
 		listenSocket.send(sendPunch);
-		//listenSocket.send(sendPunch);
-		byte[] receivePunchArray = {0};
+
+		byte[] receivePunchArray = new byte[10];
 		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
-		while(){
+
+		// El bucle está pensado para tener timeout activado.
+		int retriesLeft = 7;
+		while((receivePunchArray[0]!=PUNCH) && (retriesLeft>0)){
+			listenSocket.send(sendPunch);
 			listenSocket.receive(receivePunch);
+			--retriesLeft;
 		}
-		///////////////////////////////////////
-		//Pensar en cómo trato el 2º paquete que llegue con PUNCH.
+
+		if (retriesLeft == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
+
 	}
 
 
