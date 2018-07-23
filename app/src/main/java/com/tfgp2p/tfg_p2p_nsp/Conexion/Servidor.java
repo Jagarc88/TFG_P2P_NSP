@@ -245,25 +245,11 @@ public class Servidor {
 			 * y después el nombre.
 			 */
 			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
-			listenSocket.receive(reqFriendPacket);
-			//socket_to_client.receive(reqFriendPacket);
-
-			/*while (requestorFriendName[0] != PUNCHED) {
-				requestorFriendName = null;
-				requestorFriendName = new byte[32];
-				listenSocket.receive(reqFriendPacket);
-			}*/
-			///////////////////////////////////////
-
-			/*int retries = 2;
+			// Hay que ir descartando todos los PUNCH enviados de más por el otro:
 			requestorFriendName[0] = PUNCH;
-			while ((requestorFriendName[0]==PUNCH) && (retries>0)) {
+			while (requestorFriendName[0]==PUNCH)
 				listenSocket.receive(reqFriendPacket);
-				--retries;
-			}
-			if (retries < 0)
-				throw new AlertException("No se ha recibido respuesta del otro dispositivo");
-			*/
+			//socket_to_client.receive(reqFriendPacket);
 
 			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 			byte nameSize = requestorFriendName[0];
@@ -379,7 +365,6 @@ public class Servidor {
 		}
 
 		if (retriesLeft == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
-
 	}
 
 

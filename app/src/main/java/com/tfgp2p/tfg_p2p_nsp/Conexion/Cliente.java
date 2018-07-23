@@ -147,6 +147,13 @@ public class Cliente {
 				connect_to_friend();
 
 				///////////////////////////////////////////////////////////
+				// Hay que ir descartando todos los PUNCH enviados de más por el otro:
+				byte[] discardBuf = {PUNCH};
+				DatagramPacket discardPunches = new DatagramPacket(discardBuf, 1);
+				while (discardBuf[0] == PUNCH) {
+					socket.receive(discardPunches);
+				}
+				///////////////////////////////////////////////////////////
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
@@ -156,14 +163,6 @@ public class Cliente {
 				nameBAOS.write(myName);
 				byte[] buff = nameBAOS.toByteArray();
 
-				/*DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
-						socket_to_friend.getInetAddress(), socket_to_friend.getPort());
-				socket_to_friend.send(hey_its_me);
-				*/
-				//////////////////////////////////////////////
-				/*DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
-						socket_to_server.getInetAddress(), socket_to_server.getPort());
-				socket_to_server.send(hey_its_me);*/
 				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
 						socket.getInetAddress(), socket.getPort());
 				socket.send(hey_its_me);
