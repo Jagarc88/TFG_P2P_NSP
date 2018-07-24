@@ -13,6 +13,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
@@ -92,8 +93,6 @@ public class Cliente {
 			//socket_to_server = new DatagramSocket();
 			//socket_to_friend = new DatagramSocket();
 			socket = new DatagramSocket();
-			// TODO: Volver a activar el timeout.
-			//socket.setSoTimeout(2000);
 
 			loginServer();
 
@@ -229,11 +228,21 @@ public class Cliente {
 	 * @throws IOException
 	 */
 	private void connect_to_friend() throws IOException, AlertException {
+		this.socket.setSoTimeout(5000);
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
 		//socket_to_server.receive(friendInfoPacket);
-		socket.receive(friendInfoPacket);
+
+		int retries = 3;
+		while (retries > 0){
+			try{
+				socket.receive(friendInfoPacket);
+				retries = 0;
+			} catch (SocketTimeoutException e) {
+				--retries;
+			}
+		}
 
 		if (friendInfo[0] == NO_FRIEND)
 			throw new AlertException("Ha habido un problema en la comunicación.");
@@ -255,14 +264,19 @@ public class Cliente {
 		byte[] receivePunchArray = new byte[10];
 		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
 
-		int retriesLeft = 7;
-		while((receivePunchArray[0]!=PUNCH) && (retriesLeft>0)){
-			socket.send(sendPunch);
-			socket.receive(receivePunch);
-			--retriesLeft;
+		retries = 3;
+		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
+			try {
+				socket.send(sendPunch);
+				socket.receive(receivePunch);
+			} catch (SocketTimeoutException e) {
+				--retries;
+			}
 		}
 
-		if (retriesLeft == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
+		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
+
+		socket.setSoTimeout(0);
 	}
 
 

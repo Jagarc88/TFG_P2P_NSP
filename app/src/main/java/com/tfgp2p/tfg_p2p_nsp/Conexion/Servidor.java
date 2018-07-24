@@ -14,6 +14,8 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -70,11 +72,9 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 61001);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 52983);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
-			// TODO: Volver a activar el timeout.
-			//this.listenSocket.setSoTimeout(2000);
 
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
@@ -322,10 +322,20 @@ public class Servidor {
 	 * @throws IOException
 	 */
 	private void connect_to_friend() throws IOException, AlertException{
+		this.listenSocket.setSoTimeout(5000);
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-		listenSocket.receive(friendInfoPacket);
+
+		int retries = 3;
+		while(retries > 0){
+			try {
+				listenSocket.receive(friendInfoPacket);
+				retries = 0;
+			} catch (SocketTimeoutException e){
+				--retries;
+			}
+		}
 
 		byte[] IParray = new byte[4];
 		System.arraycopy(friendInfo, 0, IParray, 0, 4);
@@ -357,14 +367,19 @@ public class Servidor {
 		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
 
 		// El bucle está pensado para tener timeout activado.
-		int retriesLeft = 7;
-		while((receivePunchArray[0]!=PUNCH) && (retriesLeft>0)){
-			listenSocket.send(sendPunch);
-			listenSocket.receive(receivePunch);
-			--retriesLeft;
+		retries = 3;
+		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
+			try{
+				listenSocket.send(sendPunch);
+				listenSocket.receive(receivePunch);
+			} catch (SocketTimeoutException e) {
+				--retries;
+			}
 		}
 
-		if (retriesLeft == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
+		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
+
+		listenSocket.setSoTimeout(0);
 	}
 
 
