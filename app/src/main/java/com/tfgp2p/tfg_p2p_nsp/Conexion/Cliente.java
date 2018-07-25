@@ -149,9 +149,12 @@ public class Cliente {
 				// Hay que ir descartando todos los PUNCH enviados de más por el otro:
 				byte[] discardBuf = {PUNCH};
 				DatagramPacket discardPunches = new DatagramPacket(discardBuf, 1);
-				while (discardBuf[0] == PUNCH) {
-					socket.receive(discardPunches);
-				}
+				socket.setSoTimeout(1000);
+				try {
+					while (discardBuf[0] == PUNCH) {
+						socket.receive(discardPunches);
+					}
+				} catch (SocketTimeoutException e) {socket.setSoTimeout(0);}
 				///////////////////////////////////////////////////////////
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
@@ -170,7 +173,7 @@ public class Cliente {
 				byte[] resp = new byte[1];
 				DatagramPacket pac = new DatagramPacket(resp, resp.length);
 				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
-				//socket.receive(pac);
+				socket.receive(pac);
 				//socket_to_friend.receive(pac);
 				//socket_to_server.receive(pac);
 				/*int retries = 2;
@@ -199,11 +202,11 @@ public class Cliente {
 			e.printStackTrace();
 		}
 		catch (IllegalArgumentException e) {
-			if (ppIndex < 4)
+			if (ppIndex < 4) {
 				//new Cliente(Servidor.possiblePorts[++ppIndex]);
-				// TODO: Seguramente no haga falta usar puertos predeterminados por el programador. Debería bastar con el puerto
-				// TODO: elegido al azar al crear el socket con el constructor del socket sin argumentos.
+				e.printStackTrace();
 				new Cliente();
+			}
 			else
 				e.printStackTrace();
 		}
@@ -264,18 +267,18 @@ public class Cliente {
 		byte[] receivePunchArray = new byte[10];
 		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
 
-		retries = 3;
+		/*retries = 3;
 		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
-			try {
+			try {*/
 				socket.send(sendPunch);
-				socket.receive(receivePunch);
+				/*socket.receive(receivePunch);
 			} catch (SocketTimeoutException e) {
 				--retries;
 			}
 		}
 
 		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
-
+		*/
 		socket.setSoTimeout(0);
 	}
 
