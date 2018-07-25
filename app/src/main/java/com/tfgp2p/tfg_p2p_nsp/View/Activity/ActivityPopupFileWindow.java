@@ -7,10 +7,12 @@ import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.GestorSistemaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.R;
 import com.tfgp2p.tfg_p2p_nsp.View.MainActivity;
 import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.ActivityPopupAmigo.ListViewSeleccionables;
@@ -25,6 +27,7 @@ public class ActivityPopupFileWindow extends Activity {
     private ListViewSeleccionables contentListView;
     private Button buttonDownload;
     private Button buttonCerrar;
+    private TextView nameUser;
 
     private Amigo selectedAmigo;
 
@@ -38,16 +41,18 @@ public class ActivityPopupFileWindow extends Activity {
         buttonDownload = findViewById(R.id.popupfilewindow_downloadbutton);
         buttonCerrar = findViewById(R.id.popupfilewindow_cerrarbutton);
 
+        nameUser = findViewById(R.id.popupfilewindow_nameuser);
+
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
-
+/*
         Long width = Math.round(dm.widthPixels*.8);
         Long height = Math.round(dm.heightPixels*.8);
-
         getWindow().setLayout(width.intValue(),height.intValue());
-
+*/
         selectedAmigo = LayoutElementAmigos.selectedAmigo;
         fillListFiles(GestorSistemaAmigos.getFicheroListFromAmigo(selectedAmigo));
+        nameUser.setText(selectedAmigo.getNombreAmigo());
 
         buttonDownload.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,10 +79,12 @@ public class ActivityPopupFileWindow extends Activity {
     }
 
     private void onClickButtonDownload(){
-        //TODO Pone la lista de elementos seleccionados a descargar
+        List<Fichero> ficheroSelList = new ArrayList<>();
         for (LayoutElementFichero layoutElementFichero:contentListView.getSelected()){
-            System.out.println(layoutElementFichero.getFichero().getNombre());
+            ficheroSelList.add(layoutElementFichero.getFichero());
         }
+        GestorSistemaFicheros.downloadFilesFromAmigo(ficheroSelList,selectedAmigo);
+        onClickButtonCerrar();
     }
 
     private void onClickButtonCerrar(){

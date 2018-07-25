@@ -3,7 +3,7 @@ package com.tfgp2p.tfg_p2p_nsp.Conexion;
 import android.util.Pair;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.GestorSistemaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.File;
@@ -26,8 +26,6 @@ import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
  *
  * Clase que implementa la parte servidor de la aplicación.
  */
-
-	// TODO: Cambiar nombre a carpeta Gnutella.
 
 	// TODO: Sería óptimo tener un hilo recibiendo las conexiones entrantes y hasta n (pequeño) proveyendo ficheros (a n clientes).
 public class Servidor {
@@ -72,7 +70,7 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"), 61516);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName("79.155.22.115"), 61516);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 
@@ -112,7 +110,7 @@ public class Servidor {
 	 * La información enviada es SERVER_CONNECT, el tamaño del nombre del cliente y el nombre del cliente.
 	 */
 	private void loginServer(){
-		String myName = Amigos.getMyName();
+		String myName = GestorSistemaAmigos.getMyName();
 		byte[] connectionBuffer = new byte[2+myName.length()];
 		connectionBuffer[0] = SERVER_CONNECT;
 		connectionBuffer[1] = (byte) myName.length();
@@ -254,9 +252,9 @@ public class Servidor {
 			byte nameSize = requestorFriendName[0];
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
 
-			Amigos amigos = Amigos.getInstance();
+			GestorSistemaAmigos amigos = GestorSistemaAmigos.getInstance();
 			//////////////////// BORRAR AÑADIDO MANUAL DEL AMIGO //////////////////////
-			amigos.addFriend(friendName, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+			amigos.addFriend(friendName,"54654546", reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 			///////////////////////////////////////////////////////////////////////////
 			if (!amigos.isFriend(friendName, reqFriendPacket.getAddress())){
 			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
@@ -365,7 +363,7 @@ public class Servidor {
 					 * request[1] = N : Longitud del nombre del fichero.
 					 * request[2..N] : Nombre del fichero.
 					 */
-					InetSocketAddress addr = Amigos.getInstance().getFriendAddr(friend);
+					InetSocketAddress addr = GestorSistemaAmigos.getInstance().getFriendAddr(friend);
 					//int fileNamePosition = 1 + friend.length();
 					//String fileName = request.toString().substring(fileNamePosition);
 					String fileName = new String(request).substring(2, 2+request[1]);

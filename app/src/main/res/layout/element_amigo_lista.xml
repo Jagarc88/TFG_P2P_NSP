@@ -41,4 +41,23 @@
         app:layout_constraintStart_toEndOf="@+id/test_imageview_fragment_element_amigos"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <LinearLayout
+        android:id="@+id/element_amigo_lista_explorefriend"
+        android:layout_width="97dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@android:color/darker_gray"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.466">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_folder_black_24dp" />
+    </LinearLayout>
+
 </android.support.constraint.ConstraintLayout>

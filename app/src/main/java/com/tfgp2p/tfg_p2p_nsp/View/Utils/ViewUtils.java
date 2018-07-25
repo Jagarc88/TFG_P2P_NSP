@@ -1,8 +1,12 @@
 package com.tfgp2p.tfg_p2p_nsp.View.Utils;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+
+import com.tfgp2p.tfg_p2p_nsp.Controlador.AplicacionMain;
 
 public class ViewUtils {
 
@@ -46,5 +50,37 @@ public class ViewUtils {
         scrollView.addView(linearLayout);
         linearLayoutContainer.addView(scrollView);
         return linearLayout;
+    }
+
+    /**
+     * Crea un diálogo de alerta sencillo
+     * @return Nuevo diálogo
+     */
+    public static AlertDialog createSimpleDialogOKCancelar(String titulo,String mensaje,final IOKCancelarDialogListener listener,Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+        builder.setTitle(titulo)
+                .setMessage(mensaje)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                listener.onPossitiveButtonClick();
+                            }
+                        })
+                .setNegativeButton("CANCELAR",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                listener.onNegativeButtonClick();
+                            }
+                        });
+
+        return builder.create();
+    }
+
+    public interface IOKCancelarDialogListener{
+        void onPossitiveButtonClick();
+        void onNegativeButtonClick();
     }
 }

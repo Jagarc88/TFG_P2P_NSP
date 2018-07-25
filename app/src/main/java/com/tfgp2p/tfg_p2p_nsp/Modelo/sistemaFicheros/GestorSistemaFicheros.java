@@ -1,5 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros;
 
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,11 +32,9 @@ public class GestorSistemaFicheros {
 
 
     public static GestorSistemaFicheros getInstance() {
-
         if(gestorSistemaFicheros == null){
             gestorSistemaFicheros = new GestorSistemaFicheros();
         }
-
         return gestorSistemaFicheros;
     }
 
@@ -95,5 +95,12 @@ public class GestorSistemaFicheros {
             }
         }
         return ficheroList;
+    }
+
+    public static void downloadFilesFromAmigo(List<Fichero> ficheroSelList, Amigo selectedAmigo) {
+        // TODO Gestion de la descarga de los ficheros seleccionados
+        for (Fichero fichero:ficheroSelList) {
+            System.out.println(fichero.getNombre());
+        }
     }
 }

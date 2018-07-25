@@ -40,7 +40,7 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
         itemSelected = null;
         linearLayout_listaSelected = findViewById(R.id.selecter_lista);
 
-        fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER));
+        fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER).getProperty());
     }
 
     public void fillContent(String URL){
@@ -153,7 +153,7 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
         if(itemSelected != null){
 
             ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, itemSelected.getPath());
-            ConfigProperties.saveProperties(getApplicationContext());
+            ConfigProperties.saveProperties();
 
             GestorSistemaFicheros.reloadCompartiendoCarpetaData();
 

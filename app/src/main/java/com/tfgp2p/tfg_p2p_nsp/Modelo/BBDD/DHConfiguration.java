@@ -1,33 +1,57 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD;
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 
-public class DHConfiguration extends DatabaseHelper {
+public class DHConfiguration extends ADHprofile {
+
+    private static DHConfiguration dhConfiguration;
 
     public static final String COL_ID_PROPERTY_NAME="PROPERTY_NAME";
     public static final String COL_VALUE="VALUE";
 
     private static String TABLE_NAME="configuracion";
 
-    public DHConfiguration(Context context) {
-        super(context);
+    private DHConfiguration(DatabaseHelper databaseHelper) {
+        super(databaseHelper);
+    }
+
+    public DHConfiguration(){}
+
+    public static DHConfiguration createInstance(DatabaseHelper databaseHelper){
+        dhConfiguration = new DHConfiguration(databaseHelper);
+        return dhConfiguration;
+    }
+
+    public static DHConfiguration getInstance(){
+        return dhConfiguration;
     }
 
     @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table "+TABLE_NAME+" ("+COL_ID_PROPERTY_NAME+" VARCHAR(25) PRIMARY KEY, "+COL_VALUE+" TEXT)");
+    public String onCreateQuery() {
+        return "create table if not exists "+TABLE_NAME+" ("+COL_ID_PROPERTY_NAME+" VARCHAR(35) PRIMARY KEY, "+COL_VALUE+" TEXT)";
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int i, int i1) {
-    /*    db.execSQL("drop table if exists "+TABLE_NAME);
-        onCreate(db);
-        */
-    }
-
-    @Override
-    protected String getTableName() {
+    public String getTableName() {
         return TABLE_NAME;
+    }
+
+    @Override
+    public Object getKeyElement() {
+        return COL_ID_PROPERTY_NAME;
+    }
+
+    @Override
+    public String[] getColumnNamesInOrder() {
+        return new String[]{COL_ID_PROPERTY_NAME,COL_VALUE};
+    }
+
+    @Override
+    public int[] getColumnTypesInOrder() {
+        return new int[]{DatabaseHelper.FIELD_TYPE_STRING,DatabaseHelper.FIELD_TYPE_STRING};
+    }
+
+    @Override
+    public Object[] getContentsInOrder(IAlmacenableBBDD almacenableBBDD) {
+        return almacenableBBDD.getContentsInOrder();
     }
 }

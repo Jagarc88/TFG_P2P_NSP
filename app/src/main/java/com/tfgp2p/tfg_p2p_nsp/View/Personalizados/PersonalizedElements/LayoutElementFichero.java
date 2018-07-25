@@ -20,26 +20,28 @@ public class LayoutElementFichero extends LinearLayout {
 
     private boolean selected;
 
+    View elementFileslot;
+
     public LayoutElementFichero(Context context) {
         super(context);
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        View elementFileslot = inflater.inflate(R.layout.elemento_fileslot_small, null, false);
+        elementFileslot = inflater.inflate(R.layout.elemento_fileslot_small, null, false);
 
         textName = elementFileslot.findViewById(R.id.fileslot_small_nameFile);
         iconView = elementFileslot.findViewById(R.id.fileslot_small_icon);
 
         selected = false;
-        setBackgroundResource(R.drawable.background_config_opt);
+        elementFileslot.setBackgroundResource(R.drawable.background_config_opt);
 
-        elementFileslot.setOnClickListener(new OnClickListener() {
+        this.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 selected=!selected;
                 if(selected){
-                    setBackgroundResource(R.drawable.background_config_opt_selected);
+                    elementFileslot.setBackgroundResource(R.drawable.background_config_opt_selected);
                 }else{
-                    setBackgroundResource(R.drawable.background_config_opt);
+                    elementFileslot.setBackgroundResource(R.drawable.background_config_opt);
                 }
             }
         });

@@ -1,6 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.View;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -13,11 +14,16 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+
+import com.tfgp2p.tfg_p2p_nsp.Controlador.AplicacionMain;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DHAmigos;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.BBDD.DatabaseHelper;
 import com.tfgp2p.tfg_p2p_nsp.R;
 
 import com.tfgp2p.tfg_p2p_nsp.View.Activity.ActivitySeleccionCarpeta;
 import com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.FragmentTab;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.SimpleGestureFilter;
+import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
 
 public class MainActivity extends AppCompatActivity implements SimpleGestureFilter.SimpleGestureListener{
 
@@ -106,7 +112,13 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
      */
     @Override
     public void onBackPressed() {
-        exitApplication(0);
+        AlertDialog alertDialogExit = ViewUtils.createSimpleDialogOKCancelar(
+                "Cerrar applicacion",
+                "¿Seguro que desea cerrar la aplicación?",
+                new ExitDialogMainActivityListener(),
+                this
+        );
+        alertDialogExit.show();
     }
 
     public static void exitApplication(int state){
@@ -240,4 +252,16 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
 
     @Override
     public void onDoubleTap() {}
+
+    public class ExitDialogMainActivityListener implements ViewUtils.IOKCancelarDialogListener {
+        @Override
+        public void onPossitiveButtonClick() {
+            exitApplication(0);
+        }
+
+        @Override
+        public void onNegativeButtonClick() {
+            // NADA
+        }
+    }
 }

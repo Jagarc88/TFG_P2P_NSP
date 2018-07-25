@@ -1,7 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.Conexion;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.GestorSistemaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -29,7 +29,7 @@ public class Cliente {
 	private static Cliente client = null;
 
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
-	private Amigos amigos;
+	private GestorSistemaAmigos gestorSistemaAmigos;
 
 	private static DatagramSocket socket_to_server;
 	private DatagramSocket socket_to_friend;
@@ -55,7 +55,7 @@ public class Cliente {
 		try {
 			//this.friendsSockets = new ArrayList<>(10);
 			//this.friends = new HashMap<>(10);
-			this.amigos = Amigos.getInstance();
+			this.gestorSistemaAmigos = GestorSistemaAmigos.getInstance();
 			//this.socket = new DatagramSocket(listenPort);
 			//this.socket_to_server = new DatagramSocket();
 			socket_to_server = Servidor.getServerSocket();
@@ -112,7 +112,7 @@ public class Cliente {
 				///////////////////////////////////////////////////////////
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
-				byte[] myName = Amigos.getMyName().getBytes();
+				byte[] myName = GestorSistemaAmigos.getMyName().getBytes();
 				byte[] myNameLen = {(byte) myName.length};
 				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
 				nameBAOS.write(myNameLen);
@@ -222,7 +222,7 @@ public class Cliente {
 			// TODO FALTA REESCRIBIR BIEN ESTE METODO!!!! edit: puede que así valga.
 			// Se envia FILE_REQ + nombre del archivo.
 
-			InetSocketAddress addr = amigos.getFriendAddr(name);
+			InetSocketAddress addr = gestorSistemaAmigos.getFriendAddr(name);
 			// Hay que enviar en el byte[] FILE_REQ, la longitud del archivo, y el nombre del archivo.
 			byte[] reqType = new byte[1];
 			reqType[0] = Utils.FILE_REQ;
@@ -300,8 +300,6 @@ public class Cliente {
 			e.printStackTrace();
 		}
 	}
-
-
 
 
 	/**

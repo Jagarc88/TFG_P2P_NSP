@@ -9,24 +9,29 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.GestorSistemaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.R;
 import com.tfgp2p.tfg_p2p_nsp.View.Activity.ActivityPopupFileWindow;
 
 public class LayoutElementAmigos extends LinearLayout {
-
-    public static final int STATE_USER_OFFLINE = 0;
-    public static final int STATE_USER_ONLINE = 1;
 
     public static Amigo selectedAmigo;
 
     private TextView textViewFriendName;
     private ImageView imageViewStateIcon;
 
+    private LinearLayout buttonExploreFriend;
+
     private View viewInicio;
     private Amigo amigo;
 
-    public LayoutElementAmigos(Context context) {
+    private boolean selected;
+    private boolean selectable;
+
+    public LayoutElementAmigos(Context context, boolean selectable) {
         super(context);
+
+        this.selectable = selectable;
 
         viewInicio = LayoutInflater.from(context).inflate(R.layout.element_amigo_lista, this, false);
         this.addView(viewInicio);
@@ -34,20 +39,28 @@ public class LayoutElementAmigos extends LinearLayout {
         textViewFriendName = viewInicio.findViewById(R.id.test_descarga_nombrepersona);
         imageViewStateIcon = viewInicio.findViewById(R.id.test_imageview_fragment_element_amigos);
 
-        viewInicio.setOnClickListener(new OnClickListener() {
+        buttonExploreFriend = viewInicio.findViewById(R.id.element_amigo_lista_explorefriend);
+
+        buttonExploreFriend.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 onClickExplore();
             }
         });
+        viewInicio.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    onClickSelected();
+                }
+            });
     }
 
     public void setIconState(int state){
         switch (state){
-            case STATE_USER_OFFLINE:{
+            case GestorSistemaAmigos.STATE_USER_OFFLINE:{
                 imageViewStateIcon.setImageResource(R.drawable.ic_person_grey_24dp);
             }break;
-            case STATE_USER_ONLINE:{
+            case GestorSistemaAmigos.STATE_USER_ONLINE:{
                 imageViewStateIcon.setImageResource(R.drawable.ic_person_green_24dp);
             } break;
         }
@@ -68,5 +81,33 @@ public class LayoutElementAmigos extends LinearLayout {
         selectedAmigo = amigo;
         Intent listCarpeta = new Intent(getContext(), ActivityPopupFileWindow.class);
         getContext().startActivity(listCarpeta);
+    }
+
+    public void onClickSelected(){
+        //Si no es seleccionable se ignora la funcion
+        if(selectable) {
+            toggleSelected();
+        }
+        System.out.println("El amigo es seleccionable? ->"+selectable);
+    }
+
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+        if(selected){
+            viewInicio.setBackgroundResource(R.drawable.background_config_opt_selected);
+        }else{
+            viewInicio.setBackgroundResource(R.drawable.background_config_opt);
+        }
+    }
+
+    public boolean toggleSelected(){
+        setSelected(!selected);
+        return selected;
     }
 }
