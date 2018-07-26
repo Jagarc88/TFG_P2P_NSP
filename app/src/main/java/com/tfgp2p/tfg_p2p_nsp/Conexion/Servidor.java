@@ -14,7 +14,6 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -72,7 +71,7 @@ public class Servidor {
 	private Servidor(){
 		try {
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), );
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
 			this.listenSocket = new DatagramSocket();
 			this.listenSocket.setReuseAddress(true);
 

@@ -298,14 +298,17 @@ public class Cliente {
 	 * 3º Nombre del fichero solicitado.
 	 *
 	 * @param fileName Nombre del fichero solicitado.
-	 * @param name Nombre del amigo que tiene el fichero.
+	 * @param friendName Nombre del amigo que tiene el fichero.
 	 */
-	private void requestFile(String fileName, String name) {
+	private void requestFile(String fileName, String friendName) {
 		try{
 			// TODO FALTA REESCRIBIR BIEN ESTE METODO!!!! edit: puede que así valga.
+			// TODO: Borrar añadido manual del amigo:
+			this.amigos.addFriend(friendName, socket.getInetAddress(), socket.getPort());
+			/////////////////////////////////////////
 			// Se envia FILE_REQ + nombre del archivo.
 
-			InetSocketAddress addr = amigos.getFriendAddr(name);
+			InetSocketAddress addr = amigos.getFriendAddr(friendName);
 			// Hay que enviar en el byte[] FILE_REQ, la longitud del archivo, y el nombre del archivo.
 			byte[] reqType = new byte[1];
 			reqType[0] = Utils.FILE_REQ;
