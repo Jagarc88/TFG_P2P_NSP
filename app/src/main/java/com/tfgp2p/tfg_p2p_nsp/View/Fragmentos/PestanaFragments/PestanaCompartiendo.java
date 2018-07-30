@@ -7,7 +7,7 @@ import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.ICompartiendoDataCambio;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.TipoFichero;
-import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutElementFichero;
+import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutsFicheros.LayoutElementFichero;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
 import com.tfgp2p.tfg_p2p_nsp.R;
 

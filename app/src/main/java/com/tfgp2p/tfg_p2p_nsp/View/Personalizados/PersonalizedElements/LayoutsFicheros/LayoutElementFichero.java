@@ -1,4 +1,4 @@
-package com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements;
+package com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutsFicheros;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -18,33 +18,16 @@ public class LayoutElementFichero extends LinearLayout {
 
     private Fichero fichero;
 
-    private boolean selected;
-
-    View elementFileslot;
+    protected View elementFileslot;
 
     public LayoutElementFichero(Context context) {
         super(context);
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        elementFileslot = inflater.inflate(R.layout.elemento_fileslot_small, null, false);
+        elementFileslot = inflater.inflate(R.layout.elemento_fileslot_small, this, false);
 
         textName = elementFileslot.findViewById(R.id.fileslot_small_nameFile);
         iconView = elementFileslot.findViewById(R.id.fileslot_small_icon);
-
-        selected = false;
-        elementFileslot.setBackgroundResource(R.drawable.background_config_opt);
-
-        this.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                selected=!selected;
-                if(selected){
-                    elementFileslot.setBackgroundResource(R.drawable.background_config_opt_selected);
-                }else{
-                    elementFileslot.setBackgroundResource(R.drawable.background_config_opt);
-                }
-            }
-        });
 
         this.addView(elementFileslot);
     }
@@ -62,8 +45,4 @@ public class LayoutElementFichero extends LinearLayout {
         iconView.setImageDrawable(TipoFichero.obtainDrawable(TipoFichero.obtainTipoFichero(name), getContext()));
     }
 
-    @Override
-    public boolean isSelected() {
-        return selected;
-    }
 }

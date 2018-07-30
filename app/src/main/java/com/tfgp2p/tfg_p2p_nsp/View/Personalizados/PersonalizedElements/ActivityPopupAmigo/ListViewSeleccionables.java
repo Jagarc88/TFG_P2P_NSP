@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
-import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutElementFichero;
+import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutsFicheros.LayoutElementFichero;
 
 import java.util.ArrayList;
 import java.util.List;
