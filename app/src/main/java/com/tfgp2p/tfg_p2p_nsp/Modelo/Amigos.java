@@ -1,5 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo;
 
+import android.content.Context;
+
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
 
 import java.net.InetAddress;
@@ -23,16 +25,19 @@ public class Amigos {
 
 	private static Amigos amigos = null;
 
+	private Context context;
 
 
-	public static Amigos getInstance(){
+
+	public static Amigos getInstance(Context c){
 		if (amigos == null)
-			amigos = new Amigos();
+			amigos = new Amigos(c);
 		return amigos;
 	}
 
 
-	private Amigos(){
+	private Amigos(Context c){
+		context = c;
 		/* De momento ponemos nuestro nombre desde el código. Habría que poner una opción en la
 		 * configuración de la aplicación. Tb deberíamos hacer que el usuario introduzca su nombre
 		 * la primera vez que ejecuta el programa.
@@ -51,7 +56,7 @@ public class Amigos {
 			this.friendsMap.put(name, iaddr);
 		}
 		else
-			throw new AlertException(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.");
+			throw new AlertException(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.", context);
 	}
 
 
@@ -61,7 +66,7 @@ public class Amigos {
 			this.friendsMap.remove(name);
 			this.friendsMap.put(newName, addr);
 		}
-		else throw new AlertException(name + " no existe.");
+		else throw new AlertException(name + " no existe.", context);
 	}
 
 
@@ -70,7 +75,7 @@ public class Amigos {
 			this.friendsMap.remove(name);
 			this.friendsMap.put(name, newAddr);
 		}
-		else throw new AlertException(name + " no existe.");
+		else throw new AlertException(name + " no existe.", context);
 	}
 
 
@@ -78,7 +83,7 @@ public class Amigos {
 		if (this.friendsMap.containsKey(name)){
 			this.friendsMap.remove(name);
 		}
-		else throw new AlertException(name + " no existe.");
+		else throw new AlertException(name + " no existe.", context);
 	}
 
 
@@ -91,7 +96,7 @@ public class Amigos {
 		if (this.friendsMap.containsKey(name)){
 			return this.friendsMap.get(name);
 		}
-		else throw new AlertException(name + " no existe.");
+		else throw new AlertException(name + " no existe.", context);
 	}
 
 

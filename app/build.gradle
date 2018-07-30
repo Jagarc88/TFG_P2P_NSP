@@ -5,7 +5,7 @@ android {
     buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "com.tfgp2p.tfg_p2p_nsp"
-        minSdkVersion 16
+        minSdkVersion 23
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"

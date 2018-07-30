@@ -1,11 +1,13 @@
 package com.tfgp2p.tfg_p2p_nsp.Conexion;
 
+import android.content.Context;
 import android.util.Pair;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,9 +36,12 @@ public class Servidor {
 	// Instancia del objeto Servidor.
 	private static Servidor server = null;
 
+	private Context context;
+
 	// Puerto en el que se escucha a conexiones entrantes.
 	//private int listenTCPPort;
 	private int listenPort;
+	private byte[] address;
 
 	//private ServerSocket listenSocket;
 	private DatagramSocket listenSocket;
@@ -60,16 +65,17 @@ public class Servidor {
 	 *
 	 * @return objeto servidor.
 	 */
-	public static Servidor getInstance(){
+	public static Servidor getInstance(Context c){
 		if (server == null)
-			server = new Servidor();
+			server = new Servidor(c);
 		return server;
 	}
 
 
 
-	private Servidor(){
+	private Servidor(Context c){
 		try {
+			this.context = c;
 			// TODO: poner la direccion del servidor.
 			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
 			this.listenSocket = new DatagramSocket();
@@ -77,6 +83,7 @@ public class Servidor {
 
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
+			this.address = new byte[4];
 
 			this.socket_to_client = new DatagramSocket();
 			this.requestQueue = new ArrayDeque<>();
@@ -99,7 +106,7 @@ public class Servidor {
 			}).start();
 
 		} catch (IOException e) {
-			new Servidor();
+			new Servidor(c);
 		}
 	}
 
@@ -111,15 +118,27 @@ public class Servidor {
 	 * La información enviada es SERVER_CONNECT, el tamaño del nombre del cliente y el nombre del cliente.
 	 */
 	private void loginServer(){
+		// TODO: Ver la IP local antes y después de conectarse.
+		listenSocket.connect(serverInfo.getAddress(), serverInfo.getPort());
 		String myName = Amigos.getMyName();
-		byte[] connectionBuffer = new byte[2+myName.length()];
+		/*byte[] connectionBuffer = new byte[2+myName.length()];
 		connectionBuffer[0] = SERVER_CONNECT;
 		connectionBuffer[1] = (byte) myName.length();
 		System.arraycopy(myName.getBytes(), 0, connectionBuffer, 2, myName.length());
+		*/
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		baos.write(SERVER_CONNECT);
+		baos.write((byte) myName.length());
+		baos.write(myName.getBytes(), 0, myName.length());
+		this.address = Utils.getPublicIP(listenSocket, context);
+		//byte[] localPort = Utils.intToByteArray(listenPort);
+		// todo: Comprobar que las longitudes de la ip y el puerto son 4 bytes.
+		baos.write(address, 0, address.length);
+		//baos.write(localPort, 0, localPort.length);
+		byte[] connectionBuffer = baos.toByteArray();
 		DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 				serverInfo.getAddress(), serverInfo.getPort());
 		try {
-			listenSocket.connect(serverInfo.getAddress(), serverInfo.getPort());
 			listenSocket.send(p);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -257,7 +276,7 @@ public class Servidor {
 			byte nameSize = requestorFriendName[0];
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
 
-			Amigos amigos = Amigos.getInstance();
+			Amigos amigos = Amigos.getInstance(context);
 			//////////////////// BORRAR AÑADIDO MANUAL DEL AMIGO //////////////////////
 			amigos.addFriend(friendName, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 			///////////////////////////////////////////////////////////////////////////
@@ -270,7 +289,7 @@ public class Servidor {
 				//listenSocket.send(resp);
 				//socket_to_client.send(resp);
 				listenSocket.send(resp);
-				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.");
+				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.", context);
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos o sí y/o realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
 				// TODO: Escribir aquí el código que decide esto.
@@ -299,7 +318,7 @@ public class Servidor {
 						requestQueue.notify();
 					}
 				}
-				else throw new AlertException("Error, petición incorrecta.");
+				else throw new AlertException("Error, petición incorrecta.", context);
 			}
 		}
 		catch (IOException e){
@@ -411,7 +430,7 @@ public class Servidor {
 					 * request[1] = N : Longitud del nombre del fichero.
 					 * request[2..N] : Nombre del fichero.
 					 */
-					InetSocketAddress addr = Amigos.getInstance().getFriendAddr(friend);
+					InetSocketAddress addr = Amigos.getInstance(context).getFriendAddr(friend);
 					//int fileNamePosition = 1 + friend.length();
 					//String fileName = request.toString().substring(fileNamePosition);
 					String fileName = new String(request).substring(2, 2+request[1]);
@@ -512,13 +531,7 @@ public class Servidor {
 
 			fis.close();
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NullPointerException e){
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (ArrayIndexOutOfBoundsException e){
+		} catch (IOException | NullPointerException | IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
 		}
 	}
@@ -617,9 +630,8 @@ public class Servidor {
 	}
 
 
-	/*public static DatagramSocket getServerSocket(){
-		return listenSocket;
-	}*/
-
+	public byte[] getAddress(){
+		return this.address;
+	}
 
 }

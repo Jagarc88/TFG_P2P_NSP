@@ -1,8 +1,25 @@
 package com.tfgp2p.tfg_p2p_nsp;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
+import com.tfgp2p.tfg_p2p_nsp.Conexion.Servidor;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 
 /**
@@ -117,6 +134,66 @@ public class Utils {
 
 	public static boolean isValidRequest(byte req){
 		return (packetID.contains(req));
+	}
+
+
+	/**
+	 * Devuelve la dirección IP pública del dispositivo.
+	 */
+	public static byte[] getPublicIP(DatagramSocket socket, Context context){
+		byte[] ip = new byte[0];
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+		/*boolean isConnected = activeNetwork != null &&
+				activeNetwork.isConnectedOrConnecting();
+		*/
+		int connectionType = activeNetwork.getType();
+
+		switch (connectionType){
+			// Si se está conectado a Internet por wifi:
+			/*case ConnectivityManager.TYPE_WIFI:
+				try {
+					URL URL = new URL("http://www.whatismyip.org/");
+					HttpURLConnection conn = (HttpURLConnection) URL.openConnection();
+					conn.setConnectTimeout(5000);
+					conn.setReadTimeout(7000);
+					InputStream inStream = conn.getInputStream();
+					InputStreamReader isr = new InputStreamReader(inStream);
+					BufferedReader br = new BufferedReader(isr);
+					String str = br.readLine();
+					ip = str.getBytes();
+					// No funciona. Devuelve null.
+
+				} catch (IOException e){
+					e.printStackTrace();
+				}
+				break;
+			*/
+			// Si se está conectado a través de la red móvil:
+			/*case ConnectivityManager.TYPE_MOBILE:
+				try {
+					for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+						NetworkInterface ni = en.nextElement();
+						for (Enumeration<InetAddress> enumIpAddr = ni.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+							InetAddress inetAddress = enumIpAddr.nextElement();
+							if (!inetAddress.isLoopbackAddress()) {
+								// TODO: Sale una ip de 32, luegode menos y luego de 31 bytes. ¿IPv6?
+								// TODO: Tb falta que pare el bucle cuando tenga la IP.
+								ip = inetAddress.getHostAddress().getBytes();
+							}
+						}
+					}
+				} catch (SocketException e){
+					e.printStackTrace();
+				}
+				break;
+			*/
+			default:
+				socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+				ip = socket.getLocalAddress().getAddress();
+				break;
+		}
+		return ip;
 	}
 
 }

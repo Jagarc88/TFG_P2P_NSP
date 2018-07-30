@@ -63,9 +63,9 @@ public class AplicacionMain extends Application {
         // Inicia las conexiones
         new Thread(new Runnable(){
             public void run(){
-                amigos = Amigos.getInstance();
-                server = Servidor.getInstance();
-                client = Cliente.getInstance();
+                amigos = Amigos.getInstance(getApplicationContext());
+                server = Servidor.getInstance(getApplicationContext());
+                client = Cliente.getInstance(getApplicationContext());
             }
         }).start();
     }

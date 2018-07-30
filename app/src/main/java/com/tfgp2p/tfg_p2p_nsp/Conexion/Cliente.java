@@ -1,5 +1,7 @@
 package com.tfgp2p.tfg_p2p_nsp.Conexion;
 
+import android.content.Context;
+
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
@@ -29,6 +31,11 @@ public class Cliente {
 
 	private static Cliente client = null;
 
+	private byte[] address;
+	private int port;
+
+	private Context context;
+
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
 	private Amigos amigos;
 
@@ -43,10 +50,10 @@ public class Cliente {
 
 
 
-	public static Cliente getInstance(){
+	public static Cliente getInstance(Context c){
 		if (client == null)
 			//client = new Cliente(Servidor.possiblePorts[ppIndex]);
-			client = new Cliente();
+			client = new Cliente(c);
 		return client;
 	}
 
@@ -63,15 +70,13 @@ public class Cliente {
 			baos.write((byte) myName.length());
 			baos.write(myName.getBytes());
 			baos.write(IS_CLIENT_SOCKET);
-			// Aquí se escribe el puerto del socket que se conectará al amigo.
-			//baos.write(intToByteArray(socket_to_friend.getPort()));
+			//byte[] localPort = Utils.intToByteArray(port);
+			//baos.write(localPort, 0, localPort.length);
 
 			byte[] connectionBuffer = baos.toByteArray();
 			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 
-			//socket_to_server.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-			//socket_to_server.send(p);
 			socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 			socket.send(p);
 		} catch (IOException e) {
@@ -82,17 +87,19 @@ public class Cliente {
 
 	// TODO: Limpiar código del constructor que no debe estar.
 	//private Cliente(int listenPort){
-	private Cliente(){
+	private Cliente(Context c){
 		try {
+			this.context = c;
 			//this.friendsSockets = new ArrayList<>(10);
 			//this.friends = new HashMap<>(10);
-			this.amigos = Amigos.getInstance();
+			this.amigos = Amigos.getInstance(context);
 			//this.socket = new DatagramSocket(listenPort);
 			//this.socket_to_server = new DatagramSocket();
 			//socket_to_server = Servidor.getServerSocket();
 			//socket_to_server = new DatagramSocket();
 			//socket_to_friend = new DatagramSocket();
 			socket = new DatagramSocket();
+			port = socket.getLocalPort();
 
 			loginServer();
 
@@ -191,7 +198,7 @@ public class Cliente {
 				}
 				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
 				else if (resp[0] == NO_FRIEND) {
-					throw new AlertException(friendName + " no es tu amigo.");
+					throw new AlertException(friendName + " no es tu amigo.", context);
 				}
 			}
 			catch (IOException e) {
@@ -205,7 +212,7 @@ public class Cliente {
 			if (ppIndex < 4) {
 				//new Cliente(Servidor.possiblePorts[++ppIndex]);
 				e.printStackTrace();
-				new Cliente();
+				new Cliente(c);
 			}
 			else
 				e.printStackTrace();
@@ -248,7 +255,7 @@ public class Cliente {
 		}
 
 		if (friendInfo[0] == NO_FRIEND)
-			throw new AlertException("Ha habido un problema en la comunicación.");
+			throw new AlertException("Ha habido un problema en la comunicación.", context);
 
 		byte[] IParray = new byte[4];
 		System.arraycopy(friendInfo, 0, IParray, 0, 4);
