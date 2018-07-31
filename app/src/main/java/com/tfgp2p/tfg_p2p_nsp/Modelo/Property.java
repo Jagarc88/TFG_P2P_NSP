@@ -7,9 +7,9 @@ public class Property  implements IAlmacenableBBDD {
     private String property;
     private String key;
 
-    public Property(String property, String key) {
-        this.property = property;
+    public Property(String key, String property) {
         this.key = key;
+        this.property = property;
     }
 
     @Override

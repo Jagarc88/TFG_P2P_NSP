@@ -1,5 +1,9 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros;
 
+import android.os.Environment;
+
+import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Property;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
 
 import java.io.File;
@@ -15,6 +19,9 @@ import java.util.List;
  * @author jagarc88
  */
 public class GestorSistemaFicheros {
+
+    public static final String DEFAULT_NAME_FOLDER="Friend2friend";
+    public static final String EXTERNAL_PATH= "/sdcard";//Environment.getExternalStorageState();
 
     public static List<ICompartiendoDataCambio> listICompartiendoDataCambios = new ArrayList<>();
 
@@ -36,6 +43,41 @@ public class GestorSistemaFicheros {
             gestorSistemaFicheros = new GestorSistemaFicheros();
         }
         return gestorSistemaFicheros;
+    }
+
+    public boolean crearCarpetaCompartir(String path){
+        boolean success = true;
+
+        File folder = new File(path);
+
+        if (!folder.exists()) {
+            success = folder.mkdirs();
+        }
+
+        return success;
+    }
+
+    public void inicializaSistemaFicheros(){
+        Property filesFolderPathProperty = ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER);
+        String filesFolderPath = null;
+
+        //Si esta vacio, se introduce en base de datos un valor inicial y se crea la carpeta
+        if(filesFolderPathProperty==null){
+            filesFolderPath=EXTERNAL_PATH+File.separator+DEFAULT_NAME_FOLDER;
+            crearCarpetaCompartir(filesFolderPath);
+
+            //Almacenamos la direccion en la base de datos
+            ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, filesFolderPath);
+            ConfigProperties.saveProperties();
+        } else{
+            filesFolderPath=filesFolderPathProperty.getProperty();
+        }
+
+        try {
+            fillContent(filesFolderPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void fill(File f) throws IOException{

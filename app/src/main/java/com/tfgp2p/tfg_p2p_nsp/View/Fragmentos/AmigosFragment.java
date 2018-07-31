@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.GestorSistemaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.R;
@@ -87,5 +88,7 @@ public class AmigosFragment extends FragmentTab {
             listAmigos.add(layoutElementAmigo.getAmigo());
         }
         GestorSistemaAmigos.deleteFriendsList(listAmigos);
+
+        ConfigProperties.loadConfig();
     }
 }

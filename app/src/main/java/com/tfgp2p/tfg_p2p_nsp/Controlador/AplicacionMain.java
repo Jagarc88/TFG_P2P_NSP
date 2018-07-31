@@ -46,18 +46,11 @@ public class AplicacionMain extends Application {
         dhAmigos = DHAmigos.createInstance(databaseHelper);
         dhConfiguration = DHConfiguration.createInstance(databaseHelper);
 
-        if(ConfigProperties.loadConfig()==0) {
-            //TODO Crear un metodo para cargar un directorio creado por la aplicacion
-            ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, "/sdcard/");
-            ConfigProperties.saveProperties();
-        }
-        gestorSistemaFicheros = GestorSistemaFicheros.getInstance();
+        //Carga la configuracion desde la BBDD y los properties
+        ConfigProperties.loadConfig();
 
-        try {
-            gestorSistemaFicheros.fillContent(ConfigProperties.getProperty(ConfigProperties.PROP_FILES_FOLDER).getProperty());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        gestorSistemaFicheros = GestorSistemaFicheros.getInstance();
+        gestorSistemaFicheros.inicializaSistemaFicheros();
 
         //ANYADIMOS LOS FICHEROS INCOMPLETOS DE PRUEBA
         List<Fichero> ficheroList = new ArrayList<>();
@@ -69,15 +62,7 @@ public class AplicacionMain extends Application {
             ficheroList.add(fichero);
         }
         GestorSistemaFicheros.addFilesDir(ficheroList);
-/*
-        try {
-            GestorSistemaAmigos.addFriend(new Amigo("Manuel","001", GestorSistemaAmigos.STATE_USER_OFFLINE));
-            GestorSistemaAmigos.addFriend(new Amigo("Antonio","002", GestorSistemaAmigos.STATE_USER_OFFLINE));
-            GestorSistemaAmigos.addFriend(new Amigo("Sonia","003", GestorSistemaAmigos.STATE_USER_ONLINE));
-        } catch (AlertException e) {
-            e.printStackTrace();
-        }
-*/
+
         // Inicia las conexiones
         new Thread(new Runnable(){
             public void run(){

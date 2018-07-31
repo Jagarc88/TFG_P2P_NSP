@@ -58,12 +58,14 @@ public class ConfigProperties{
      * Guarda en disco los nuevos valores dados al fichero de configuracion
      */
     public static void saveProperties(){
-        DHConfiguration dhConfiguration = DHConfiguration.getInstance();
+        DHConfiguration dhConfiguration = DAO.databaseConfiguration();
 
         try {
             for (Property property : configData.values()) {
                 // Establecemos todas las propiedades
-                dhConfiguration.updateElement(property);
+                if(dhConfiguration.updateElement(property)==0){
+                    dhConfiguration.addElement(property);
+                }
             }
         }catch(DatabaseNotLoadedException e){
             e.printStackTrace();
