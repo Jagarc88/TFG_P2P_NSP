@@ -156,12 +156,13 @@ public class Cliente {
 				// Hay que ir descartando todos los PUNCH enviados de más por el otro:
 				byte[] discardBuf = {PUNCH};
 				DatagramPacket discardPunches = new DatagramPacket(discardBuf, 1);
-				socket.setSoTimeout(1000);
-				try {
+				//socket.setSoTimeout(1000);
+				/*try {
 					while (discardBuf[0] == PUNCH) {
 						socket.receive(discardPunches);
 					}
 				} catch (SocketTimeoutException e) {socket.setSoTimeout(0);}
+				*/
 				///////////////////////////////////////////////////////////
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
@@ -238,11 +239,10 @@ public class Cliente {
 	 * @throws IOException
 	 */
 	private void connect_to_friend() throws IOException, AlertException {
-		this.socket.setSoTimeout(5000);
+		//this.socket.setSoTimeout(5000);
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-		//socket_to_server.receive(friendInfoPacket);
 
 		int retries = 3;
 		while (retries > 0){
@@ -251,6 +251,8 @@ public class Cliente {
 				retries = 0;
 			} catch (SocketTimeoutException e) {
 				--retries;
+				if (retries == 0)
+					throw new AlertException("Se ha agotado el tiempo de conexión", context);
 			}
 		}
 
@@ -277,15 +279,16 @@ public class Cliente {
 		/*retries = 3;
 		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
 			try {*/
-				socket.send(sendPunch);
-				/*socket.receive(receivePunch);
-			} catch (SocketTimeoutException e) {
+				//socket.send(sendPunch);
+				socket.receive(receivePunch);
+			/*} catch (SocketTimeoutException e) {
 				--retries;
 			}
 		}
 
 		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
 		*/
+		// TODO: timeout a 0 temporalmente. Quitarlo.
 		socket.setSoTimeout(0);
 	}
 
@@ -309,9 +312,9 @@ public class Cliente {
 	 */
 	private void requestFile(String fileName, String friendName) {
 		try{
-			// TODO FALTA REESCRIBIR BIEN ESTE METODO!!!! edit: puede que así valga.
+			// TODO FALTA REESCRIBIR BIEN ESTE METODO. edit: puede que así valga.
 			// TODO: Borrar añadido manual del amigo:
-			this.amigos.addFriend(friendName, socket.getInetAddress(), socket.getPort());
+			//this.amigos.addFriend(friendName, socket.getInetAddress(), socket.getPort());
 			/////////////////////////////////////////
 			// Se envia FILE_REQ + nombre del archivo.
 
@@ -370,11 +373,11 @@ public class Cliente {
 			socket.receive(dataPacket);
 
 			// TODO: quitar lo de "copia de".
-			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia de " + fileName);
+			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName);
 			boolean exit = false;
 
 			while (!exit) {
-				//TODO Implementar algún tipo de verificación de paquetes. Por ejemplo, cuando se reciba 1 mandar mensaje de confirmación.
+				//TODO Implementar algún tipo de verificación de paquetes o cambiar a TCP.
 				/* Habría que implementarlo con un nextIsLast como en la parte Servidor, pero así funciona.
 				 * MUY IMPORTANTE USAR dataPacket.getLength() Y NO dataBuffer.length PARA DESCARTAR LO QUE SOBRA
 				 * DEL dataBuffer de escrituras anteriores. Para hacerlo como en la parte Servidor habría que
@@ -405,8 +408,8 @@ public class Cliente {
 	/**
 	 * Obtiene el nombre del fichero en un String a partir de un buffer de metadatos.
 	 *
-	 * @param metadataBuffer
-	 * @return
+	 * @param metadataBuffer Array de metadatos
+	 * @return Nombre del archivo.
 	 */
 	private String getFileNameFromBuffer(byte[] metadataBuffer) {
 		int count = 0;

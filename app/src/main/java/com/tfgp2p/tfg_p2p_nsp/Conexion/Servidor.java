@@ -130,7 +130,7 @@ public class Servidor {
 		baos.write(SERVER_CONNECT);
 		baos.write((byte) myName.length());
 		baos.write(myName.getBytes(), 0, myName.length());
-		this.address = Utils.getPublicIP(listenSocket, context);
+		this.address = Utils.getIP(listenSocket, context);
 		//byte[] localPort = Utils.intToByteArray(listenPort);
 		// todo: Comprobar que las longitudes de la ip y el puerto son 4 bytes.
 		baos.write(address, 0, address.length);
@@ -323,6 +323,7 @@ public class Servidor {
 		}
 		catch (IOException e){
 			e.printStackTrace();
+			throw new AlertException(e.getMessage(), context);
 		}
 		catch (Exception e){
 			e.printStackTrace();
@@ -355,6 +356,8 @@ public class Servidor {
 				retries = 0;
 			} catch (SocketTimeoutException e){
 				--retries;
+				if (retries == 0)
+					throw new AlertException("Se ha agotado el tiempo de conexión", context);
 			}
 		}
 
@@ -369,11 +372,13 @@ public class Servidor {
 		//socket_to_client.connect(friendIP, friendPort);
 		listenSocket.connect(friendIP, friendPort);
 
+		//TODO: revisar este comentario cuando funcione sin depurador.
 		/* Ahora entra en acción el Hole Punching. Se deben enviar 2 paquetes:
 		 *
-		 * El primero es el que abre el camino. Cuando el router toma este paquete para reenviarlo
-		 * crea en su tabla NAT la traducción IP_origen/puerto_origen ; IP_destino/puerto_destino.
-		 * Así cuando reciba un paquete desde el destino hasta el origen registrados lo pasará.
+		 * El primero es el que abre el camino hacia nuestro dispositivo. Cuando el router toma este
+		 * paquete para reenviarlo crea en su tabla NAT la traducción IP_origen/puerto_origen ;
+		 * IP_destino/puerto_destino. Así cuando reciba un paquete desde el destino hasta el origen
+		 * registrados lo pasará.
 		 *
 		 * El segundo paquete tiene como objetivo asegurarse de que la NAT del otro dispositivo
 		 * ya tiene guardada la traducción correspondiente en su tabla de traducciones y que desde
@@ -392,7 +397,7 @@ public class Servidor {
 		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
 			try{*/
 				//listenSocket.send(sendPunch);
-				listenSocket.receive(receivePunch);
+				//listenSocket.receive(receivePunch);
 			/*} catch (SocketTimeoutException e) {
 				--retries;
 			}
@@ -400,6 +405,8 @@ public class Servidor {
 
 		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
 		*/
+		// TODO: timeout a 0 temporalmente. Quitarlo.
+
 		listenSocket.setSoTimeout(0);
 	}
 
@@ -417,10 +424,13 @@ public class Servidor {
 			 * No se me ocurre el caso en el que se soliciten los metadatos de sílo 1 fichero.
 			 */
 			case METADATA_REQ_ONE:
-				// TODO: Pensar cuándo puede darse el caso de solicitar metadatos de sólo 1 fichero.
+				// TODO: Los metadatos de un solo fichero sólo serán pedidos cuando se haga una búsqueda.
 				break;
 
 			case METADATA_REQ_ALL:
+				/* Los metadatos de todos los ficheros se pedirán cuando un usuario quiera entrar
+				 * en la carpeta compartida del amigo.
+				 */
 				sendAllFilesMetadata();
 				break;
 
@@ -447,7 +457,7 @@ public class Servidor {
 
 			default:
 				// Petición no admitida.
-				// TODO: deberíamos hacer que en el destinatario se mostrara un popup de error, por ejemplo con un ERROR_popup.
+				// TODO: deberíamos hacer que en el destinatario se mostrara un toast de error.
 				break;
 		}
 	}

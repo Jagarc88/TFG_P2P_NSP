@@ -42,8 +42,8 @@ public class Amigos {
 		 * configuración de la aplicación. Tb deberíamos hacer que el usuario introduzca su nombre
 		 * la primera vez que ejecuta el programa.
 		 */
-		myName = "Pedro";
-		//myName = "Manolito";
+		//myName = "Pedro";
+		myName = "Manolito";
 
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();
@@ -51,12 +51,11 @@ public class Amigos {
 
 
 	public void addFriend(String name, InetAddress addr, int port) throws AlertException {
-		if (!this.friendsMap.containsKey(name)) {
+		//if (!this.friendsMap.containsKey(name)) {
 			InetSocketAddress iaddr = new InetSocketAddress(addr, port);
 			this.friendsMap.put(name, iaddr);
-		}
-		else
-			throw new AlertException(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.", context);
+		//}
+		//else throw new AlertException(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.", context);
 	}
 
 

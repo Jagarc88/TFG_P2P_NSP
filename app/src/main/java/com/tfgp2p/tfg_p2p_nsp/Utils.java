@@ -77,6 +77,7 @@ public class Utils {
 	public static final byte SERVER_CONNECT = 10;
 	public static final byte IS_CLIENT_SOCKET = 11;
 	public static final byte PUNCH = 12;
+	public static final byte TAKE_IP_FROM_PACKET = 0;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
@@ -140,8 +141,8 @@ public class Utils {
 	/**
 	 * Devuelve la dirección IP pública del dispositivo.
 	 */
-	public static byte[] getPublicIP(DatagramSocket socket, Context context){
-		byte[] ip = new byte[0];
+	public static byte[] getIP(DatagramSocket socket, Context context){
+		byte[] ip = new byte[1];
 		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 		/*boolean isConnected = activeNetwork != null &&
@@ -151,8 +152,10 @@ public class Utils {
 
 		switch (connectionType){
 			// Si se está conectado a Internet por wifi:
-			/*case ConnectivityManager.TYPE_WIFI:
-				try {
+			case ConnectivityManager.TYPE_WIFI:
+				ip[0] = TAKE_IP_FROM_PACKET;
+				break;
+				/*try {
 					URL URL = new URL("http://www.whatismyip.org/");
 					HttpURLConnection conn = (HttpURLConnection) URL.openConnection();
 					conn.setConnectTimeout(5000);
@@ -170,14 +173,17 @@ public class Utils {
 				break;
 			*/
 			// Si se está conectado a través de la red móvil:
-			/*case ConnectivityManager.TYPE_MOBILE:
-				try {
+			case ConnectivityManager.TYPE_MOBILE:
+				socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+				ip = socket.getLocalAddress().getAddress();
+				break;
+				/*try {
 					for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
 						NetworkInterface ni = en.nextElement();
 						for (Enumeration<InetAddress> enumIpAddr = ni.getInetAddresses(); enumIpAddr.hasMoreElements();) {
 							InetAddress inetAddress = enumIpAddr.nextElement();
 							if (!inetAddress.isLoopbackAddress()) {
-								// TODO: Sale una ip de 32, luegode menos y luego de 31 bytes. ¿IPv6?
+								// TODO: Sale una ip de 32, luego de menos y luego de 31 bytes. ¿IPv6?
 								// TODO: Tb falta que pare el bucle cuando tenga la IP.
 								ip = inetAddress.getHostAddress().getBytes();
 							}
@@ -188,10 +194,6 @@ public class Utils {
 				}
 				break;
 			*/
-			default:
-				socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-				ip = socket.getLocalAddress().getAddress();
-				break;
 		}
 		return ip;
 	}
