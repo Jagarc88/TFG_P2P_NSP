@@ -78,7 +78,7 @@ public class Utils {
 	public static final byte SERVER_CONNECT = 10;
 	public static final byte IS_CLIENT_SOCKET = 11;
 	public static final byte PUNCH = 12;
-	public static final byte TAKE_IP_FROM_PACKET = 0;
+	public static final byte TAKE_IP_FROM_HEADER = 0;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
@@ -154,7 +154,7 @@ public class Utils {
 		switch (connectionType){
 			// Si se está conectado a Internet por wifi:
 			case ConnectivityManager.TYPE_WIFI:
-				ip[0] = TAKE_IP_FROM_PACKET;
+				ip[0] = TAKE_IP_FROM_HEADER;
 				break;
 				/*try {
 					URL URL = new URL("http://www.whatismyip.org/");

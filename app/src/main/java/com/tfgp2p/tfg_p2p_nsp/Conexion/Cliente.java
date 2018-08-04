@@ -6,7 +6,10 @@ import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -14,6 +17,8 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -41,7 +46,9 @@ public class Cliente {
 
 	//private DatagramSocket socket_to_server;
 	//private DatagramSocket socket_to_friend;
-	private DatagramSocket socket;
+	//private DatagramSocket socket;
+	private Socket socket;
+	private Socket peerSocket;
 
 	private static int ppIndex = 0;
 
@@ -64,6 +71,9 @@ public class Cliente {
 	 */
 	private void loginServer(){
 		try {
+			socket = new Socket(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			socket.setReuseAddress(true);
+
 			String myName = Amigos.getMyName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			baos.write(SERVER_CONNECT);
@@ -73,12 +83,19 @@ public class Cliente {
 			//byte[] localPort = Utils.intToByteArray(port);
 			//baos.write(localPort, 0, localPort.length);
 
-			byte[] connectionBuffer = baos.toByteArray();
-			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+			//byte[] connectionBuffer = baos.toByteArray();
+
+			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+			dos.writeInt(baos.size());
+
+			baos.writeTo(dos);
+			dos.close();
+			/*DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 
 			socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 			socket.send(p);
+			*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -98,7 +115,10 @@ public class Cliente {
 			//socket_to_server = Servidor.getServerSocket();
 			//socket_to_server = new DatagramSocket();
 			//socket_to_friend = new DatagramSocket();
-			socket = new DatagramSocket();
+			//socket = new DatagramSocket();
+			// TODO: Poner TIMEOUT a ambos sockets.
+			peerSocket = new Socket();
+			socket = new Socket();
 			port = socket.getLocalPort();
 
 			loginServer();
@@ -137,10 +157,14 @@ public class Cliente {
 				//baos.write(nameBytes);
 				baos.write(friendNameLen);
 				baos.write(friendNameBytes);
-				byte[] nameBuff = baos.toByteArray();
+				/*byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
 				//socket_to_server.send(p);
-				socket.send(p);
+				socket.send(p);*/
+				DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+				dos.writeInt(baos.size());
+				baos.writeTo(dos);
+				dos.close();
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -154,8 +178,8 @@ public class Cliente {
 
 				///////////////////////////////////////////////////////////
 				// Hay que ir descartando todos los PUNCH enviados de más por el otro:
-				byte[] discardBuf = {PUNCH};
-				DatagramPacket discardPunches = new DatagramPacket(discardBuf, 1);
+				//byte[] discardBuf = {PUNCH};
+				//DatagramPacket discardPunches = new DatagramPacket(discardBuf, 1);
 				//socket.setSoTimeout(1000);
 				/*try {
 					while (discardBuf[0] == PUNCH) {
@@ -167,21 +191,26 @@ public class Cliente {
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
-				byte[] myNameLen = {(byte) myName.length};
+				//byte[] myNameLen = {(byte) myName.length};
 				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
-				nameBAOS.write(myNameLen);
+				//nameBAOS.write(myNameLen);
 				nameBAOS.write(myName);
-				byte[] buff = nameBAOS.toByteArray();
+
+				DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+				dos.writeByte(nameBAOS.size());
+				nameBAOS.writeTo(dos);
+				dos.close();
+				/*byte[] buff = nameBAOS.toByteArray();
 
 				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
 						socket.getInetAddress(), socket.getPort());
-				socket.send(hey_its_me);
+				socket.send(hey_its_me);*/
 				/////////////////////////////////////////////
-
+				// TODO: ¡¡¡¡¡¡¡¡¡¡¡¡¡SEGUIR POR AQUÍ!!!!!!!!!!! Falta recibir hello_friend o no_friend, y lo siguiente.
 				byte[] resp = new byte[1];
-				DatagramPacket pac = new DatagramPacket(resp, resp.length);
+				/*DatagramPacket pac = new DatagramPacket(resp, resp.length);
 				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
-				socket.receive(pac);
+				socket.receive(pac);*/
 				//socket_to_friend.receive(pac);
 				//socket_to_server.receive(pac);
 				/*int retries = 2;
@@ -206,9 +235,9 @@ public class Cliente {
 				e.printStackTrace();
 			}
 		}
-		catch (SocketException e){
+		/*catch (SocketException e){
 			e.printStackTrace();
-		}
+		}*/
 		catch (IllegalArgumentException e) {
 			if (ppIndex < 4) {
 				//new Cliente(Servidor.possiblePorts[++ppIndex]);
@@ -242,9 +271,9 @@ public class Cliente {
 		//this.socket.setSoTimeout(5000);
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
-		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
+		//DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
 
-		int retries = 3;
+		/*int retries = 3;
 		while (retries > 0){
 			try{
 				socket.receive(friendInfoPacket);
@@ -255,32 +284,42 @@ public class Cliente {
 					throw new AlertException("Se ha agotado el tiempo de conexión", context);
 			}
 		}
+		*/
+
+		DataInputStream din = new DataInputStream(socket.getInputStream());
+		din.readFully(friendInfo);
+		ByteArrayInputStream bais = new ByteArrayInputStream(friendInfo);
 
 		if (friendInfo[0] == NO_FRIEND)
 			throw new AlertException("Ha habido un problema en la comunicación.", context);
 
 		byte[] IParray = new byte[4];
-		System.arraycopy(friendInfo, 0, IParray, 0, 4);
+		bais.read(IParray, 0, 4);
+		//System.arraycopy(friendInfo, 0, IParray, 0, 4);
 		InetAddress friendIP = InetAddress.getByAddress(IParray);
 
 		byte[] portArray = new byte[4];
-		System.arraycopy(friendInfo, 4, portArray, 0, 4);
+		bais.read(portArray, 4, 4);
+		//System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		socket.connect(friendIP, friendPort);
+		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+		// TODO: Capturar excepción producida por timeout para que vuelva a estar al loro y mostrar alerta al usuario.
+		peerSocket.connect(peerISA);
+		//socket.connect(friendIP, friendPort);
 
-		byte[] sendPunchArray = {PUNCH};
+		/*byte[] sendPunchArray = {PUNCH};
 		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket.getInetAddress(), socket.getPort());
 		socket.send(sendPunch);
 
 		byte[] receivePunchArray = new byte[10];
 		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
 
-		/*retries = 3;
+		retries = 3;
 		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
 			try {*/
 				//socket.send(sendPunch);
-				socket.receive(receivePunch);
+				//socket.receive(receivePunch);
 			/*} catch (SocketTimeoutException e) {
 				--retries;
 			}
@@ -289,7 +328,7 @@ public class Cliente {
 		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
 		*/
 		// TODO: timeout a 0 temporalmente. Quitarlo.
-		socket.setSoTimeout(0);
+		//socket.setSoTimeout(0);
 	}
 
 
@@ -329,12 +368,19 @@ public class Cliente {
 			s.write(reqType);
 			s.write(fLength);
 			s.write(fnBuffer);
-			byte[] completeBuffer = s.toByteArray();
 
+			DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
+			dos.writeInt(s.size());
+			s.writeTo(dos);
+			dos.close();
+
+			// TODO: ¡¡¡¡¡¡¡¡¡¡¡¡¡SEGUIR POR AQUÍ!!!!!!!!!!!!!!!!! Falta enviar la petición.
+			/*byte[] completeBuffer = s.toByteArray();
 			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
 			//socket_to_friend.send(request);
 			//socket_to_server.send(request);
 			socket.send(request);
+			*/
 		}
 		catch (AlertException e){
 			e.showAlert();
