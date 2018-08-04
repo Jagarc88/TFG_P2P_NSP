@@ -154,7 +154,9 @@ public class Servidor {
 
 			listenSocket.send(p);
 			*/
-
+			// Primero hay que mandar el tamaño del stream que tieen que leer el servidor:
+			dos.writeInt(baos.size());
+			// Ahora se escribe la información:
 			baos.writeTo(dos);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -258,7 +260,7 @@ public class Servidor {
 			DatagramPacket p = new DatagramPacket(new_req, new_req.length);
 			while (new_req[0] != NEW_REQ){
 				new_req[0] = 0;
-				listenSocket.receive(p);
+				//listenSocket.receive(p);
 			}
 
 			connect_to_friend();
@@ -283,7 +285,7 @@ public class Servidor {
 			int retries = 7;
 			while (requestorFriendName[0] == PUNCH) {
 				try {
-			*/		listenSocket.receive(reqFriendPacket);
+			*/		//listenSocket.receive(reqFriendPacket);
 			//	} catch (SocketTimeoutException e) {--retries;}
 			//}
 			//socket_to_client.receive(reqFriendPacket);
@@ -304,7 +306,7 @@ public class Servidor {
 				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 				//listenSocket.send(resp);
 				//socket_to_client.send(resp);
-				listenSocket.send(resp);
+				//listenSocket.send(resp);
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.", context);
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos o sí y/o realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
@@ -319,11 +321,11 @@ public class Servidor {
 				// TODO: Repasar la dicección y el puerto que estoy poniendo en este paquete.
 				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 				//socket_to_client.send(resp);
-				listenSocket.send(resp);
+				//listenSocket.send(resp);
 
 				DatagramPacket reqPacket = new DatagramPacket(request, request.length);
 				//socket_to_client.receive(reqPacket);
-				listenSocket.receive(reqPacket);
+				//listenSocket.receive(reqPacket);
 
 				if (isValidRequest(request[0])){
 					synchronized (requestQueue) {
@@ -367,14 +369,14 @@ public class Servidor {
 
 		int retries = 3;
 		while(retries > 0){
-			try {
-				listenSocket.receive(friendInfoPacket);
+			//try {
+				//listenSocket.receive(friendInfoPacket);
 				retries = 0;
-			} catch (SocketTimeoutException e){
+			//} catch (SocketTimeoutException e){
 				--retries;
 				if (retries == 0)
 					throw new AlertException("Se ha agotado el tiempo de conexión", context);
-			}
+			//}
 		}
 
 		byte[] IParray = new byte[4];
@@ -386,7 +388,7 @@ public class Servidor {
 		int friendPort = Utils.byteArrayToInt(portArray);
 
 		//socket_to_client.connect(friendIP, friendPort);
-		listenSocket.connect(friendIP, friendPort);
+		//listenSocket.connect(friendIP, friendPort);
 
 		//TODO: revisar este comentario cuando funcione sin depurador.
 		/* Ahora entra en acción el Hole Punching. Se deben enviar 2 paquetes:
@@ -402,8 +404,8 @@ public class Servidor {
 		 * que nos interesan.
 		 */
 		byte[] sendPunchArray = {PUNCH};
-		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, listenSocket.getInetAddress(), listenSocket.getPort());
-		listenSocket.send(sendPunch);
+		//DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, listenSocket.getInetAddress(), listenSocket.getPort());
+		//listenSocket.send(sendPunch);
 
 		byte[] receivePunchArray = new byte[10];
 		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
@@ -540,7 +542,7 @@ public class Servidor {
 				totalBytesRead += bytesRead;
 				packet.setData(buffer);
 				// TODO: Utilizar otro socket (otro puerto).
-				listenSocket.send(packet);
+				//listenSocket.send(packet);
 				//////////////////////////////////////////////
 				/*try {
 					Thread.sleep(1000);
@@ -597,7 +599,7 @@ public class Servidor {
 		System.arraycopy(aux, 0, metadataBuffer, 4, aux.length);
 
 		DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length, addr.getAddress(), addr.getPort());
-		listenSocket.send(metadataPacket);
+		//listenSocket.send(metadataPacket);
 	}
 
 
@@ -643,16 +645,16 @@ public class Servidor {
 	 * que pueda ver el contenido de la carpeta compartida remota.
 	 */
 	private void sendAllFilesMetadata() {
-		try {
+		//try {
 			byte[] allMetadata = getMetadataFromSharedFolder();
 			DatagramPacket p = new DatagramPacket(allMetadata, allMetadata.length);
-			listenSocket.send(p);
+			//listenSocket.send(p);
 			// TODO: Creo que no me falta nada en este método...
 
-		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
+		//}
+		//catch (IOException e){
+			//e.printStackTrace();
+		//}
 	}
 
 
