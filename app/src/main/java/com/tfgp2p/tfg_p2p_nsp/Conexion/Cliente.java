@@ -314,7 +314,7 @@ public class Cliente {
 		try{
 			// TODO FALTA REESCRIBIR BIEN ESTE METODO. edit: puede que así valga.
 			// TODO: Borrar añadido manual del amigo:
-			//this.amigos.addFriend(friendName, socket.getInetAddress(), socket.getPort());
+			this.amigos.addFriend(friendName, socket.getInetAddress(), socket.getPort());
 			/////////////////////////////////////////
 			// Se envia FILE_REQ + nombre del archivo.
 

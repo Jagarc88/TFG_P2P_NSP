@@ -15,6 +15,7 @@ import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -141,7 +142,7 @@ public class Utils {
 	/**
 	 * Devuelve la dirección IP pública del dispositivo.
 	 */
-	public static byte[] getIP(DatagramSocket socket, Context context){
+	public static byte[] getIP(Socket socket, Context context){
 		byte[] ip = new byte[1];
 		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -174,8 +175,10 @@ public class Utils {
 			*/
 			// Si se está conectado a través de la red móvil:
 			case ConnectivityManager.TYPE_MOBILE:
-				socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-				ip = socket.getLocalAddress().getAddress();
+				try {
+					socket.connect(Servidor.getServerInfo(), Servidor.getServerInfo().getPort());
+					ip = socket.getLocalAddress().getAddress();
+				} catch (IOException e){ e.printStackTrace();}
 				break;
 				/*try {
 					for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {

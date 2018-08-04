@@ -8,6 +8,7 @@ import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,6 +17,8 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -43,9 +46,10 @@ public class Servidor {
 	private int listenPort;
 	private byte[] address;
 
-	//private ServerSocket listenSocket;
-	private DatagramSocket listenSocket;
-	private DatagramSocket socket_to_client;
+	private ServerSocket listenSocket;
+	private Socket socket;
+	//private DatagramSocket listenSocket;
+	//private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
 	private Queue<Pair<String, byte[]>> requestQueue;
@@ -78,14 +82,17 @@ public class Servidor {
 			this.context = c;
 			// TODO: poner la direccion del servidor.
 			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
-			this.listenSocket = new DatagramSocket();
+			//this.listenSocket = new DatagramSocket();
+			this.listenSocket = new ServerSocket();
 			this.listenSocket.setReuseAddress(true);
+
+			this.socket = new Socket();
 
 			// Para chequear si asigna bien el puerto:
 			this.listenPort = this.listenSocket.getLocalPort();
 			this.address = new byte[4];
 
-			this.socket_to_client = new DatagramSocket();
+			//this.socket_to_client = new DatagramSocket();
 			this.requestQueue = new ArrayDeque<>();
 			//this.activeClients = new HashMap<>(10);
 
@@ -119,27 +126,36 @@ public class Servidor {
 	 */
 	private void loginServer(){
 		// TODO: Ver la IP local antes y después de conectarse.
-		listenSocket.connect(serverInfo.getAddress(), serverInfo.getPort());
+		//listenSocket.connect(serverInfo.getAddress(), serverInfo.getPort());
 		String myName = Amigos.getMyName();
 		/*byte[] connectionBuffer = new byte[2+myName.length()];
 		connectionBuffer[0] = SERVER_CONNECT;
 		connectionBuffer[1] = (byte) myName.length();
 		System.arraycopy(myName.getBytes(), 0, connectionBuffer, 2, myName.length());
 		*/
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		baos.write(SERVER_CONNECT);
-		baos.write((byte) myName.length());
-		baos.write(myName.getBytes(), 0, myName.length());
-		this.address = Utils.getIP(listenSocket, context);
-		//byte[] localPort = Utils.intToByteArray(listenPort);
-		// todo: Comprobar que las longitudes de la ip y el puerto son 4 bytes.
-		baos.write(address, 0, address.length);
-		//baos.write(localPort, 0, localPort.length);
-		byte[] connectionBuffer = baos.toByteArray();
-		DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
-				serverInfo.getAddress(), serverInfo.getPort());
 		try {
+			socket = new Socket(serverInfo.getAddress(), serverInfo.getPort());
+			socket.setReuseAddress(true);
+
+			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			baos.write(SERVER_CONNECT);
+			baos.write((byte) myName.length());
+			baos.write(myName.getBytes(), 0, myName.length());
+			this.address = Utils.getIP(socket, context);
+			//byte[] localPort = Utils.intToByteArray(listenPort);
+			// todo: Comprobar que las longitudes de la ip y el puerto son 4 bytes.
+			baos.write(address, 0, address.length);
+			//baos.write(localPort, 0, localPort.length);
+			/*byte[] connectionBuffer = baos.toByteArray();
+			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+					serverInfo.getAddress(), serverInfo.getPort());
+
 			listenSocket.send(p);
+			*/
+
+			baos.writeTo(dos);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
