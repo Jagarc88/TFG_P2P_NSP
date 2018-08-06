@@ -8,6 +8,7 @@ import com.tfgp2p.tfg_p2p_nsp.Utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
@@ -37,7 +38,7 @@ public class Cliente {
 	private static Cliente client = null;
 
 	private byte[] address;
-	private int port;
+	private int localPort;
 
 	private Context context;
 
@@ -49,6 +50,10 @@ public class Cliente {
 	//private DatagramSocket socket;
 	private Socket socket;
 	private Socket peerSocket;
+	private DataOutputStream serverOutput;
+	private DataInputStream serverInput;
+	private DataOutputStream peerOutput;
+	private DataInputStream peerInput;
 
 	private static int ppIndex = 0;
 
@@ -64,42 +69,6 @@ public class Cliente {
 		return client;
 	}
 
-	/**
-	 * Necesitamos enviar el puerto del socket del cliente para que la tabla NAT
-	 * tras la que está el contrario lo guarde y pueda pasar los paquetes que se
-	 * reciban a su destino.
-	 */
-	private void loginServer(){
-		try {
-			socket = new Socket(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-			socket.setReuseAddress(true);
-
-			String myName = Amigos.getMyName();
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			baos.write(SERVER_CONNECT);
-			baos.write((byte) myName.length());
-			baos.write(myName.getBytes());
-			baos.write(IS_CLIENT_SOCKET);
-			//byte[] localPort = Utils.intToByteArray(port);
-			//baos.write(localPort, 0, localPort.length);
-
-			//byte[] connectionBuffer = baos.toByteArray();
-
-			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-			dos.writeInt(baos.size());
-
-			baos.writeTo(dos);
-			dos.close();
-			/*DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
-					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-
-			socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-			socket.send(p);
-			*/
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 
 	// TODO: Limpiar código del constructor que no debe estar.
@@ -119,7 +88,9 @@ public class Cliente {
 			// TODO: Poner TIMEOUT a ambos sockets.
 			peerSocket = new Socket();
 			socket = new Socket();
-			port = socket.getLocalPort();
+			peerSocket.setReuseAddress(true);
+			//socket.setReuseAddress(true);
+			//port = socket.getLocalPort();
 
 			loginServer();
 
@@ -146,8 +117,7 @@ public class Cliente {
 				//byte[] nameLen = new byte[] {(byte) name.length()};
 				//byte[] nameBytes = name.getBytes();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-// TODO: Como ahora hay que pasar por el servidor, en el paquete hay que meter quién es el destino, al menos en el primer paquete.
-// TODO: Puedo guardar los usuarios de la conexión en la clase Connection del programa servidor.
+
 				/* Datos para la primera comunicación:
 				 * "HOLA, quiero hablar con MANOLITO cuyo nombre tiene esta otra LONGITUD".
 				 */
@@ -161,10 +131,12 @@ public class Cliente {
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
 				//socket_to_server.send(p);
 				socket.send(p);*/
-				DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-				dos.writeInt(baos.size());
-				baos.writeTo(dos);
-				dos.close();
+				//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+				// todo: Ver si el puerto cambia en al reconexión. ¿Importa?
+				socket.connect(Servidor.getServerInfo());
+				serverOutput.writeInt(baos.size());
+				baos.writeTo(serverOutput);
+				//dos.close();
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -196,10 +168,10 @@ public class Cliente {
 				//nameBAOS.write(myNameLen);
 				nameBAOS.write(myName);
 
-				DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-				dos.writeByte(nameBAOS.size());
-				nameBAOS.writeTo(dos);
-				dos.close();
+				//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+				peerOutput.writeByte(nameBAOS.size());
+				nameBAOS.writeTo(peerOutput);
+				//dos.close();
 				/*byte[] buff = nameBAOS.toByteArray();
 
 				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
@@ -208,6 +180,7 @@ public class Cliente {
 				/////////////////////////////////////////////
 				// TODO: ¡¡¡¡¡¡¡¡¡¡¡¡¡SEGUIR POR AQUÍ!!!!!!!!!!! Falta recibir hello_friend o no_friend, y lo siguiente.
 				byte[] resp = new byte[1];
+				resp[0] = peerInput.readByte();
 				/*DatagramPacket pac = new DatagramPacket(resp, resp.length);
 				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
 				socket.receive(pac);*/
@@ -247,6 +220,9 @@ public class Cliente {
 			else
 				e.printStackTrace();
 		}
+		catch (SocketException e){
+			e.printStackTrace();
+		}
 		/*catch (UnknownHostException e){
 			e.printStackTrace();
 		}*/
@@ -255,6 +231,53 @@ public class Cliente {
 		}
 
 	}
+
+
+
+	/**
+	 * Necesitamos enviar el puerto del socket del cliente para que la tabla NAT
+	 * tras la que está el contrario lo guarde y pueda pasar los paquetes que se
+	 * reciban a su destino.
+	 */
+	private void loginServer(){
+		try {
+			//socket = new Socket(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			InetSocketAddress serverAddr = new InetSocketAddress(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			//socket.setReuseAddress(true);
+			socket.connect(serverAddr);
+			localPort = socket.getLocalPort();
+			serverOutput = new DataOutputStream(socket.getOutputStream());
+			serverInput = new DataInputStream(socket.getInputStream());
+			//port = socket.getLocalPort();
+
+			String myName = Amigos.getMyName();
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			baos.write(SERVER_CONNECT);
+			baos.write((byte) myName.length());
+			baos.write(myName.getBytes());
+			baos.write(IS_CLIENT_SOCKET);
+			//byte[] localPort = Utils.intToByteArray(port);
+			//baos.write(localPort, 0, localPort.length);
+
+			//byte[] connectionBuffer = baos.toByteArray();
+
+			//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+			serverOutput.writeInt(baos.size());
+
+			baos.writeTo(serverOutput);
+			//dos.close();
+			/*DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+
+			socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			socket.send(p);
+			*/
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
 
 
 	/**
@@ -286,8 +309,8 @@ public class Cliente {
 		}
 		*/
 
-		DataInputStream din = new DataInputStream(socket.getInputStream());
-		din.readFully(friendInfo);
+		//DataInputStream dis = new DataInputStream(socket.getInputStream());
+		serverInput.readFully(friendInfo);
 		ByteArrayInputStream bais = new ByteArrayInputStream(friendInfo);
 
 		if (friendInfo[0] == NO_FRIEND)
@@ -303,10 +326,19 @@ public class Cliente {
 		//System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
+		// TODO: ES MUY POSIBLE QUE NO DEJE USAR EL MISMO PUERTO QUE USÉ PARA CONECTARME AL SERVIDOR. En ese caso
+		// TODO: habría que cerrar el socket al servidor, y por tanto habría que crearlo de nuevo si me quiero
+		// TODO: conectar otra vez a él.
+		InetSocketAddress localISA = new InetSocketAddress(this.localPort);
+		peerSocket.bind(localISA);
+		// todo: Ver si la dirección de ambos sockets es la misma. En caso afirmativo la idea de bindear
+		// todo: al puerto antes usado puede funcionar.
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		// TODO: Capturar excepción producida por timeout para que vuelva a estar al loro y mostrar alerta al usuario.
 		peerSocket.connect(peerISA);
+		peerInput = new DataInputStream(peerSocket.getInputStream());
+		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 		//socket.connect(friendIP, friendPort);
+		// TODO: Capturar excepción producida por timeout para que vuelva a estar al loro y mostrar alerta al usuario.
 
 		/*byte[] sendPunchArray = {PUNCH};
 		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket.getInetAddress(), socket.getPort());
@@ -369,12 +401,11 @@ public class Cliente {
 			s.write(fLength);
 			s.write(fnBuffer);
 
-			DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
-			dos.writeInt(s.size());
-			s.writeTo(dos);
-			dos.close();
+			//DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
+			peerOutput.writeInt(s.size());
+			s.writeTo(peerOutput);
+			//dos.close();
 
-			// TODO: ¡¡¡¡¡¡¡¡¡¡¡¡¡SEGUIR POR AQUÍ!!!!!!!!!!!!!!!!! Falta enviar la petición.
 			/*byte[] completeBuffer = s.toByteArray();
 			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
 			//socket_to_friend.send(request);
@@ -398,29 +429,39 @@ public class Cliente {
 		try {
 			///////////////////////  Prueba de la recepción del archivo ///////////////////////////
 			// De momento pillo aquí el buffer de metadatos.
+
+			// TODO. ¿Son los metadatos inútiles aquí?
+			/*DataInputStream dis = new DataInputStream(peerSocket.getInputStream());
+			int bufferSize = dis.readInt();
+			byte[] metadataBuffer = new byte[bufferSize];
+			dis.read(metadataBuffer, 0, bufferSize);
+			*/
 			// TODO: Para recibir un archivo no hay que devolver el nombre en el metadataBuffer, solo el tamaño.
-			byte[] metadataBuffer = new byte[100];
+			/*byte[] metadataBuffer = new byte[100];
 			DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length);
 			///////////////////////////////////////////////////////////////////////////////////
 
 			//socket_to_friend.receive(metadataPacket);
 			//socket_to_server.receive(metadataPacket);
 			socket.receive(metadataPacket);
-
-			byte[] aux = new byte[4];
-			for (int i = 0; i < 4; i++)
-				aux[i] = metadataBuffer[i];
+			*/
 
 			byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
-			DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
+			/*DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
 			//socket_to_friend.receive(dataPacket);
 			//socket_to_server.receive(dataPacket);
 			socket.receive(dataPacket);
+			*/
 
 			// TODO: quitar lo de "copia de".
 			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName);
-			boolean exit = false;
+			//DataInputStream dis = new DataInputStream(peerSocket.getInputStream());
+			int count;
+			while ((count = peerInput.read(dataBuffer)) > 0){
+				fos.write(dataBuffer, 0, count);
+			}
+			/*boolean exit = false;
 
 			while (!exit) {
 				//TODO Implementar algún tipo de verificación de paquetes o cambiar a TCP.
@@ -431,7 +472,7 @@ public class Cliente {
 				 * tiene la longitud MAX_BUFF_SIZE y, por tanto, datos antiguos sobre los que no se han escrito
 				 * datos nuevos con el último paquete.
 				 */
-				fos.write(dataBuffer, 0, dataPacket.getLength());
+			/*	fos.write(dataBuffer, 0, dataPacket.getLength());
 
 				if (dataPacket.getLength() < MAX_BUFF_SIZE)
 					exit = true;
@@ -440,8 +481,9 @@ public class Cliente {
 					//socket_to_server.receive(dataPacket);
 					socket.receive(dataPacket);
 			}
-
-			fos.close();
+			*/
+			//dis.close();
+			//fos.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
