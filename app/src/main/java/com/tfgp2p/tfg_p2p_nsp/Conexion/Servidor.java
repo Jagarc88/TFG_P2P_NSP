@@ -60,6 +60,7 @@ public class Servidor {
 	//private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
+	// TODO: En su lugar seguramente tendría que implementar una cola de hilos, cada uno con el socket al cliente corespondiente...
 	private Queue<Pair<String, byte[]>> requestQueue;
 
 	/*
@@ -283,7 +284,7 @@ public class Servidor {
 		InetAddress friendIP = InetAddress.getByAddress(IParray);
 
 		byte[] portArray = new byte[4];
-		bais.read(portArray, 4, 4);
+		bais.read(portArray, 0, 4);
 		//System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 

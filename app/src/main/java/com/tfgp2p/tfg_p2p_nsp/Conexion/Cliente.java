@@ -88,6 +88,7 @@ public class Cliente {
 			// TODO: Poner TIMEOUT a ambos sockets.
 			peerSocket = new Socket();
 			socket = new Socket();
+			socket.setReuseAddress(true);
 			peerSocket.setReuseAddress(true);
 			//socket.setReuseAddress(true);
 			//port = socket.getLocalPort();
@@ -132,8 +133,14 @@ public class Cliente {
 				//socket_to_server.send(p);
 				socket.send(p);*/
 				//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-				// todo: Ver si el puerto cambia en al reconexión. ¿Importa?
+
+				/*socket.close();
+				socket = new Socket();
+				socket.bind(new InetSocketAddress(this.localPort));
 				socket.connect(Servidor.getServerInfo());
+				*/
+				serverInput = new DataInputStream(socket.getInputStream());
+				serverOutput = new DataOutputStream(socket.getOutputStream());
 				serverOutput.writeInt(baos.size());
 				baos.writeTo(serverOutput);
 				//dos.close();
@@ -322,21 +329,20 @@ public class Cliente {
 		InetAddress friendIP = InetAddress.getByAddress(IParray);
 
 		byte[] portArray = new byte[4];
-		bais.read(portArray, 4, 4);
+		bais.read(portArray, 0, 4);
 		//System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		// TODO: ES MUY POSIBLE QUE NO DEJE USAR EL MISMO PUERTO QUE USÉ PARA CONECTARME AL SERVIDOR. En ese caso
-		// TODO: habría que cerrar el socket al servidor, y por tanto habría que crearlo de nuevo si me quiero
-		// TODO: conectar otra vez a él.
+
 		InetSocketAddress localISA = new InetSocketAddress(this.localPort);
 		peerSocket.bind(localISA);
-		// todo: Ver si la dirección de ambos sockets es la misma. En caso afirmativo la idea de bindear
-		// todo: al puerto antes usado puede funcionar.
+		// Apañado con un setReuseAddress(TRUE) en el peerSocket.
+
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 		peerSocket.connect(peerISA);
-		peerInput = new DataInputStream(peerSocket.getInputStream());
+		/*peerInput = new DataInputStream(peerSocket.getInputStream());
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
+		*/
 		//socket.connect(friendIP, friendPort);
 		// TODO: Capturar excepción producida por timeout para que vuelva a estar al loro y mostrar alerta al usuario.
 
