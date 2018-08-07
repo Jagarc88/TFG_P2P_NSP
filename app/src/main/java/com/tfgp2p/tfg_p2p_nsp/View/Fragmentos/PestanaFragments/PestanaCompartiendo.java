@@ -3,9 +3,10 @@ package com.tfgp2p.tfg_p2p_nsp.View.Fragmentos.PestanaFragments;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import com.tfgp2p.tfg_p2p_nsp.Controlador.Observers.Ficheros.IListenerFicheroList;
+import com.tfgp2p.tfg_p2p_nsp.Controlador.Observers.Ficheros.OberserverFicheros;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.ICompartiendoDataCambio;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.TipoFichero;
 import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.LayoutsFicheros.LayoutElementFichero;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
@@ -16,9 +17,14 @@ import java.util.List;
 /**
  * Created by Deekin on 03/12/2017.
  */
-public class PestanaCompartiendo extends PestanaFragment implements ICompartiendoDataCambio {
+public class PestanaCompartiendo extends PestanaFragment implements IListenerFicheroList {
 
     LinearLayout linearLayout_listaCompartiendo;
+
+    public PestanaCompartiendo() {
+        super();
+        OberserverFicheros.listenerFicherossLists.add(this);
+    }
 
     @Override
     protected void rellenaVariables(View view) {
@@ -54,7 +60,7 @@ public class PestanaCompartiendo extends PestanaFragment implements ICompartiend
     }
 
     @Override
-    public void reloadCompartiendoCarpetaData() {
+    public void refreshListShown() {
         draw(linearLayout_listaCompartiendo);
     }
 }

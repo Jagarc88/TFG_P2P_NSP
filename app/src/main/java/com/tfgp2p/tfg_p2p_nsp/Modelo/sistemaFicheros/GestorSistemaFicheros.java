@@ -1,7 +1,5 @@
 package com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros;
 
-import android.os.Environment;
-
 import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Property;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.Amigo;
@@ -22,8 +20,6 @@ public class GestorSistemaFicheros {
 
     public static final String DEFAULT_NAME_FOLDER="Friend2friend";
     public static final String EXTERNAL_PATH= "/sdcard";//Environment.getExternalStorageState();
-
-    public static List<ICompartiendoDataCambio> listICompartiendoDataCambios = new ArrayList<>();
 
     private static GestorSistemaFicheros gestorSistemaFicheros = null;
 
@@ -116,12 +112,6 @@ public class GestorSistemaFicheros {
     public static List<Fichero> getFiles(){
         getInstance();
         return dir;
-    }
-
-    public static void reloadCompartiendoCarpetaData() {
-        for (ICompartiendoDataCambio compart: listICompartiendoDataCambios) {
-            compart.reloadCompartiendoCarpetaData();
-        }
     }
 
     /**
