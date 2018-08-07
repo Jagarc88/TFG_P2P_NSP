@@ -8,9 +8,9 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.tfgp2p.tfg_p2p_nsp.Controlador.Observers.Ficheros.OberserverFicheros;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.ConfigProperties;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.Fichero;
-import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaFicheros.GestorSistemaFicheros;
 import com.tfgp2p.tfg_p2p_nsp.R;
 import com.tfgp2p.tfg_p2p_nsp.View.MainActivity;
 
@@ -155,7 +155,7 @@ public class ActivitySeleccionCarpeta extends AppCompatActivity {
             ConfigProperties.setProperty(ConfigProperties.PROP_FILES_FOLDER, itemSelected.getPath());
             ConfigProperties.saveProperties();
 
-            GestorSistemaFicheros.reloadCompartiendoCarpetaData();
+            OberserverFicheros.refreshAllViewsAmigosList();
 
             volverAMenu();
         }
