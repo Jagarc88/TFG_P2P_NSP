@@ -9,6 +9,7 @@ import com.tfgp2p.tfg_p2p_nsp.Modelo.sistemaAmigos.GestorSistemaAmigos;
 import com.tfgp2p.tfg_p2p_nsp.R;
 import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.PestanaAmigos.LayoutElementAmigos;
 import com.tfgp2p.tfg_p2p_nsp.View.Utils.ViewUtils;
+import com.tfgp2p.tfg_p2p_nsp.Controlador.Observers.Amigo.OberserverAmigos;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ public class PestanaAmigos extends PestanaFragment implements IListenerAmigosLis
     public PestanaAmigos(){
         super();
         listaAmigosSeleccionable = false;
-        IListenerAmigosList.listenerAmigosLists.add(this);
+        OberserverAmigos.listenerAmigosLists.add(this);
     }
 
     @Override
@@ -63,6 +64,6 @@ public class PestanaAmigos extends PestanaFragment implements IListenerAmigosLis
     @Override
     public void onDestroy() {
         super.onDestroy();
-        IListenerAmigosList.listenerAmigosLists.remove(this);
+        OberserverAmigos.listenerAmigosLists.remove(this);
     }
 }

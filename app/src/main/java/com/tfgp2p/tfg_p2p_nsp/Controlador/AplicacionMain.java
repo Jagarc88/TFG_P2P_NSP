@@ -72,4 +72,8 @@ public class AplicacionMain extends Application {
             }
         }).start();
     }
+
+    public static void exitApp(int state){
+        System.exit(state);
+    }
 }
