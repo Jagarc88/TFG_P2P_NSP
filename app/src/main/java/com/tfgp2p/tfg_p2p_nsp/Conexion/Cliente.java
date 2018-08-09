@@ -76,116 +76,67 @@ public class Cliente {
 	private Cliente(Context c){
 		try {
 			this.context = c;
-			//this.friendsSockets = new ArrayList<>(10);
-			//this.friends = new HashMap<>(10);
 			this.amigos = Amigos.getInstance(context);
-			//this.socket = new DatagramSocket(listenPort);
-			//this.socket_to_server = new DatagramSocket();
-			//socket_to_server = Servidor.getServerSocket();
-			//socket_to_server = new DatagramSocket();
-			//socket_to_friend = new DatagramSocket();
-			//socket = new DatagramSocket();
-			// TODO: Poner TIMEOUT a ambos sockets.
+
 			peerSocket = new Socket();
 			peerSocket.setReuseAddress(true);
 			socket = new Socket();
 			socket.setReuseAddress(true);
-			//socket.setReuseAddress(true);
-			//port = socket.getLocalPort();
 
 			loginServer();
 
 			//////// Prueba de la conexión al móvil servidor:
 			/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch////////////////
 
-			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName("192.168.0.12"), listenPort);
-			//InetSocketAddress sa = new InetSocketAddress(Inet4Address.getByName(""), 50000);
 			String friendName = "Manolito";
-			//this.amigos.addFriend(friendName, sa);
-
 
 			//String fileName = "serie";
 			String fileName = "5megas.pdf";
 			//String fileName = "de_julio.txt";
 
-			//String name = "Manolito";
-			//InetSocketAddress friendAddr = amigos.getFriendAddr(name);
 			//////////////////////////////////////////////////////////////////////////////////
 			//////// BORRAR ENVÍO MANUAL DE PETICIÓN DE FICHERO //////////////////////////////
 			try {
 				byte[] friendNameBytes = friendName.getBytes();
 				byte[] friendNameLen = {(byte) friendNameBytes.length};
-				//byte[] nameLen = new byte[] {(byte) name.length()};
-				//byte[] nameBytes = name.getBytes();
+
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 				/* Datos para la primera comunicación:
 				 * "HOLA, quiero hablar con MANOLITO cuyo nombre tiene esta otra LONGITUD".
 				 */
-				// TODO: Faltaría enviar tb la clave del amigo.
+				// TODO: Faltaría enviar tb la clave/id del amigo.
 				baos.write(HELLO);
 				//baos.write(nameLen);
 				//baos.write(nameBytes);
 				baos.write(friendNameLen);
 				baos.write(friendNameBytes);
-				/*byte[] nameBuff = baos.toByteArray();
-				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Servidor.getServerInfo());
-				//socket_to_server.send(p);
-				socket.send(p);*/
-				//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
-				/*socket.close();
-				socket = new Socket();
-				socket.bind(new InetSocketAddress(this.localPort));
-				socket.connect(Servidor.getServerInfo());
-				*/
 				serverInput = new DataInputStream(socket.getInputStream());
 				serverOutput = new DataOutputStream(socket.getOutputStream());
 				serverOutput.writeInt(baos.size());
 				baos.writeTo(serverOutput);
-				//dos.close();
 			}
 			catch (IOException e){
 				e.printStackTrace();
 			}
-			///////////////////////////////////////////////
+			//////////////////////////////////////////////////////////////
 
 			// TODO: La petición debe ir en el sendRequest(). Ya lo meteré cuando organice el envío de todo tipo de peticiones.
 			try {
 				// Este método se bloquea hasta que recibe la dirección y el puerto de la máquina destino.
 				connect_to_friend();
 
-				///////////////////////////////////////////////////////////
-				// Hay que ir descartando todos los PUNCH enviados de más por el otro:
-				//byte[] discardBuf = {PUNCH};
-				//DatagramPacket discardPunches = new DatagramPacket(discardBuf, 1);
-				//socket.setSoTimeout(1000);
-				/*try {
-					while (discardBuf[0] == PUNCH) {
-						socket.receive(discardPunches);
-					}
-				} catch (SocketTimeoutException e) {socket.setSoTimeout(0);}
-				*/
-				///////////////////////////////////////////////////////////
-
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
-				//byte[] myNameLen = {(byte) myName.length};
-				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
-				//nameBAOS.write(myNameLen);
+
 				nameBAOS.write(myName);
 
-				//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
 				peerOutput.writeByte(nameBAOS.size());
 				nameBAOS.writeTo(peerOutput);
-				//dos.close();
-				/*byte[] buff = nameBAOS.toByteArray();
-
-				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
-						socket.getInetAddress(), socket.getPort());
-				socket.send(hey_its_me);*/
 				/////////////////////////////////////////////
-				// TODO: ¡¡¡¡¡¡¡¡¡¡¡¡¡SEGUIR POR AQUÍ!!!!!!!!!!! Falta recibir hello_friend o no_friend, y lo siguiente.
+				// TODO: ¡¡OJO!! A partir de aquí creo que está incompleto. Falta recibir hello_friend o no_friend, y lo siguiente.
 				byte[] resp = new byte[1];
 				resp[0] = peerInput.readByte();
 				/*DatagramPacket pac = new DatagramPacket(resp, resp.length);
@@ -215,12 +166,9 @@ public class Cliente {
 				e.printStackTrace();
 			}
 		}
-		/*catch (SocketException e){
-			e.printStackTrace();
-		}*/
+
 		catch (IllegalArgumentException e) {
 			if (ppIndex < 4) {
-				//new Cliente(Servidor.possiblePorts[++ppIndex]);
 				e.printStackTrace();
 				new Cliente(c);
 			}
@@ -230,9 +178,6 @@ public class Cliente {
 		catch (SocketException e){
 			e.printStackTrace();
 		}
-		/*catch (UnknownHostException e){
-			e.printStackTrace();
-		}*/
 		catch (AlertException e){
 			e.showAlert();
 		}
@@ -248,14 +193,11 @@ public class Cliente {
 	 */
 	private void loginServer(){
 		try {
-			//socket = new Socket(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 			InetSocketAddress serverAddr = new InetSocketAddress(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-			//socket.setReuseAddress(true);
 			socket.connect(serverAddr);
 			localPort = socket.getLocalPort();
 			serverOutput = new DataOutputStream(socket.getOutputStream());
 			serverInput = new DataInputStream(socket.getInputStream());
-			//port = socket.getLocalPort();
 
 			String myName = Amigos.getMyName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -263,22 +205,10 @@ public class Cliente {
 			baos.write((byte) myName.length());
 			baos.write(myName.getBytes());
 			baos.write(IS_CLIENT_SOCKET);
-			//byte[] localPort = Utils.intToByteArray(port);
-			//baos.write(localPort, 0, localPort.length);
 
-			//byte[] connectionBuffer = baos.toByteArray();
-
-			//DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 			serverOutput.writeInt(baos.size());
-
 			baos.writeTo(serverOutput);
-			//dos.close();
-			/*DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
-					Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 
-			socket.connect(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
-			socket.send(p);
-			*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -298,25 +228,9 @@ public class Cliente {
 	 * @throws IOException
 	 */
 	private void connect_to_friend() throws IOException, AlertException {
-		//this.socket.setSoTimeout(5000);
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
-		//DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
 
-		/*int retries = 3;
-		while (retries > 0){
-			try{
-				socket.receive(friendInfoPacket);
-				retries = 0;
-			} catch (SocketTimeoutException e) {
-				--retries;
-				if (retries == 0)
-					throw new AlertException("Se ha agotado el tiempo de conexión", context);
-			}
-		}
-		*/
-
-		//DataInputStream dis = new DataInputStream(socket.getInputStream());
 		serverInput.readFully(friendInfo);
 		ByteArrayInputStream bais = new ByteArrayInputStream(friendInfo);
 
@@ -325,20 +239,19 @@ public class Cliente {
 
 		byte[] IParray = new byte[4];
 		bais.read(IParray, 0, 4);
-		//System.arraycopy(friendInfo, 0, IParray, 0, 4);
 		InetAddress friendIP = InetAddress.getByAddress(IParray);
 
 		byte[] portArray = new byte[4];
 		bais.read(portArray, 0, 4);
-		//System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
 
 		InetSocketAddress localISA = new InetSocketAddress(this.localPort);
 		peerSocket.bind(localISA);
-		// Apañado con un setReuseAddress(TRUE) en el peerSocket. 
+		// Apañado con un setReuseAddress(TRUE) en el peerSocket.
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+		// todo: de momento esto está sin revisar según el método Sequential Hole Punching. Lo que sigue es de pruebas anteriores.
 		try{
 			peerSocket.connect(peerISA, 2000);
 		} catch (SocketTimeoutException e){
@@ -347,31 +260,6 @@ public class Cliente {
 		peerSocket.connect(peerISA);
 		peerInput = new DataInputStream(peerSocket.getInputStream());
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
-
-		//socket.connect(friendIP, friendPort);
-		// TODO: Capturar excepción producida por timeout para que vuelva a estar al loro y mostrar alerta al usuario.
-
-		/*byte[] sendPunchArray = {PUNCH};
-		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket.getInetAddress(), socket.getPort());
-		socket.send(sendPunch);
-
-		byte[] receivePunchArray = new byte[10];
-		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
-
-		retries = 3;
-		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
-			try {*/
-				//socket.send(sendPunch);
-				//socket.receive(receivePunch);
-			/*} catch (SocketTimeoutException e) {
-				--retries;
-			}
-		}
-
-		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
-		*/
-		// TODO: timeout a 0 temporalmente. Quitarlo.
-		//socket.setSoTimeout(0);
 	}
 
 
@@ -412,17 +300,8 @@ public class Cliente {
 			s.write(fLength);
 			s.write(fnBuffer);
 
-			//DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
 			peerOutput.writeInt(s.size());
 			s.writeTo(peerOutput);
-			//dos.close();
-
-			/*byte[] completeBuffer = s.toByteArray();
-			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
-			//socket_to_friend.send(request);
-			//socket_to_server.send(request);
-			socket.send(request);
-			*/
 		}
 		catch (AlertException e){
 			e.showAlert();
@@ -441,60 +320,16 @@ public class Cliente {
 			///////////////////////  Prueba de la recepción del archivo ///////////////////////////
 			// De momento pillo aquí el buffer de metadatos.
 
-			// TODO. ¿Son los metadatos inútiles aquí?
-			/*DataInputStream dis = new DataInputStream(peerSocket.getInputStream());
-			int bufferSize = dis.readInt();
-			byte[] metadataBuffer = new byte[bufferSize];
-			dis.read(metadataBuffer, 0, bufferSize);
-			*/
-			// TODO: Para recibir un archivo no hay que devolver el nombre en el metadataBuffer, solo el tamaño.
-			/*byte[] metadataBuffer = new byte[100];
-			DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length);
-			///////////////////////////////////////////////////////////////////////////////////
-
-			//socket_to_friend.receive(metadataPacket);
-			//socket_to_server.receive(metadataPacket);
-			socket.receive(metadataPacket);
-			*/
-
 			byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
-			/*DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
-
-			//socket_to_friend.receive(dataPacket);
-			//socket_to_server.receive(dataPacket);
-			socket.receive(dataPacket);
-			*/
 
 			// TODO: quitar lo de "copia de".
 			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName);
-			//DataInputStream dis = new DataInputStream(peerSocket.getInputStream());
+			// TODO: Esto está sin probar:
+			// La recepción del fichero se resumiría en estas líneas:
 			int count;
 			while ((count = peerInput.read(dataBuffer)) > 0){
 				fos.write(dataBuffer, 0, count);
 			}
-			/*boolean exit = false;
-
-			while (!exit) {
-				//TODO Implementar algún tipo de verificación de paquetes o cambiar a TCP.
-				/* Habría que implementarlo con un nextIsLast como en la parte Servidor, pero así funciona.
-				 * MUY IMPORTANTE USAR dataPacket.getLength() Y NO dataBuffer.length PARA DESCARTAR LO QUE SOBRA
-				 * DEL dataBuffer de escrituras anteriores. Para hacerlo como en la parte Servidor habría que
-				 * limpiar el buffer y así como está no lo estamos haciendo. Si no se limpia el dataBuffer
-				 * tiene la longitud MAX_BUFF_SIZE y, por tanto, datos antiguos sobre los que no se han escrito
-				 * datos nuevos con el último paquete.
-				 */
-			/*	fos.write(dataBuffer, 0, dataPacket.getLength());
-
-				if (dataPacket.getLength() < MAX_BUFF_SIZE)
-					exit = true;
-				else
-					//socket_to_friend.receive(dataPacket);
-					//socket_to_server.receive(dataPacket);
-					socket.receive(dataPacket);
-			}
-			*/
-			//dis.close();
-			//fos.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();

@@ -90,7 +90,7 @@ public class Servidor {
 		try {
 			this.context = c;
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"),44200);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
 			//this.listenSocket = new DatagramSocket();
 
 			this.socket = new Socket();
@@ -159,7 +159,7 @@ public class Servidor {
 			baos.write(myName.getBytes(), 0, myName.length());
 			this.address = Utils.getIP(socket, context);
 			//byte[] localPort = Utils.intToByteArray(listenPort);
-			// todo: Comprobar que las longitudes de la ip y el puerto son 4 bytes.
+
 			baos.write(address, 0, address.length);
 			//baos.write(localPort, 0, localPort.length);
 			/*byte[] connectionBuffer = baos.toByteArray();
@@ -258,92 +258,38 @@ public class Servidor {
 	 *
 	 * @throws IOException
 	 */
-	private void connect_to_friend() throws IOException, AlertException{
-		//this.listenSocket.setSoTimeout(5000);
+	private void connect_to_friend() throws IOException, AlertException {
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
-		/*DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
 
-		int retries = 3;
-		while(retries > 0){
-			//try {
-				//listenSocket.receive(friendInfoPacket);
-				retries = 0;
-			//} catch (SocketTimeoutException e){
-				--retries;
-				if (retries == 0)
-					throw new AlertException("Se ha agotado el tiempo de conexión", context);
-			//}
-		}*/
-
-		//DataInputStream dis = new DataInputStream(peerSocket.getInputStream());
 		serverInput.readFully(friendInfo);
 		ByteArrayInputStream bais = new ByteArrayInputStream(friendInfo);
 
 		byte[] IParray = new byte[4];
 		bais.read(IParray, 0, 4);
-		//System.arraycopy(friendInfo, 0, IParray, 0, 4);
 		InetAddress friendIP = InetAddress.getByAddress(IParray);
 
 		byte[] portArray = new byte[4];
 		bais.read(portArray, 0, 4);
-		//System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		// Intento de conexión con el cliente, debe fallar por ejemplo por timeout:
-		try{
+		// Intento de conexión con el cliente, debe fallar por timeout (por ejemplo):
+		try {
 			this.peerSocket.connect(peerISA, 500);
-		} catch (SocketTimeoutException e){
+		} catch (SocketTimeoutException e) {
 			// TODO: Comprobar que se ha cerrado tb la conexión en el servidor. Si no, mandarle un CLOSE_SOCKET.
 			socket.close();
 		}
 		//////////////////////////////////////
 		try {
 			peerSocket = listenSocket.accept();
-		} catch (SocketTimeoutException e){}
+		} catch (SocketTimeoutException e) {
+		}
 		//peerSocket.connect(peerISA);
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 		peerInput = new DataInputStream(peerSocket.getInputStream());
 
-		//socket_to_client.connect(friendIP, friendPort);
-		//listenSocket.connect(friendIP, friendPort);
-
-		//TODO: revisar este comentario cuando funcione sin depurador.
-		/* Ahora entra en acción el Hole Punching. Se deben enviar 2 paquetes:
-		 *
-		 * El primero es el que abre el camino hacia nuestro dispositivo. Cuando el router toma este
-		 * paquete para reenviarlo crea en su tabla NAT la traducción IP_origen/puerto_origen ;
-		 * IP_destino/puerto_destino. Así cuando reciba un paquete desde el destino hasta el origen
-		 * registrados lo pasará.
-		 *
-		 * El segundo paquete tiene como objetivo asegurarse de que la NAT del otro dispositivo
-		 * ya tiene guardada la traducción correspondiente en su tabla de traducciones y que desde
-		 * el momento que obtiene respuesta ya se puede comenzar con la comunicación de los datos
-		 * que nos interesan.
-		 */
-		/*byte[] sendPunchArray = {PUNCH};
-		//DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, listenSocket.getInetAddress(), listenSocket.getPort());
-		//listenSocket.send(sendPunch);
-
-		byte[] receivePunchArray = new byte[10];
-		DatagramPacket receivePunch = new DatagramPacket(receivePunchArray, 1);
-
-		// El bucle está pensado para tener timeout activado.
-		/*retries = 3;
-		while((receivePunchArray[0]!=PUNCH) && (retries>0)){
-			try{*/
-		//listenSocket.send(sendPunch);
-		//listenSocket.receive(receivePunch);
-			/*} catch (SocketTimeoutException e) {
-				--retries;
-			}
-		}
-
-		if (retries == 0) throw new AlertException("No ha sido posible conectar con tu amigo");
-		*/
-		// TODO: timeout a 0 temporalmente. Quitarlo.
-		//listenSocket.setSoTimeout(0);
 	}
 
 
@@ -361,27 +307,14 @@ public class Servidor {
 		 * Con la cola de espera estoy forzando a que las peticiones se atiendan de una en una.
 		 * Para que se atiendan todas habría que lanzar un thread por cada petición atendida.
 		 */
-		/////////// BORRAR AÑADIDO MANUAL DE UN AMIGO, borrar tb los catch ////////////////
-		/*try{
-			Amigos amigos = Amigos.getInstance();
-			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName("192.168.0.10"), listenPort);
-			amigos.addFriend("Manolito", addr);
-
-		} catch (UnknownHostException e){
-			e.printStackTrace();
-		} catch (AlertException e){
-			e.showAlert();
-		}*/
-		////////////////////////////////////////////////////////////
 
 		try{
 			// Mientras el servidor no envíe aviso de nueva petición el hilo no avanza.
 			byte[] new_req = new byte[1];
-			//DatagramPacket p = new DatagramPacket(new_req, new_req.length);
+
 			while (new_req[0] != NEW_REQ){
 				new_req[0] = 0;
 				new_req[0] = serverInput.readByte();
-				//listenSocket.receive(p);
 			}
 
 			connect_to_friend();
@@ -397,46 +330,23 @@ public class Servidor {
 
 			/* Primero hay que recibir el nombre del amigo que hará la petición.
 			 * Se recibe en reqFriendPacket el primer byte con la longitud del nombre
-			 * y después el nombre.
+			 * y después el nombre, que se guarda en requestorFriendName.
 			 */
-			//DataInputStream dis = new DataInputStream(peerSocket.getInputStream());
+
 			byte nameSize = peerInput.readByte();
 			peerInput.readFully(requestorFriendName, 0, nameSize);
 			String friendName = new String(requestorFriendName).substring(0, nameSize);
-			//DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
-			// Hay que ir descartando todos los PUNCH enviados de más por el otro:
-			/*requestorFriendName[0] = PUNCH;
-			listenSocket.setSoTimeout(1000);
-			int retries = 7;
-			while (requestorFriendName[0] == PUNCH) {
-				try {
-			*/		//listenSocket.receive(reqFriendPacket);
-			//	} catch (SocketTimeoutException e) {--retries;}
-			//}
-			//socket_to_client.receive(reqFriendPacket);
 
-			//DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-			/*byte nameSize = requestorFriendName[0];
-			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
-			*/
 
 			Amigos amigos = Amigos.getInstance(context);
 			//////////////////// BORRAR AÑADIDO MANUAL DEL AMIGO //////////////////////
-			//amigos.addFriend(friendName, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
 			amigos.addFriend(friendName, peerSocket.getInetAddress(), peerSocket.getPort());
-			//DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
 			///////////////////////////////////////////////////////////////////////////
-			//if (!amigos.isFriend(friendName, reqFriendPacket.getAddress())){
+
 			if (!amigos.isFriend(friendName, peerSocket.getInetAddress())){
 			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
 				request[0] = -1;
 				peerOutput.writeByte(NO_FRIEND);
-				/*byte[] no = {NO_FRIEND};
-				// TODO: ¿Mejor socket_to_client.getAddress() y getPort()?
-				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				//listenSocket.send(resp);
-				//socket_to_client.send(resp);
-				*/
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.", context);
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos o sí y/o realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
@@ -444,28 +354,18 @@ public class Servidor {
 
 			}
 			else{
+				// Se manda un saludo al amigo para hacerle saber que la conexión ha ido bien y que se espera su petición:
+				peerOutput.writeByte(HELLO_FRIEND);
+
+				// Se recibe su petición:
+				int reqSize = peerInput.readInt();
+				peerInput.read(request,0, reqSize);
+
 				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
 				 * de fichero si es eso lo que solicita.
 				 */
-				peerOutput.writeByte(HELLO_FRIEND);
-				/*byte[] ok = {HELLO_FRIEND};
-				// TODO: Repasar la dicección y el puerto que estoy poniendo en este paquete.
-				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				//socket_to_client.send(resp);
-				listenSocket.send(resp);
-				*/
-
-				int reqSize = peerInput.readInt();
-				peerInput.read(request,0, reqSize);
-				/*DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-				//socket_to_client.receive(reqPacket);
-				listenSocket.receive(reqPacket);
-				*/
-
 				if (isValidRequest(request[0])){
 					synchronized (requestQueue) {
-						//Byte[] aux = new Byte[request.length];
-						//byte[] aux = new byte[request.length];
 						byte[] aux = new byte[reqSize];
 						System.arraycopy(request, 0, aux, 0, request.length);
 						requestQueue.add(new Pair<>(friendName, aux));
@@ -474,9 +374,6 @@ public class Servidor {
 				}
 				else throw new AlertException("Error, petición incorrecta.", context);
 			}
-
-			//dos.close();
-			//dis.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -522,8 +419,6 @@ public class Servidor {
 					 * request[2..N] : Nombre del fichero.
 					 */
 					InetSocketAddress addr = Amigos.getInstance(context).getFriendAddr(friend);
-					//int fileNamePosition = 1 + friend.length();
-					//String fileName = request.toString().substring(fileNamePosition);
 					String fileName = new String(request).substring(2, 2+request[1]);
 					sendFile(fileName, addr);
 				}
@@ -579,9 +474,10 @@ public class Servidor {
 			 */
 			//sendFileMetadata(file, addr, fileLength);
 
+			// TODO: Esto está sin probar:
+			// El envío del fichero en sí se resumiría en 4 líneas:
 			byte[] buffer = new byte[MAX_BUFF_SIZE];
 			int count;
-			//DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
 			while ((count = fis.read(buffer)) > 0) {
 				peerOutput.write(buffer, 0, count);
 			}
@@ -612,7 +508,6 @@ public class Servidor {
 
 				totalBytesRead += bytesRead;
 				packet.setData(buffer);
-				// TODO: Utilizar otro socket (otro puerto).
 				//listenSocket.send(packet);
 				//////////////////////////////////////////////
 				/*try {
@@ -670,14 +565,8 @@ public class Servidor {
 		System.arraycopy(aux, 0, metadataBuffer, 4, aux.length);
 
 		int dataSize = metadataBuffer.length;
-		//DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
 		peerOutput.writeInt(dataSize);
 		peerOutput.write(metadataBuffer, 0, dataSize);
-		//dos.close();
-
-		/*DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length, addr.getAddress(), addr.getPort());
-		listenSocket.send(metadataPacket);
-		*/
 	}
 
 
@@ -726,11 +615,6 @@ public class Servidor {
 		try {
 			byte[] allMetadata = getMetadataFromSharedFolder();
 			peerOutput.write(allMetadata, 0, allMetadata.length);
-			/*DatagramPacket p = new DatagramPacket(allMetadata, allMetadata.length);
-			listenSocket.send(p);
-			*/
-			// TODO: Creo que no me falta nada en este método...
-
 		}
 		catch (IOException e){
 			e.printStackTrace();
