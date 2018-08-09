@@ -87,9 +87,9 @@ public class Cliente {
 			//socket = new DatagramSocket();
 			// TODO: Poner TIMEOUT a ambos sockets.
 			peerSocket = new Socket();
+			peerSocket.setReuseAddress(true);
 			socket = new Socket();
 			socket.setReuseAddress(true);
-			peerSocket.setReuseAddress(true);
 			//socket.setReuseAddress(true);
 			//port = socket.getLocalPort();
 
@@ -336,13 +336,18 @@ public class Cliente {
 
 		InetSocketAddress localISA = new InetSocketAddress(this.localPort);
 		peerSocket.bind(localISA);
-		// Apañado con un setReuseAddress(TRUE) en el peerSocket.
+		// Apañado con un setReuseAddress(TRUE) en el peerSocket. 
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+		try{
+			peerSocket.connect(peerISA, 2000);
+		} catch (SocketTimeoutException e){
+			peerSocket = new Socket();
+		}
 		peerSocket.connect(peerISA);
-		/*peerInput = new DataInputStream(peerSocket.getInputStream());
+		peerInput = new DataInputStream(peerSocket.getInputStream());
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
-		*/
+
 		//socket.connect(friendIP, friendPort);
 		// TODO: Capturar excepción producida por timeout para que vuelva a estar al loro y mostrar alerta al usuario.
 

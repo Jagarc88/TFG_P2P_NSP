@@ -45,7 +45,7 @@ public class Servidor {
 
 	// Puerto en el que se escucha a conexiones entrantes.
 	//private int listenTCPPort;
-	//private int listenPort;
+	private int listenPort;
 	private byte[] address;
 
 	private ServerSocket listenSocket;
@@ -90,12 +90,11 @@ public class Servidor {
 		try {
 			this.context = c;
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"),44200);
 			//this.listenSocket = new DatagramSocket();
-			this.listenSocket = new ServerSocket();
-			this.listenSocket.setReuseAddress(true);
 
 			this.socket = new Socket();
+			this.socket.setReuseAddress(true);
 			this.peerSocket = new Socket();
 			this.peerSocket.setReuseAddress(true);
 
@@ -147,6 +146,9 @@ public class Servidor {
 		try {
 			InetSocketAddress serverAddr = new InetSocketAddress(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
 			socket.connect(serverAddr);
+			listenPort = socket.getLocalPort();
+			listenSocket = new ServerSocket(listenPort);
+			listenSocket.setReuseAddress(true);
 			//peerSocket = new Socket(serverInfo.getAddress(), serverInfo.getPort());
 			serverOutput = new DataOutputStream(socket.getOutputStream());
 			serverInput = new DataInputStream(socket.getInputStream());
@@ -289,7 +291,18 @@ public class Servidor {
 		int friendPort = Utils.byteArrayToInt(portArray);
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		peerSocket.connect(peerISA);
+		// Intento de conexión con el cliente, debe fallar por ejemplo por timeout:
+		try{
+			this.peerSocket.connect(peerISA, 500);
+		} catch (SocketTimeoutException e){
+			// TODO: Comprobar que se ha cerrado tb la conexión en el servidor. Si no, mandarle un CLOSE_SOCKET.
+			socket.close();
+		}
+		//////////////////////////////////////
+		try {
+			peerSocket = listenSocket.accept();
+		} catch (SocketTimeoutException e){}
+		//peerSocket.connect(peerISA);
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 		peerInput = new DataInputStream(peerSocket.getInputStream());
 
