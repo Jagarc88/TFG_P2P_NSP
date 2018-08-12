@@ -18,6 +18,7 @@ import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -39,6 +40,7 @@ public class Cliente {
 
 	private byte[] address;
 	private int localPort;
+	private SocketAddress localSA;
 
 	private Context context;
 
@@ -48,8 +50,10 @@ public class Cliente {
 	//private DatagramSocket socket_to_server;
 	//private DatagramSocket socket_to_friend;
 	//private DatagramSocket socket;
+	private ServerSocket listenSocket;
 	private Socket socket;
 	private Socket peerSocket;
+	private Socket peerConnectingSocket;
 	private DataOutputStream serverOutput;
 	private DataInputStream serverInput;
 	private DataOutputStream peerOutput;
@@ -80,6 +84,8 @@ public class Cliente {
 
 			peerSocket = new Socket();
 			peerSocket.setReuseAddress(true);
+			peerConnectingSocket = new Socket();
+			peerConnectingSocket.setReuseAddress(true);
 			socket = new Socket();
 			socket.setReuseAddress(true);
 
@@ -193,9 +199,18 @@ public class Cliente {
 	 */
 	private void loginServer(){
 		try {
-			InetSocketAddress serverAddr = new InetSocketAddress(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
 			socket.connect(serverAddr);
 			localPort = socket.getLocalPort();
+			//listenSocket = new ServerSocket();
+			//listenSocket.setReuseAddress(true);
+			localSA = socket.getLocalSocketAddress();
+			//listenSocket.bind(localSA);
+
+			////////////////// QUITAR DE AQUÍ
+			//peerSocket.bind(localSA);
+			/////////////////////////////////
+
 			serverOutput = new DataOutputStream(socket.getOutputStream());
 			serverInput = new DataInputStream(socket.getInputStream());
 
@@ -245,19 +260,27 @@ public class Cliente {
 		bais.read(portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
+		//InetSocketAddress localISA = new InetSocketAddress(this.localPort);
+		peerSocket.bind(localSA);
+		peerConnectingSocket.bind(localSA);
 
-		InetSocketAddress localISA = new InetSocketAddress(this.localPort);
-		peerSocket.bind(localISA);
-		// Apañado con un setReuseAddress(TRUE) en el peerSocket.
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try{
+					//peerConnectedSocket = new Socket("localhost", listenPort);
+					listenSocket = new ServerSocket();
+					listenSocket.bind(localSA);
+					listenSocket.setReuseAddress(true);
+					peerSocket = listenSocket.accept();
+					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
+				} catch (IOException e){e.printStackTrace();}
+			}
+		}).start();
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		// todo: de momento esto está sin revisar según el método Sequential Hole Punching. Lo que sigue es de pruebas anteriores.
-		try{
-			peerSocket.connect(peerISA, 2000);
-		} catch (SocketTimeoutException e){
-			peerSocket = new Socket();
-		}
-		peerSocket.connect(peerISA);
+		peerConnectingSocket.connect(peerISA);
+
 		peerInput = new DataInputStream(peerSocket.getInputStream());
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 	}

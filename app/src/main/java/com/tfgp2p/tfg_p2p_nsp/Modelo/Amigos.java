@@ -4,8 +4,10 @@ import android.content.Context;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 
 /**
@@ -24,6 +26,9 @@ public class Amigos {
 	private HashMap<String, InetSocketAddress> friendsMap;
 
 	private static Amigos amigos = null;
+
+	// TODO: Debería ser final, pero en android no me permite dejarla en blanco e inicializarla en el constructor por ejemplo...
+	private static InetSocketAddress serverInfo;
 
 	private Context context;
 
@@ -47,6 +52,9 @@ public class Amigos {
 
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();
+		try {
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
+		} catch (UnknownHostException e){e.printStackTrace();}
 	}
 
 
@@ -119,6 +127,10 @@ public class Amigos {
 		myName = newname;
 	}
 
+
+	public static InetSocketAddress getServerInfo(){
+		return serverInfo;
+	}
 
 
 }

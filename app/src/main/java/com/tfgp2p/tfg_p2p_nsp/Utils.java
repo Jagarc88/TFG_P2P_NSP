@@ -5,6 +5,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 import com.tfgp2p.tfg_p2p_nsp.Conexion.Servidor;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -176,7 +177,7 @@ public class Utils {
 			// Si se está conectado a través de la red móvil:
 			case ConnectivityManager.TYPE_MOBILE:
 				try {
-					socket.connect(Servidor.getServerInfo(), Servidor.getServerInfo().getPort());
+					socket.connect(Amigos.getServerInfo(), 15000);
 					ip = socket.getLocalAddress().getAddress();
 				} catch (IOException e){ e.printStackTrace();}
 				break;

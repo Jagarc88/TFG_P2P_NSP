@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -47,11 +48,13 @@ public class Servidor {
 	//private int listenTCPPort;
 	private int listenPort;
 	private byte[] address;
+	private SocketAddress localSA;
 
 	private ServerSocket listenSocket;
 	private Socket socket;
 	// TODO: Seguramente haga falta unos cuantos sockets para servir a varios clientes a la vez...
 	private Socket peerSocket;
+	private Socket peerConnectingSocket;
 	private DataOutputStream serverOutput;
 	private DataInputStream serverInput;
 	private DataOutputStream peerOutput;
@@ -69,8 +72,6 @@ public class Servidor {
 	 */
 	//private HashMap<String, InetSocketAddress> activeClients;
 
-	// TODO: Debería ser final, pero en android no me permite dejarla en blanco e inicializarla en el constructor por ejemplo...
-	private static InetSocketAddress serverInfo;
 
 
 	/**
@@ -90,13 +91,15 @@ public class Servidor {
 		try {
 			this.context = c;
 			// TODO: poner la direccion del servidor.
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
+			//serverInfo = new InetSocketAddress(Inet4Address.getByName("2.153.114.70"),44200);
 			//this.listenSocket = new DatagramSocket();
 
 			this.socket = new Socket();
 			this.socket.setReuseAddress(true);
 			this.peerSocket = new Socket();
 			this.peerSocket.setReuseAddress(true);
+			this.peerConnectingSocket = new Socket();
+			this.peerConnectingSocket.setReuseAddress(true);
 
 			// Para chequear si asigna bien el puerto:
 			//this.listenPort = this.listenSocket.getLocalPort();
@@ -144,12 +147,14 @@ public class Servidor {
 		System.arraycopy(myName.getBytes(), 0, connectionBuffer, 2, myName.length());
 		*/
 		try {
-			InetSocketAddress serverAddr = new InetSocketAddress(Servidor.getServerInfo().getAddress(), Servidor.getServerInfo().getPort());
+			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
 			socket.connect(serverAddr);
 			listenPort = socket.getLocalPort();
-			listenSocket = new ServerSocket(listenPort);
-			listenSocket.setReuseAddress(true);
+			localSA = socket.getLocalSocketAddress();
+			//listenSocket = new ServerSocket(listenPort);
+			//listenSocket.setReuseAddress(true);
 			//peerSocket = new Socket(serverInfo.getAddress(), serverInfo.getPort());
+
 			serverOutput = new DataOutputStream(socket.getOutputStream());
 			serverInput = new DataInputStream(socket.getInputStream());
 
@@ -273,20 +278,26 @@ public class Servidor {
 		bais.read(portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
+		peerSocket.bind(localSA);
+		peerConnectingSocket.bind(localSA);
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try{
+					//peerConnectedSocket = new Socket("localhost", listenPort);
+					listenSocket = new ServerSocket();
+					listenSocket.bind(localSA);
+					listenSocket.setReuseAddress(true);
+					peerSocket = listenSocket.accept();
+					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
+				} catch (IOException e){e.printStackTrace();}
+			}
+		}).start();
+
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		// Intento de conexión con el cliente, debe fallar por timeout (por ejemplo):
-		try {
-			this.peerSocket.connect(peerISA, 500);
-		} catch (SocketTimeoutException e) {
-			// TODO: Comprobar que se ha cerrado tb la conexión en el servidor. Si no, mandarle un CLOSE_SOCKET.
-			socket.close();
-		}
-		//////////////////////////////////////
-		try {
-			peerSocket = listenSocket.accept();
-		} catch (SocketTimeoutException e) {
-		}
-		//peerSocket.connect(peerISA);
+		peerConnectingSocket.connect(peerISA);
+
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 		peerInput = new DataInputStream(peerSocket.getInputStream());
 
@@ -319,6 +330,7 @@ public class Servidor {
 
 			connect_to_friend();
 
+			// todo: Ver si tengo conectado el peerConnectedSocket aquí fuera del thread.
 			byte[] requestorFriendName = new byte[32];
 			byte[] request = new byte[64];
 			request[0] = -1;
@@ -532,9 +544,6 @@ public class Servidor {
 
 
 
-	public static InetSocketAddress getServerInfo(){
-		return serverInfo;
-	}
 
 
 	/**
