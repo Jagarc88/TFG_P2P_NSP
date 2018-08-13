@@ -15,8 +15,6 @@ import com.tfgp2p.tfg_p2p_nsp.View.Personalizados.PersonalizedElements.PestanaAm
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 
 /**
  * Created by jagar on 25/11/2017.
@@ -63,40 +61,14 @@ public class AplicacionMain extends Application {
         GestorSistemaAmigos.amigoList.add(new Amigo("Sonia",003, LayoutElementAmigos.STATE_USER_ONLINE));
 
 
-        amigos = Amigos.getInstance(getApplicationContext());
         // Inicia las conexiones
-        final CyclicBarrier barrier = new CyclicBarrier(3);
-
-        Thread launchServer = new Thread(new Runnable(){
+        new Thread(new Runnable(){
             @Override
             public void run(){
-                try {
-                    barrier.await();
-                    server = Servidor.getInstance(getApplicationContext());
-                } catch (InterruptedException | BrokenBarrierException e) {
-                    e.printStackTrace();
-                }
+        		amigos = Amigos.getInstance(getApplicationContext());
+				server = Servidor.getInstance(getApplicationContext());
+				//client = Cliente.getInstance(getApplicationContext());
             }
-        });
-        Thread launchClient = new Thread(new Runnable(){
-            @Override
-            public void run() {
-                try{
-                    barrier.await();
-                    client = Cliente.getInstance(getApplicationContext());
-                } catch (InterruptedException | BrokenBarrierException e) {
-                e.printStackTrace();
-                }
-            }
-        });
-
-        launchServer.start();
-        launchClient.start();
-
-        try {
-            barrier.await();
-        } catch (InterruptedException | BrokenBarrierException e) {
-            e.printStackTrace();
-        }
+        }).start();
     }
 }

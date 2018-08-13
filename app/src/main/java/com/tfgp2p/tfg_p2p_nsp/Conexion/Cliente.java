@@ -272,14 +272,14 @@ public class Cliente {
 					listenSocket = new ServerSocket();
 					listenSocket.bind(localSA);
 					listenSocket.setReuseAddress(true);
-					peerSocket = listenSocket.accept();
+					peerConnectingSocket = listenSocket.accept();
 					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
 				} catch (IOException e){e.printStackTrace();}
 			}
 		}).start();
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		peerConnectingSocket.connect(peerISA);
+		peerSocket.connect(peerISA);
 
 		peerInput = new DataInputStream(peerSocket.getInputStream());
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());

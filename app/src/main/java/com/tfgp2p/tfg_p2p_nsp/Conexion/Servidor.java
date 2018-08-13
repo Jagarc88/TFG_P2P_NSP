@@ -289,14 +289,16 @@ public class Servidor {
 					listenSocket = new ServerSocket();
 					listenSocket.bind(localSA);
 					listenSocket.setReuseAddress(true);
-					peerSocket = listenSocket.accept();
+					peerConnectingSocket = listenSocket.accept();
+					// Este no se conecta, parece que sólo sirve para el HP.
+					System.out.println("Direccion: " + peerSocket.getInetAddress() + ", puerto: " + peerSocket.getPort());
 					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
 				} catch (IOException e){e.printStackTrace();}
 			}
 		}).start();
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		peerConnectingSocket.connect(peerISA);
+		peerSocket.connect(peerISA);
 
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 		peerInput = new DataInputStream(peerSocket.getInputStream());
