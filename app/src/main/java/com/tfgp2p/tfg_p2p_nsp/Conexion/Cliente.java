@@ -264,7 +264,7 @@ public class Cliente {
 		peerSocket.bind(localSA);
 		peerConnectingSocket.bind(localSA);
 
-		/*new Thread(new Runnable() {
+		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try{
@@ -272,13 +272,13 @@ public class Cliente {
 					listenSocket = new ServerSocket();
 					listenSocket.bind(localSA);
 					listenSocket.setReuseAddress(true);
-					peerConnectingSocket = listenSocket.accept();
+					peerSocket = listenSocket.accept();
 					System.out.println("Hey");
 					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
 				} catch (IOException e){e.printStackTrace();}
 			}
 		}).start();
-		*/
+
 		byte resp = serverInput.readByte();
 		if (resp == TRY_CONNECT) {
 			InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);

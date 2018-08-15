@@ -281,35 +281,27 @@ public class Servidor {
 		peerSocket.bind(localSA);
 		peerConnectingSocket.bind(localSA);
 
-		/*new Thread(new Runnable() {
+		final InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try{
-					//peerConnectedSocket = new Socket("localhost", listenPort);
-					listenSocket = new ServerSocket();
-					listenSocket.bind(localSA);
-					listenSocket.setReuseAddress(true);
-					peerConnectingSocket = listenSocket.accept();
+					peerSocket.connect(peerISA);
 					// Este no se conecta, parece que sólo sirve para el HP.
 					System.out.println("Direccion: " + peerSocket.getInetAddress() + ", puerto: " + peerSocket.getPort());
 					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
 				} catch (IOException e){e.printStackTrace();}
 			}
 		}).start();
-		*/
 
-		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+
 		/////////////////////////////////////////////////////////////////
-		try {
-			peerSocket.connect(peerISA, 2000);
-		} catch (SocketTimeoutException e){e.printStackTrace();}
 		serverOutput.writeInt(1);
 		serverOutput.writeByte(CLOSE_SOCKET);
-		socket.close();
 		listenSocket = new ServerSocket(listenPort);
 		//listenSocket.bind(localSA);
 		listenSocket.setReuseAddress(true);
-		peerConnectingSocket = listenSocket.accept();
+		peerSocket = listenSocket.accept();
 		////////////////////////////////////////////////////////////////
 
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());

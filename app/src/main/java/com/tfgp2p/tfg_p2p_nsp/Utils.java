@@ -177,10 +177,10 @@ public class Utils {
 			*/
 			// Si se está conectado a través de la red móvil:
 			case ConnectivityManager.TYPE_MOBILE:
-				try {
-					socket.connect(Amigos.getServerInfo(), 15000);
+				//try {
+					//socket.connect(Amigos.getServerInfo(), 15000);
 					ip = socket.getLocalAddress().getAddress();
-				} catch (IOException e){ e.printStackTrace();}
+				//} catch (IOException e){ e.printStackTrace();}
 				break;
 				/*try {
 					for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
