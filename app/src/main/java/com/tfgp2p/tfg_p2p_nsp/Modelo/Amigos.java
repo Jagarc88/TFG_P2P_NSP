@@ -53,7 +53,7 @@ public class Amigos {
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();
 		try {
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
+			serverInfo = new InetSocketAddress(Inet4Address.getByName(""), );
 		} catch (UnknownHostException e){e.printStackTrace();}
 	}
 

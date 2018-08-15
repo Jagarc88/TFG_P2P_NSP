@@ -67,7 +67,7 @@ public class AplicacionMain extends Application {
             public void run(){
         		amigos = Amigos.getInstance(getApplicationContext());
 				server = Servidor.getInstance(getApplicationContext());
-				//client = Cliente.getInstance(getApplicationContext());
+				client = Cliente.getInstance(getApplicationContext());
             }
         }).start();
     }

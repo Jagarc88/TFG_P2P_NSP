@@ -78,7 +78,8 @@ public class Utils {
 	 */
 	public static final byte SERVER_CONNECT = 10;
 	public static final byte IS_CLIENT_SOCKET = 11;
-	public static final byte PUNCH = 12;
+	public static final byte CLOSE_SOCKET = 12;
+	public static final byte TRY_CONNECT = 13;
 	public static final byte TAKE_IP_FROM_HEADER = 0;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.

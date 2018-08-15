@@ -281,7 +281,7 @@ public class Servidor {
 		peerSocket.bind(localSA);
 		peerConnectingSocket.bind(localSA);
 
-		new Thread(new Runnable() {
+		/*new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try{
@@ -296,9 +296,21 @@ public class Servidor {
 				} catch (IOException e){e.printStackTrace();}
 			}
 		}).start();
+		*/
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-		peerSocket.connect(peerISA);
+		/////////////////////////////////////////////////////////////////
+		try {
+			peerSocket.connect(peerISA, 2000);
+		} catch (SocketTimeoutException e){e.printStackTrace();}
+		serverOutput.writeInt(1);
+		serverOutput.writeByte(CLOSE_SOCKET);
+		socket.close();
+		listenSocket = new ServerSocket(listenPort);
+		//listenSocket.bind(localSA);
+		listenSocket.setReuseAddress(true);
+		peerConnectingSocket = listenSocket.accept();
+		////////////////////////////////////////////////////////////////
 
 		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
 		peerInput = new DataInputStream(peerSocket.getInputStream());
