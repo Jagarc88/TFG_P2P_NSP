@@ -80,6 +80,7 @@ public class Utils {
 	public static final byte IS_CLIENT_SOCKET = 11;
 	public static final byte CLOSE_SOCKET = 12;
 	public static final byte TRY_CONNECT = 13;
+	public static final byte PUNCH = 14;
 	public static final byte TAKE_IP_FROM_HEADER = 0;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
@@ -144,7 +145,7 @@ public class Utils {
 	/**
 	 * Devuelve la dirección IP pública del dispositivo.
 	 */
-	public static byte[] getIP(Socket socket, Context context){
+	public static byte[] getIP(DatagramSocket socket, Context context){
 		byte[] ip = new byte[1];
 		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();

@@ -6,24 +6,15 @@ import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -47,17 +38,7 @@ public class Cliente {
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
 	private Amigos amigos;
 
-	//private DatagramSocket socket_to_server;
-	//private DatagramSocket socket_to_friend;
-	//private DatagramSocket socket;
-	private ServerSocket listenSocket;
-	private Socket socket;
-	private Socket peerSocket;
-	private Socket peerConnectingSocket;
-	private DataOutputStream serverOutput;
-	private DataInputStream serverInput;
-	private DataOutputStream peerOutput;
-	private DataInputStream peerInput;
+	private DatagramSocket socket;
 
 	private static int ppIndex = 0;
 
@@ -82,12 +63,8 @@ public class Cliente {
 			this.context = c;
 			this.amigos = Amigos.getInstance(context);
 
-			peerSocket = new Socket();
-			peerSocket.setReuseAddress(true);
-			peerConnectingSocket = new Socket();
-			peerConnectingSocket.setReuseAddress(true);
-			socket = new Socket();
-			socket.setReuseAddress(true);
+			socket = new DatagramSocket();
+			localPort = socket.getLocalPort();
 
 			loginServer();
 
@@ -118,10 +95,9 @@ public class Cliente {
 				baos.write(friendNameLen);
 				baos.write(friendNameBytes);
 
-				serverInput = new DataInputStream(socket.getInputStream());
-				serverOutput = new DataOutputStream(socket.getOutputStream());
-				serverOutput.writeInt(baos.size());
-				baos.writeTo(serverOutput);
+				byte[] nameBuff = baos.toByteArray();
+				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Amigos.getServerInfo());
+				socket.send(p);
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -135,30 +111,23 @@ public class Cliente {
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
-
-				nameBAOS.write(myName);
+				byte[] myNameLen = {(byte) myName.length};
 
 				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
-				peerOutput.writeByte(nameBAOS.size());
-				nameBAOS.writeTo(peerOutput);
+				nameBAOS.write(myNameLen);
+				nameBAOS.write(myName);
+				byte[] buff = nameBAOS.toByteArray();
+
+				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
+						socket.getInetAddress(), socket.getPort());
+				socket.send(hey_its_me);
+
 				/////////////////////////////////////////////
 				// TODO: ¡¡OJO!! A partir de aquí creo que está incompleto. Falta recibir hello_friend o no_friend, y lo siguiente.
 				byte[] resp = new byte[1];
-				resp[0] = peerInput.readByte();
-				/*DatagramPacket pac = new DatagramPacket(resp, resp.length);
-				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
-				socket.receive(pac);*/
-				//socket_to_friend.receive(pac);
-				//socket_to_server.receive(pac);
-				/*int retries = 2;
-				resp[0] = PUNCH;
-				while ((resp[0]==PUNCH) && (retries>=0)) {
-					socket.receive(pac);
-					--retries;
-				}
-				if (retries < 0)
-					throw new AlertException("No se ha recibido respuesta del otro dispositivo");
-				*/
+				DatagramPacket pac = new DatagramPacket(resp, resp.length);
+				socket.receive(pac);
+
 				if (resp[0] == HELLO_FRIEND) {
 					requestFile(fileName, friendName);
 					receiveFile(fileName);
@@ -201,18 +170,7 @@ public class Cliente {
 		try {
 			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
 			socket.connect(serverAddr);
-			localPort = socket.getLocalPort();
-			//listenSocket = new ServerSocket();
-			//listenSocket.setReuseAddress(true);
 			localSA = socket.getLocalSocketAddress();
-			//listenSocket.bind(localSA);
-
-			////////////////// QUITAR DE AQUÍ
-			//peerSocket.bind(localSA);
-			/////////////////////////////////
-
-			serverOutput = new DataOutputStream(socket.getOutputStream());
-			serverInput = new DataInputStream(socket.getInputStream());
 
 			String myName = Amigos.getMyName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -221,8 +179,11 @@ public class Cliente {
 			baos.write(myName.getBytes());
 			baos.write(IS_CLIENT_SOCKET);
 
-			serverOutput.writeInt(baos.size());
-			baos.writeTo(serverOutput);
+			byte[] connectionBuffer = baos.toByteArray();
+			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
+					Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
+			socket.connect(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
+			socket.send(p);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -246,47 +207,33 @@ public class Cliente {
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 
-		serverInput.readFully(friendInfo);
-		ByteArrayInputStream bais = new ByteArrayInputStream(friendInfo);
+		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
+		socket.receive(friendInfoPacket);
 
 		if (friendInfo[0] == NO_FRIEND)
 			throw new AlertException("Ha habido un problema en la comunicación.", context);
 
 		byte[] IParray = new byte[4];
-		bais.read(IParray, 0, 4);
+		System.arraycopy(friendInfo, 0, IParray, 0, 4);
 		InetAddress friendIP = InetAddress.getByAddress(IParray);
 
 		byte[] portArray = new byte[4];
-		bais.read(portArray, 0, 4);
+		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		//InetSocketAddress localISA = new InetSocketAddress(this.localPort);
-		peerSocket.bind(localSA);
-		peerConnectingSocket.bind(localSA);
-
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try{
-					//peerConnectedSocket = new Socket("localhost", listenPort);
-					listenSocket = new ServerSocket();
-					listenSocket.bind(localSA);
-					listenSocket.setReuseAddress(true);
-					peerSocket = listenSocket.accept();
-					System.out.println("Hey");
-					//todo: Comprobar si se ha conectado al puerto local o a otro. Habría que conectarlo al mismo que se conectó al servidor.
-				} catch (IOException e){e.printStackTrace();}
-			}
-		}).start();
-
-		byte resp = serverInput.readByte();
-		if (resp == TRY_CONNECT) {
-			InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
-			peerSocket.connect(peerISA);
+		// TODO: Repasar este comentario por si al final funciona de forma distinta:
+		/* Con esto damos tiempo a que el dispositivo que actúa como proveedor del archivo le dé
+		 * tiempo a mandar el paquete que hará que la NAT tras la que se encuentra registre la
+		 * traducción IP+puerto privados <-> IP+puerto públicos y pueda recibir ya el primer
+		 * paquete que le envíe el cliente.
+		 */
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 
-		peerInput = new DataInputStream(peerSocket.getInputStream());
-		peerOutput = new DataOutputStream(peerSocket.getOutputStream());
+		socket.connect(friendIP, friendPort);
 	}
 
 
@@ -327,8 +274,9 @@ public class Cliente {
 			s.write(fLength);
 			s.write(fnBuffer);
 
-			peerOutput.writeInt(s.size());
-			s.writeTo(peerOutput);
+			byte[] completeBuffer = s.toByteArray();
+			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
+			socket.send(request);
 		}
 		catch (AlertException e){
 			e.showAlert();
@@ -343,19 +291,19 @@ public class Cliente {
 	 * Descarga un fichero.
 	 */
 	private void receiveFile(String fileName){
-		try {
-			///////////////////////  Prueba de la recepción del archivo ///////////////////////////
-			// De momento pillo aquí el buffer de metadatos.
-
-			byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
-
-			// TODO: quitar lo de "copia de".
-			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName);
+		// TODO: quitar lo de "copia de".
+		try (FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName)) {
 			// TODO: Esto está sin probar:
-			// La recepción del fichero se resumiría en estas líneas:
-			int count;
-			while ((count = peerInput.read(dataBuffer)) > 0){
-				fos.write(dataBuffer, 0, count);
+			byte[] data = new byte[4+MAX_BUFF_SIZE];
+			DatagramPacket dataPacket = new DatagramPacket(data, data.length);
+			int count = MAX_BUFF_SIZE;
+
+			while (count == MAX_BUFF_SIZE){
+				socket.receive(dataPacket);
+				byte[] size = new byte[4];
+				System.arraycopy(data, 0, size, 0, 4);
+				count = Utils.byteArrayToInt(size);
+				fos.write(data, 4, count);
 			}
 		}
 		catch (IOException e){
