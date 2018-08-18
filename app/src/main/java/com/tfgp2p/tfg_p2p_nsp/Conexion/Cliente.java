@@ -15,6 +15,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -122,8 +125,6 @@ public class Cliente {
 						socket.getInetAddress(), socket.getPort());
 				socket.send(hey_its_me);
 
-				/////////////////////////////////////////////
-				// TODO: ¡¡OJO!! A partir de aquí creo que está incompleto. Falta recibir hello_friend o no_friend, y lo siguiente.
 				byte[] resp = new byte[1];
 				DatagramPacket pac = new DatagramPacket(resp, resp.length);
 				socket.receive(pac);
@@ -132,7 +133,6 @@ public class Cliente {
 					requestFile(fileName, friendName);
 					receiveFile(fileName);
 				}
-				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
 				else if (resp[0] == NO_FRIEND) {
 					throw new AlertException(friendName + " no es tu amigo.", context);
 				}
@@ -182,7 +182,6 @@ public class Cliente {
 			byte[] connectionBuffer = baos.toByteArray();
 			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 					Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			socket.connect(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
 			socket.send(p);
 
 		} catch (IOException e) {
@@ -290,20 +289,68 @@ public class Cliente {
 	/**
 	 * Descarga un fichero.
 	 */
-	private void receiveFile(String fileName){
+	private void receiveFile(String fileName) throws AlertException{
 		// TODO: quitar lo de "copia de".
-		try (FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName)) {
+		try (FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName)) {
 			// TODO: Esto está sin probar:
-			byte[] data = new byte[4+MAX_BUFF_SIZE];
-			DatagramPacket dataPacket = new DatagramPacket(data, data.length);
-			int count = MAX_BUFF_SIZE;
 
+			final int bufferSize = 12+MAX_BUFF_SIZE;
+			byte[] data = new byte[bufferSize];
+			DatagramPacket dataPacket = new DatagramPacket(data, data.length);
+			byte[] ackBuffer = new byte[1];
+			DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
+			Checksum checksum = new Adler32();
+			long calculatedCS = 0;
+			long receivedCS = 1;
+			byte retries = 1;
+			byte[] received_checksum_array = new byte[8];
+			int count = MAX_BUFF_SIZE;
+			// Vamos a esperar hasta 5 segundos al primer paquete.
+			socket.setSoTimeout(5000);
+			boolean firstRun = true;
+
+			// todo: repasar este comentario.
+			/* Se envía:
+			 * Checksum =                   8 bytes +
+			 * Tamaño de los datos leídos = 4 bytes +
+			 * Datos =                   1024 bytes = 1036 bytes
+			 */
 			while (count == MAX_BUFF_SIZE){
-				socket.receive(dataPacket);
+				while (calculatedCS != receivedCS) {
+					while (retries > 0){
+						try {
+							socket.receive(dataPacket);
+						} catch (SocketTimeoutException e) {
+							e.printStackTrace();
+							// ¿QUÉ RESPUESTA MANDO AL SERVIDOR?
+
+							socket.send(ackPacket);
+							--retries;
+						}
+					}
+					// TODO: Si da tiempo implementar que las descargas se puedan pausar (por el usuario o por pérdida de la red).
+					if (retries == 0) throw new AlertException("Se ha agotado el tiempo de espera", context);
+					retries = 5;
+
+					checksum.update(data, 0, data.length);
+					calculatedCS = checksum.getValue();
+					System.arraycopy(data, 0, received_checksum_array, 0, received_checksum_array.length);
+					receivedCS = byteArrayToLong(received_checksum_array);
+				}
+
 				byte[] size = new byte[4];
-				System.arraycopy(data, 0, size, 0, 4);
+				System.arraycopy(data, 8, size, 0, 4);
 				count = Utils.byteArrayToInt(size);
-				fos.write(data, 4, count);
+				fos.write(data, 12, count);
+
+				// ESTO NO VA A FUNCIONAR. CREO QUE NECESITAMOS LOS NÚMEROS DE SECUENCIA.
+				ackBuffer[0] = PACKET_OK;
+				socket.send(ackPacket);
+
+				if (firstRun){
+					firstRun = false;
+					socket.setSoTimeout(1000);
+				}
 			}
 		}
 		catch (IOException e){

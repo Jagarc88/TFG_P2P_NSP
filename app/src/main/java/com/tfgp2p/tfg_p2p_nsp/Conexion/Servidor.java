@@ -16,8 +16,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -437,17 +440,64 @@ public class Servidor {
 			 */
 
 			// TODO: Esto está sin probar:
-			byte[] buffer = new byte[4+MAX_BUFF_SIZE];
-			byte[] readDataSize = new byte[4];
+			final int bufferSize = 12+MAX_BUFF_SIZE;
+			byte[] buffer = new byte[bufferSize];
+			byte[] readDataSize;
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+			byte[] ackBuffer = new byte[1];
+			DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
 			int count;
+			Checksum checksum = new Adler32();
+			long longCS;
+			byte[] checksumArray;
+			//int seqNum = 0;
+			//byte[] seqArray;
 
-			while ((count = fis.read(buffer, 4, MAX_BUFF_SIZE)) > 0) {
-				// Se envía el tamaño de los datos leídos (count) + LOS DATOS = 4 bytes(count) + bytes de datos.
+			while ((count = fis.read(buffer, 12, MAX_BUFF_SIZE)) > 0) {
+				// todo: repasar este comentario.
+				/* Se envía:
+				 * Checksum =                   8 bytes +
+				 * Tamaño de los datos leídos = 4 bytes +
+				 * Datos =                   1024 bytes = 1036 bytes
+				 */
+				checksum.update(buffer, 0, bufferSize);
+				longCS = checksum.getValue();
+				checksumArray = longToByteArray(longCS);
+				System.arraycopy(checksumArray, 0, buffer, 0, checksumArray.length);
+
 				readDataSize = Utils.intToByteArray(count);
-				System.arraycopy(readDataSize, 0, buffer, 0, 4);
-				socket.send(packet);
+				//seqArray = Utils.intToByteArray(++seqNum);
+				//System.arraycopy(seqArray, 0, buffer, 0, 4);
+				System.arraycopy(readDataSize, 0, buffer, 8, readDataSize.length);
+
+				ackBuffer[0] = CORRUPT_OR_LOST_PACKET;
+				socket.setSoTimeout(1000);
+
+				// TODO: Falta enviar el nº de secuencia. CON ESTA IMPLEMENTACIÓN NO ES NECESARIO.
+				while (ackBuffer[0] == CORRUPT_OR_LOST_PACKET){
+					socket.send(packet);
+					try{
+						socket.receive(ackPacket);
+					} catch (SocketTimeoutException e) {
+						// Si no se obtiene respuesta de momento se envía de nuevo.
+						e.printStackTrace();
+					}
+				}
 			}
+			/* En cada recepción de paquetes pueden ocurrir varias cosas:
+			 * 1- Que llegue bien.
+			 * 2- Que llegue mal o que no llegue => Enviarlo de nuevo.
+			 *
+			 * En caso de implementarlo de forma que no se espere a una respuesta por parte del cliente
+			 * hay que tener en cuenta los casos descritos a continuación.
+			 * Para que funcione mejor se podrían enviar 8 paquetes (por ejemplo) y haríamos que el
+			 * cliente comprobara que todos están llegando bien cada 8 paquetes.
+			 *
+			 * 1- Que no llegue 1 o más y haya que calcular cuántos se han perdido =>
+			 *    => Hay que guardarlos en una estructura y mandarlos de nuevo.
+			 * 2- Que llegue alguno duplicado => Descartarlo.
+			 * 3- Que llegue corrupto (comprobar checksum) => Mandarlo de nuevo.
+			 */
 
 		} catch (IOException | NullPointerException | IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();

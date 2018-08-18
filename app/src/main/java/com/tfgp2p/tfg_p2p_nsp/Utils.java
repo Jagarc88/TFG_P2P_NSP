@@ -82,6 +82,9 @@ public class Utils {
 	public static final byte TRY_CONNECT = 13;
 	public static final byte PUNCH = 14;
 	public static final byte TAKE_IP_FROM_HEADER = 0;
+	public static final byte PACKET_OK = -1;
+	public static final byte CORRUPT_OR_LOST_PACKET = -2;
+	//public static final byte MISSING_FROM_NUMBER= -3;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
@@ -126,6 +129,25 @@ public class Utils {
 
 
 	/**
+	 * Transforma un long en un array de 8 bytes.
+	 *
+	 * @param n
+	 * @return
+	 */
+	public static byte[] longToByteArray(long n) {
+		return new byte[] {
+				(byte)(n >>> 56),
+				(byte)(n >>> 48),
+				(byte)(n >>> 40),
+				(byte)(n >>> 32),
+				(byte)(n >>> 24),
+				(byte)(n >>> 16),
+				(byte)(n >>> 8),
+				(byte) n};
+	}
+
+
+	/**
 	 * Transforma un byte[] en un int.
 	 *
 	 * @param array
@@ -133,6 +155,17 @@ public class Utils {
 	 */
 	public static int byteArrayToInt(byte[] array){
 		return ByteBuffer.wrap(array).getInt();
+	}
+
+
+	/**
+	 * Transforma un byte[] en un long.
+	 *
+	 * @param array
+	 * @return
+	 */
+	public static long byteArrayToLong(byte[] array){
+		return ByteBuffer.wrap(array).getLong();
 	}
 
 
