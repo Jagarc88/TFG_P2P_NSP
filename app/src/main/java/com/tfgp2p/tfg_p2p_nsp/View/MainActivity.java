@@ -2,6 +2,7 @@ package com.tfgp2p.tfg_p2p_nsp.View;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
@@ -119,10 +120,6 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
                 this
         );
         alertDialogExit.show();
-    }
-
-    public static void exitApplication(int state){
-        System.exit(state);
     }
 
     public void onClickTabbar(View view){
@@ -256,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements SimpleGestureFilt
     public class ExitDialogMainActivityListener implements ViewUtils.IOKCancelarDialogListener {
         @Override
         public void onPossitiveButtonClick() {
-            exitApplication(0);
+            AplicacionMain.exitApp(0);
         }
 
         @Override
