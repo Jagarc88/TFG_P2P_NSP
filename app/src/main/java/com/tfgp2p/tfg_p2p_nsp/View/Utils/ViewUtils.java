@@ -53,7 +53,7 @@ public class ViewUtils {
     }
 
     /**
-     * Crea un diálogo de alerta sencillo
+     * Crea un diálogo de alerta sencillo OK - Cancelar
      * @return Nuevo diálogo
      */
     public static AlertDialog createSimpleDialogOKCancelar(String titulo,String mensaje,final IOKCancelarDialogListener listener,Context context) {
@@ -79,8 +79,33 @@ public class ViewUtils {
         return builder.create();
     }
 
+
     public interface IOKCancelarDialogListener{
         void onPossitiveButtonClick();
         void onNegativeButtonClick();
+    }
+
+    /**
+     * Crea un diálogo de alerta sencillo OK
+     * @return Nuevo diálogo
+     */
+    public static AlertDialog createSimpleDialogOK(String titulo,String mensaje,final IOKDialogListener listener,Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+        builder.setTitle(titulo)
+                .setMessage(mensaje)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                listener.onPossitiveButtonClick();
+                            }
+                        });
+
+        return builder.create();
+    }
+
+    public interface IOKDialogListener{
+        void onPossitiveButtonClick();
     }
 }
