@@ -294,14 +294,19 @@ public class Cliente {
 		try (FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName)) {
 			// TODO: Esto está sin probar:
 
-			final int bufferSize = 12+MAX_BUFF_SIZE;
+			final int bufferSize = 16+MAX_BUFF_SIZE;
 			byte[] data = new byte[bufferSize];
 			DatagramPacket dataPacket = new DatagramPacket(data, data.length);
-			byte[] ackBuffer = new byte[1];
-			DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
+			byte[] answer = new byte[5];
+			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length);
+			int receivedSeqNum = -1;
+			int expectedSeqNum = 1;
+			boolean seqOK = false;
+			byte[] seqArray = new byte[4];
 			Checksum checksum = new Adler32();
 			long calculatedCS = 0;
 			long receivedCS = 1;
+			boolean checksumOK = false;
 			byte retries = 1;
 			byte[] received_checksum_array = new byte[8];
 			int count = MAX_BUFF_SIZE;
@@ -309,11 +314,12 @@ public class Cliente {
 			socket.setSoTimeout(5000);
 			boolean firstRun = true;
 
-			// todo: repasar este comentario.
+			// TODO: repasar este comentario.
 			/* Se envía:
 			 * Checksum =                   8 bytes +
+			 * Nº de secuencia =            4 bytes +
 			 * Tamaño de los datos leídos = 4 bytes +
-			 * Datos =                   1024 bytes = 1036 bytes
+			 * Datos =                   1024 bytes = 1040 bytes
 			 */
 			while (count == MAX_BUFF_SIZE){
 				while (calculatedCS != receivedCS) {
@@ -322,9 +328,7 @@ public class Cliente {
 							socket.receive(dataPacket);
 						} catch (SocketTimeoutException e) {
 							e.printStackTrace();
-							// ¿QUÉ RESPUESTA MANDO AL SERVIDOR?
-
-							socket.send(ackPacket);
+							//socket.send(ackPacket);
 							--retries;
 						}
 					}
@@ -332,20 +336,40 @@ public class Cliente {
 					if (retries == 0) throw new AlertException("Se ha agotado el tiempo de espera", context);
 					retries = 5;
 
-					checksum.update(data, 0, data.length);
+					checksum.update(data, 8, data.length);
 					calculatedCS = checksum.getValue();
 					System.arraycopy(data, 0, received_checksum_array, 0, received_checksum_array.length);
 					receivedCS = byteArrayToLong(received_checksum_array);
+					checksumOK = (receivedCS == calculatedCS);
+
+					if (checksumOK){
+						// Si el checksum está bien comprobamos el nº de secuencia.
+						System.arraycopy(data, 8, seqArray, 0, seqArray.length);
+						receivedSeqNum = byteArrayToInt(seqArray);
+						seqOK = (receivedSeqNum == expectedSeqNum);
+
+						if (seqOK){
+							// Si el nº de secuencia es el esperado escribimos los datos en el archivo y notificamos al proveedor.
+							byte[] size = new byte[4];
+							System.arraycopy(data, 12, size, 0, size.length);
+							count = Utils.byteArrayToInt(size);
+							fos.write(data, 16, count);
+
+							++expectedSeqNum;
+							answer[0] = PACKET_OK;
+							socket.send(answerPacket);
+						}
+					}
+					if (!checksumOK || !seqOK) {
+						// Si el nº de secuencia no es el que esperábamos o el checksum está mal pedimos el paquete de nuevo.
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						baos.write(PACKET_CORRUPT_OR_LOST);
+						seqArray = intToByteArray(expectedSeqNum);
+						baos.write(seqArray);
+						answer = baos.toByteArray();
+						socket.send(answerPacket);
+					}
 				}
-
-				byte[] size = new byte[4];
-				System.arraycopy(data, 8, size, 0, 4);
-				count = Utils.byteArrayToInt(size);
-				fos.write(data, 12, count);
-
-				// ESTO NO VA A FUNCIONAR. CREO QUE NECESITAMOS LOS NÚMEROS DE SECUENCIA.
-				ackBuffer[0] = PACKET_OK;
-				socket.send(ackPacket);
 
 				if (firstRun){
 					firstRun = false;

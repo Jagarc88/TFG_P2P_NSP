@@ -15,9 +15,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.Queue;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
@@ -400,10 +402,6 @@ public class Servidor {
 				}
 				break;
 
-			case PACKET_ACK:
-				// TODO: Puede que packetACK no sea útil aquí...
-				break;
-
 			default:
 				// Petición no admitida.
 				// TODO: deberíamos hacer que en el destinatario se mostrara una alerta de error.
@@ -440,50 +438,78 @@ public class Servidor {
 			 */
 
 			// TODO: Esto está sin probar:
-			final int bufferSize = 12+MAX_BUFF_SIZE;
+			final int bufferSize = 16+MAX_BUFF_SIZE;
 			byte[] buffer = new byte[bufferSize];
 			byte[] readDataSize;
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
-			byte[] ackBuffer = new byte[1];
-			DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
 			int count;
 			Checksum checksum = new Adler32();
 			long longCS;
 			byte[] checksumArray;
-			//int seqNum = 0;
-			//byte[] seqArray;
+			int seqNum = 0;
+			byte[] seqArray;
+			byte[] answer = new byte[5];
+			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length);
+			int lostPacketNum;
+			socket.setSoTimeout(1000);
+			/* Los paquetes enviados se guardan (¿temporalmente? llamar a clear()) para poder reenviarlos en caso
+			 * de que al cliente no le hayan llegado alguno.
+			 */
+			HashMap<Integer, DatagramPacket> packetsSent = new HashMap<>(16);
 
-			while ((count = fis.read(buffer, 12, MAX_BUFF_SIZE)) > 0) {
-				// todo: repasar este comentario.
+			while ((count = fis.read(buffer, 16, MAX_BUFF_SIZE)) > 0) {
+				// TODO: repasar este comentario.
 				/* Se envía:
 				 * Checksum =                   8 bytes +
+				 * Nº de secuencia =            4 bytes +
 				 * Tamaño de los datos leídos = 4 bytes +
-				 * Datos =                   1024 bytes = 1036 bytes
+				 * Datos =                   1024 bytes = 1040 bytes
 				 */
-				checksum.update(buffer, 0, bufferSize);
+
+				// Copia de nº de secuenia:
+				seqArray = Utils.intToByteArray(++seqNum);
+				System.arraycopy(seqArray, 0, buffer, 8, seqArray.length);
+
+				// Copia de los datos leídos:
+				readDataSize = Utils.intToByteArray(count);
+				System.arraycopy(readDataSize, 0, buffer, 12, readDataSize.length);
+
+				// Copia del checksum (Va al principio del buffer y se calcula al final):
+				checksum.update(buffer, 8, bufferSize-8);
 				longCS = checksum.getValue();
 				checksumArray = longToByteArray(longCS);
 				System.arraycopy(checksumArray, 0, buffer, 0, checksumArray.length);
 
-				readDataSize = Utils.intToByteArray(count);
-				//seqArray = Utils.intToByteArray(++seqNum);
-				//System.arraycopy(seqArray, 0, buffer, 0, 4);
-				System.arraycopy(readDataSize, 0, buffer, 8, readDataSize.length);
+				socket.send(packet);
+				packetsSent.put(seqNum, packet);
 
-				ackBuffer[0] = CORRUPT_OR_LOST_PACKET;
-				socket.setSoTimeout(1000);
-
-				// TODO: Falta enviar el nº de secuencia. CON ESTA IMPLEMENTACIÓN NO ES NECESARIO.
-				while (ackBuffer[0] == CORRUPT_OR_LOST_PACKET){
-					socket.send(packet);
-					try{
-						socket.receive(ackPacket);
-					} catch (SocketTimeoutException e) {
-						// Si no se obtiene respuesta de momento se envía de nuevo.
-						e.printStackTrace();
+				try {
+					socket.receive(answerPacket);
+					/* answer[] podría recibir la señal de si hay paquetes corruptos o perdidos,
+					 * cuántos son y el nº del primero (o directamente todos los números).
+					 */
+					if (answer[0] != PACKET_OK) {
+						while (answer[0] == PACKET_CORRUPT_OR_LOST) {
+							System.arraycopy(answer, 1, seqArray, 0, seqArray.length);
+							lostPacketNum = byteArrayToInt(seqArray);
+							packet = packetsSent.get(lostPacketNum);
+							socket.send(packet);
+							socket.receive(answerPacket);
+						}
 					}
+				} catch (SocketTimeoutException e) {
+					/* Si no se recibe respuesta lo más probable es que todo haya ido bien y se
+					 * continua con al ejecución normal. En caso de que se haya perdido algún paquete
+					 * ya lo pedirá el cliente a continuación y se recibirá dicha petición en la
+					 * siguiente iteración.
+					 */
+					e.printStackTrace();
 				}
+
+				if (packetsSent.size() == 16)
+					packetsSent.clear();
 			}
+
 			/* En cada recepción de paquetes pueden ocurrir varias cosas:
 			 * 1- Que llegue bien.
 			 * 2- Que llegue mal o que no llegue => Enviarlo de nuevo.
@@ -544,6 +570,7 @@ public class Servidor {
 	 * @return tamaño y nombre de los ficheros de la carpeta compartida.
 	 */
 	private byte[] getMetadataFromSharedFolder() {
+		// TODO: FALTAN 2 COSAS: MANDAR EL Nº DE FICHEROS TOTALES Y EL TAMAÑO DEL NOMBRE DE CADA UNO.
 		// TODO: Poner bien la carpeta compartida.
 		File filesPath =  new File(Utils.parseMountDirectory().getAbsolutePath());
 		File[] files = filesPath.listFiles();
