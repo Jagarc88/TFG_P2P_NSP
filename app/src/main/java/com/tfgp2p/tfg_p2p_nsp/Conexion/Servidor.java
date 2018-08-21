@@ -15,7 +15,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
@@ -484,6 +483,7 @@ public class Servidor {
 				packetsSent.put(seqNum, packet);
 
 				try {
+					socket.setSoTimeout(1000);
 					socket.receive(answerPacket);
 					/* answer[] podría recibir la señal de si hay paquetes corruptos o perdidos,
 					 * cuántos son y el nº del primero (o directamente todos los números).
@@ -497,7 +497,7 @@ public class Servidor {
 							socket.receive(answerPacket);
 						}
 					}
-				} catch (SocketTimeoutException e) {
+				} catch (Exception e) {
 					/* Si no se recibe respuesta lo más probable es que todo haya ido bien y se
 					 * continua con al ejecución normal. En caso de que se haya perdido algún paquete
 					 * ya lo pedirá el cliente a continuación y se recibirá dicha petición en la

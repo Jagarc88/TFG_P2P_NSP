@@ -154,6 +154,7 @@ public class Cliente {
 			e.printStackTrace();
 		}
 		catch (AlertException e){
+			e.printStackTrace();
 			e.showAlert();
 		}
 
@@ -311,7 +312,7 @@ public class Cliente {
 			byte[] received_checksum_array = new byte[8];
 			int count = MAX_BUFF_SIZE;
 			// Vamos a esperar hasta 5 segundos al primer paquete.
-			socket.setSoTimeout(5000);
+			//socket.setSoTimeout(5000);
 			boolean firstRun = true;
 
 			// TODO: repasar este comentario.
@@ -322,64 +323,66 @@ public class Cliente {
 			 * Datos =                   1024 bytes = 1040 bytes
 			 */
 			while (count == MAX_BUFF_SIZE){
-				while (calculatedCS != receivedCS) {
-					while (retries > 0){
-						try {
-							socket.receive(dataPacket);
-						} catch (SocketTimeoutException e) {
-							e.printStackTrace();
-							//socket.send(ackPacket);
-							--retries;
-						}
+				while (retries > 0){
+					try {
+						socket.receive(dataPacket);
+						retries = -1;
+					} catch (SocketTimeoutException e) {
+						e.printStackTrace();
+						//socket.send(ackPacket);
+						--retries;
 					}
-					// TODO: Si da tiempo implementar que las descargas se puedan pausar (por el usuario o por pérdida de la red).
-					if (retries == 0) throw new AlertException("Se ha agotado el tiempo de espera", context);
-					retries = 5;
+				}
+				// TODO: Si da tiempo implementar que las descargas se puedan pausar (por el usuario o por pérdida de la red).
+				if (retries == 0) throw new AlertException("Se ha agotado el tiempo de espera", context);
+				retries = 5;
 
-					checksum.update(data, 8, data.length);
-					calculatedCS = checksum.getValue();
-					System.arraycopy(data, 0, received_checksum_array, 0, received_checksum_array.length);
-					receivedCS = byteArrayToLong(received_checksum_array);
-					checksumOK = (receivedCS == calculatedCS);
+				checksum.update(data, 8, data.length-8);
+				calculatedCS = checksum.getValue();
+				System.arraycopy(data, 0, received_checksum_array, 0, received_checksum_array.length);
+				receivedCS = byteArrayToLong(received_checksum_array);
+				checksumOK = (receivedCS == calculatedCS);
 
-					if (checksumOK){
-						// Si el checksum está bien comprobamos el nº de secuencia.
-						System.arraycopy(data, 8, seqArray, 0, seqArray.length);
-						receivedSeqNum = byteArrayToInt(seqArray);
-						seqOK = (receivedSeqNum == expectedSeqNum);
+				if (checksumOK){
+					// Si el checksum está bien comprobamos el nº de secuencia.
+					System.arraycopy(data, 8, seqArray, 0, seqArray.length);
+					receivedSeqNum = byteArrayToInt(seqArray);
+					seqOK = (receivedSeqNum == expectedSeqNum);
 
-						if (seqOK){
-							// Si el nº de secuencia es el esperado escribimos los datos en el archivo y notificamos al proveedor.
-							byte[] size = new byte[4];
-							System.arraycopy(data, 12, size, 0, size.length);
-							count = Utils.byteArrayToInt(size);
-							fos.write(data, 16, count);
+					if (seqOK){
+						// Si el nº de secuencia es el esperado escribimos los datos en el archivo y notificamos al proveedor.
+						byte[] size = new byte[4];
+						System.arraycopy(data, 12, size, 0, size.length);
+						count = Utils.byteArrayToInt(size);
+						fos.write(data, 16, count);
 
-							++expectedSeqNum;
-							answer[0] = PACKET_OK;
-							socket.send(answerPacket);
-						}
-					}
-					if (!checksumOK || !seqOK) {
-						// Si el nº de secuencia no es el que esperábamos o el checksum está mal pedimos el paquete de nuevo.
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						baos.write(PACKET_CORRUPT_OR_LOST);
-						seqArray = intToByteArray(expectedSeqNum);
-						baos.write(seqArray);
-						answer = baos.toByteArray();
+
+						++expectedSeqNum;
+						answer[0] = PACKET_OK;
 						socket.send(answerPacket);
 					}
 				}
+				if (!checksumOK || !seqOK) {
+					// Si el nº de secuencia no es el que esperábamos o el checksum está mal pedimos el paquete de nuevo.
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					baos.write(PACKET_CORRUPT_OR_LOST);
+					seqArray = intToByteArray(expectedSeqNum);
+					baos.write(seqArray);
+					answer = baos.toByteArray();
+					socket.send(answerPacket);
+				}
+
 
 				if (firstRun){
 					firstRun = false;
-					socket.setSoTimeout(1000);
+					//socket.setSoTimeout(1000);
 				}
 			}
 		}
-		catch (IOException e){
+		catch (IOException | ArrayIndexOutOfBoundsException e){
 			e.printStackTrace();
 		}
+		System.out.println("Envío completado");
 	}
 
 
