@@ -49,7 +49,6 @@ public class Servidor {
 	private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
-	// TODO: En su lugar seguramente tendría que implementar una cola de hilos, cada uno con el socket al cliente corespondiente...
 	private Queue<Pair<String, byte[]>> requestQueue;
 
 	/*
@@ -78,7 +77,9 @@ public class Servidor {
 			this.context = c;
 
 			this.socket = new DatagramSocket();
-			this.socket_to_client = new DatagramSocket();
+			this.socket.setReuseAddress(true);
+			this.socket_to_client = new DatagramSocket(null	);
+			this.socket_to_client.setReuseAddress(true);
 
 			this.address = new byte[4];
 			this.requestQueue = new ArrayDeque<>();
@@ -238,7 +239,8 @@ public class Servidor {
 		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		socket.connect(friendIP, friendPort);
+		socket_to_client.bind(localSA);
+		socket_to_client.connect(friendIP, friendPort);
 
 		//TODO: revisar este comentario.
 		/* Ahora entra en acción el Hole Punching. Se deben enviar 2 paquetes:
@@ -255,8 +257,8 @@ public class Servidor {
 		 */
 
 		byte[] sendPunchArray = {PUNCH};
-		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket.getInetAddress(), socket.getPort());
-		socket.send(sendPunch);
+		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket_to_client.getInetAddress(), socket_to_client.getPort());
+		socket_to_client.send(sendPunch);
 	}
 
 
@@ -302,7 +304,7 @@ public class Servidor {
 			 */
 
 			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
-			socket.receive(reqFriendPacket);
+			socket_to_client.receive(reqFriendPacket);
 			byte nameSize = requestorFriendName[0];
 			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
 
@@ -317,7 +319,7 @@ public class Servidor {
 				request[0] = -1;
 				byte[] no = {NO_FRIEND};
 				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				socket.send(resp);
+				socket_to_client.send(resp);
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.", context);
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos o sí y/o realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
@@ -328,11 +330,11 @@ public class Servidor {
 				// Se manda un saludo al amigo para hacerle saber que la conexión ha ido bien y que se espera su petición:
 				byte[] ok = {HELLO_FRIEND};
 				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				socket.send(resp);
+				socket_to_client.send(resp);
 
 				// Se recibe su petición:
 				DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-				socket.receive(reqPacket);
+				socket_to_client.receive(reqPacket);
 				int reqSize = reqPacket.getLength();
 
 				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
@@ -450,7 +452,7 @@ public class Servidor {
 			byte[] answer = new byte[5];
 			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length);
 			int lostPacketNum;
-			socket.setSoTimeout(1000);
+			socket_to_client.connect(addr);
 			/* Los paquetes enviados se guardan (¿temporalmente? llamar a clear()) para poder reenviarlos en caso
 			 * de que al cliente no le hayan llegado alguno.
 			 */
@@ -479,12 +481,12 @@ public class Servidor {
 				checksumArray = longToByteArray(longCS);
 				System.arraycopy(checksumArray, 0, buffer, 0, checksumArray.length);
 
-				socket.send(packet);
+				socket_to_client.send(packet);
 				packetsSent.put(seqNum, packet);
 
 				try {
-					socket.setSoTimeout(1000);
-					socket.receive(answerPacket);
+					//socket_to_client.setSoTimeout(1000);
+					socket_to_client.receive(answerPacket);
 					/* answer[] podría recibir la señal de si hay paquetes corruptos o perdidos,
 					 * cuántos son y el nº del primero (o directamente todos los números).
 					 */
@@ -493,8 +495,8 @@ public class Servidor {
 							System.arraycopy(answer, 1, seqArray, 0, seqArray.length);
 							lostPacketNum = byteArrayToInt(seqArray);
 							packet = packetsSent.get(lostPacketNum);
-							socket.send(packet);
-							socket.receive(answerPacket);
+							socket_to_client.send(packet);
+							socket_to_client.receive(answerPacket);
 						}
 					}
 				} catch (Exception e) {
@@ -528,6 +530,7 @@ public class Servidor {
 		} catch (IOException | NullPointerException | IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
 		}
+		System.out.println("Envío completado");
 	}
 
 
