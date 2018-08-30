@@ -310,10 +310,10 @@ public class Cliente {
 			boolean checksumOK = false;
 			byte retries = 1;
 			byte[] received_checksum_array = new byte[8];
+			boolean firstRun = true;
 			int count = MAX_BUFF_SIZE;
 			// Vamos a esperar hasta 5 segundos al primer paquete.
-			//socket.setSoTimeout(5000);
-			boolean firstRun = true;
+			socket.setSoTimeout(5000);
 
 			// TODO: repasar este comentario.
 			/* Se envía:
@@ -334,7 +334,8 @@ public class Cliente {
 					}
 				}
 				// TODO: Si da tiempo implementar que las descargas se puedan pausar (por el usuario o por pérdida de la red).
-				if (retries == 0) throw new AlertException("Se ha agotado el tiempo de espera", context);
+				if (retries == 0)
+					throw new AlertException("Se ha agotado el tiempo de espera", context);
 				retries = 5;
 
 				checksum.update(data, 8, data.length-8);
@@ -356,7 +357,6 @@ public class Cliente {
 						count = Utils.byteArrayToInt(size);
 						fos.write(data, 16, count);
 
-
 						++expectedSeqNum;
 						answer[0] = PACKET_OK;
 						socket.send(answerPacket);
@@ -375,7 +375,7 @@ public class Cliente {
 
 				if (firstRun){
 					firstRun = false;
-					//socket.setSoTimeout(1000);
+					socket.setSoTimeout(1000);
 				}
 			}
 		}

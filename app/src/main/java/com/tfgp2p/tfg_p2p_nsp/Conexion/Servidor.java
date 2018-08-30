@@ -457,6 +457,7 @@ public class Servidor {
 			 * de que al cliente no le hayan llegado alguno.
 			 */
 			HashMap<Integer, DatagramPacket> packetsSent = new HashMap<>(16);
+			socket_to_client.setSoTimeout(1000);
 
 			while ((count = fis.read(buffer, 16, MAX_BUFF_SIZE)) > 0) {
 				// TODO: repasar este comentario.
@@ -485,21 +486,24 @@ public class Servidor {
 				packetsSent.put(seqNum, packet);
 
 				try {
-					//socket_to_client.setSoTimeout(1000);
 					socket_to_client.receive(answerPacket);
 					/* answer[] podría recibir la señal de si hay paquetes corruptos o perdidos,
 					 * cuántos son y el nº del primero (o directamente todos los números).
 					 */
 					if (answer[0] != PACKET_OK) {
 						while (answer[0] == PACKET_CORRUPT_OR_LOST) {
-							System.arraycopy(answer, 1, seqArray, 0, seqArray.length);
-							lostPacketNum = byteArrayToInt(seqArray);
-							packet = packetsSent.get(lostPacketNum);
-							socket_to_client.send(packet);
-							socket_to_client.receive(answerPacket);
+							try {
+								System.arraycopy(answer, 1, seqArray, 0, seqArray.length);
+								lostPacketNum = byteArrayToInt(seqArray);
+								packet = packetsSent.get(lostPacketNum);
+								socket_to_client.send(packet);
+								socket_to_client.receive(answerPacket);
+							} catch (SocketTimeoutException e){
+								e.printStackTrace();
+							}
 						}
 					}
-				} catch (Exception e) {
+				} catch (SocketTimeoutException e) {
 					/* Si no se recibe respuesta lo más probable es que todo haya ido bien y se
 					 * continua con al ejecución normal. En caso de que se haya perdido algún paquete
 					 * ya lo pedirá el cliente a continuación y se recibirá dicha petición en la
