@@ -457,7 +457,7 @@ public class Servidor {
 			 * de que al cliente no le hayan llegado alguno.
 			 */
 			HashMap<Integer, DatagramPacket> packetsSent = new HashMap<>(16);
-			socket_to_client.setSoTimeout(1000);
+			socket_to_client.setSoTimeout(2000);
 
 			while ((count = fis.read(buffer, 16, MAX_BUFF_SIZE)) > 0) {
 				// TODO: repasar este comentario.

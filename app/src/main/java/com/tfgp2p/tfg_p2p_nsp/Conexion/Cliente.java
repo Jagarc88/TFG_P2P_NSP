@@ -76,8 +76,8 @@ public class Cliente {
 
 			String friendName = "Manolito";
 
-			//String fileName = "serie";
-			String fileName = "5megas.pdf";
+			String fileName = "CUDA.pdf";
+			//String fileName = "5megas.pdf";
 			//String fileName = "de_julio.txt";
 
 			//////////////////////////////////////////////////////////////////////////////////
@@ -299,7 +299,7 @@ public class Cliente {
 			byte[] data = new byte[bufferSize];
 			DatagramPacket dataPacket = new DatagramPacket(data, data.length);
 			byte[] answer = new byte[5];
-			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length);
+			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length, socket.getInetAddress(), socket.getPort());
 			int receivedSeqNum = -1;
 			int expectedSeqNum = 1;
 			boolean seqOK = false;
@@ -312,8 +312,7 @@ public class Cliente {
 			byte[] received_checksum_array = new byte[8];
 			boolean firstRun = true;
 			int count = MAX_BUFF_SIZE;
-			// Vamos a esperar hasta 5 segundos al primer paquete.
-			socket.setSoTimeout(5000);
+			socket.setSoTimeout(3000);
 
 			// TODO: repasar este comentario.
 			/* Se envía:
@@ -329,7 +328,6 @@ public class Cliente {
 						retries = -1;
 					} catch (SocketTimeoutException e) {
 						e.printStackTrace();
-						//socket.send(ackPacket);
 						--retries;
 					}
 				}
@@ -369,20 +367,22 @@ public class Cliente {
 					seqArray = intToByteArray(expectedSeqNum);
 					baos.write(seqArray);
 					answer = baos.toByteArray();
+					answerPacket = new DatagramPacket(answer, answer.length, socket.getInetAddress(), socket.getPort());
 					socket.send(answerPacket);
 				}
 
 
 				if (firstRun){
 					firstRun = false;
-					socket.setSoTimeout(1000);
+					socket.setSoTimeout(2000);
 				}
 			}
+
+		System.out.println("Envío completado");
 		}
 		catch (IOException | ArrayIndexOutOfBoundsException e){
 			e.printStackTrace();
 		}
-		System.out.println("Envío completado");
 	}
 
 
