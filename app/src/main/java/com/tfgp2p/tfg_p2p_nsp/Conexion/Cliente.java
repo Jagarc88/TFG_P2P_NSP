@@ -6,18 +6,24 @@ import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.zip.Adler32;
-import java.util.zip.Checksum;
+import java.net.UnknownHostException;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -32,18 +38,23 @@ public class Cliente {
 
 	private static Cliente client = null;
 
-	private byte[] address;
+	private byte[] localAddress;
 	private int localPort;
-	private SocketAddress localSA;
 
 	private Context context;
 
 	// Colección de amigos que contiene nombres, direcciones y puertos remotos.
 	private Amigos amigos;
 
-	private DatagramSocket socket;
-
-	private static int ppIndex = 0;
+	private ServerSocket tcpListenSocket;
+	private Socket tcpSocket;
+	private DatagramSocket udpSocket;
+	/*private Socket peerConnectingSocket;
+	private DataOutputStream serverOutput;
+	private DataInputStream serverInput;
+	*/
+	private DataOutputStream peerOutput;
+	private DataInputStream peerInput;
 
 
 
@@ -66,8 +77,22 @@ public class Cliente {
 			this.context = c;
 			this.amigos = Amigos.getInstance(context);
 
-			socket = new DatagramSocket();
-			localPort = socket.getLocalPort();
+			// Se crea el socket UDP y se asocia a un puerto disponible con el constructor por defecto:
+			this.udpSocket = new DatagramSocket();
+			this.udpSocket.setReuseAddress(true);
+
+			//this.localAddress = udpListenSocket.getLocalAddress().getAddress();
+			this.localAddress = Utils.getIP(udpSocket, context);
+			this.localPort = udpSocket.getLocalPort();
+
+			this.tcpListenSocket = new ServerSocket(localPort);
+			this.tcpListenSocket.setReuseAddress(true);
+
+			this.tcpSocket = new Socket();
+			this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
+			this.tcpSocket.setReuseAddress(true);
+
+			// TODO: COMPROBAR QUE TODOS LOS SOCKETS TIENEN LAS DIRECCIONES Y LOS PUERTOS IGUALES.
 
 			loginServer();
 
@@ -76,8 +101,8 @@ public class Cliente {
 
 			String friendName = "Manolito";
 
-			String fileName = "CUDA.pdf";
-			//String fileName = "5megas.pdf";
+			//String fileName = "serie";
+			String fileName = "5megas.pdf";
 			//String fileName = "de_julio.txt";
 
 			//////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +125,7 @@ public class Cliente {
 
 				byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Amigos.getServerInfo());
-				socket.send(p);
+				udpSocket.send(p);
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -114,25 +139,35 @@ public class Cliente {
 
 				ByteArrayOutputStream nameBAOS = new ByteArrayOutputStream();
 				byte[] myName = Amigos.getMyName().getBytes();
-				byte[] myNameLen = {(byte) myName.length};
+
+				nameBAOS.write(myName);
 
 				// Lo que se enviará es la longitud de mi nombre y mi nombre, en este orden.
-				nameBAOS.write(myNameLen);
-				nameBAOS.write(myName);
-				byte[] buff = nameBAOS.toByteArray();
-
-				DatagramPacket hey_its_me = new DatagramPacket(buff, buff.length,
-						socket.getInetAddress(), socket.getPort());
-				socket.send(hey_its_me);
-
+				peerOutput.writeByte(nameBAOS.size());
+				nameBAOS.writeTo(peerOutput);
+				/////////////////////////////////////////////
+				// TODO: ¡¡OJO!! A partir de aquí creo que está incompleto. Falta recibir hello_friend o no_friend, y lo siguiente.
 				byte[] resp = new byte[1];
-				DatagramPacket pac = new DatagramPacket(resp, resp.length);
-				socket.receive(pac);
-
+				resp[0] = peerInput.readByte();
+				/*DatagramPacket pac = new DatagramPacket(resp, resp.length);
+				// TODO: Hacer algo aquí para que no se quede bloqueado el receive si la comunicación ha salido mal.
+				socket.receive(pac);*/
+				//socket_to_friend.receive(pac);
+				//socket_to_server.receive(pac);
+				/*int retries = 2;
+				resp[0] = PUNCH;
+				while ((resp[0]==PUNCH) && (retries>=0)) {
+					socket.receive(pac);
+					--retries;
+				}
+				if (retries < 0)
+					throw new AlertException("No se ha recibido respuesta del otro dispositivo");
+				*/
 				if (resp[0] == HELLO_FRIEND) {
 					requestFile(fileName, friendName);
 					receiveFile(fileName);
 				}
+				// TODO: Si no es amigo pensar por qué ha llegado a este punto. No debería poder hacer peticiones a no amigos.
 				else if (resp[0] == NO_FRIEND) {
 					throw new AlertException(friendName + " no es tu amigo.", context);
 				}
@@ -142,19 +177,10 @@ public class Cliente {
 			}
 		}
 
-		catch (IllegalArgumentException e) {
-			if (ppIndex < 4) {
-				e.printStackTrace();
-				new Cliente(c);
-			}
-			else
-				e.printStackTrace();
-		}
-		catch (SocketException e){
+		catch (IOException e){
 			e.printStackTrace();
 		}
 		catch (AlertException e){
-			e.printStackTrace();
 			e.showAlert();
 		}
 
@@ -170,8 +196,7 @@ public class Cliente {
 	private void loginServer(){
 		try {
 			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			socket.connect(serverAddr);
-			localSA = socket.getLocalSocketAddress();
+			udpSocket.connect(serverAddr);
 
 			String myName = Amigos.getMyName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -183,7 +208,7 @@ public class Cliente {
 			byte[] connectionBuffer = baos.toByteArray();
 			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 					Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			socket.send(p);
+			udpSocket.send(p);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -206,9 +231,8 @@ public class Cliente {
 	private void connect_to_friend() throws IOException, AlertException {
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
-
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-		socket.receive(friendInfoPacket);
+		udpSocket.receive(friendInfoPacket);
 
 		if (friendInfo[0] == NO_FRIEND)
 			throw new AlertException("Ha habido un problema en la comunicación.", context);
@@ -220,6 +244,8 @@ public class Cliente {
 		byte[] portArray = new byte[4];
 		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
+
+		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 
 		// TODO: Repasar este comentario por si al final funciona de forma distinta:
 		/* Con esto damos tiempo a que el dispositivo que actúa como proveedor del archivo le dé
@@ -233,7 +259,10 @@ public class Cliente {
 			e.printStackTrace();
 		}
 
-		socket.connect(friendIP, friendPort);
+		tcpSocket.connect(peerISA);
+
+		peerInput = new DataInputStream(tcpSocket.getInputStream());
+		peerOutput = new DataOutputStream(tcpSocket.getOutputStream());
 	}
 
 
@@ -258,8 +287,13 @@ public class Cliente {
 		try{
 			// TODO FALTA REESCRIBIR BIEN ESTE METODO. edit: puede que así valga.
 			// TODO: Borrar añadido manual del amigo:
-			this.amigos.addFriend(friendName, socket.getInetAddress(), socket.getPort());
+			this.amigos.addFriend(friendName, tcpSocket.getInetAddress(), tcpSocket.getPort());
 			/////////////////////////////////////////
+
+			// Envío del aviso de una nueva petición.
+			byte[] newreq = {Utils.NEW_REQ};
+			peerOutput.write(newreq);
+
 			// Se envia FILE_REQ + nombre del archivo.
 
 			InetSocketAddress addr = amigos.getFriendAddr(friendName);
@@ -274,9 +308,8 @@ public class Cliente {
 			s.write(fLength);
 			s.write(fnBuffer);
 
-			byte[] completeBuffer = s.toByteArray();
-			DatagramPacket request = new DatagramPacket(completeBuffer, completeBuffer.length, addr.getAddress(), addr.getPort());
-			socket.send(request);
+			peerOutput.writeInt(s.size());
+			s.writeTo(peerOutput);
 		}
 		catch (AlertException e){
 			e.showAlert();
@@ -290,97 +323,23 @@ public class Cliente {
 	/**
 	 * Descarga un fichero.
 	 */
-	private void receiveFile(String fileName) throws AlertException{
-		// TODO: quitar lo de "copia de".
-		try (FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + '/' + fileName)) {
+	private void receiveFile(String fileName){
+		try {
+			///////////////////////  Prueba de la recepción del archivo ///////////////////////////
+			// De momento pillo aquí el buffer de metadatos.
+
+			byte[] dataBuffer = new byte[MAX_BUFF_SIZE];
+
+			// TODO: quitar lo de "copia de".
+			FileOutputStream fos = new FileOutputStream(Utils.parseMountDirectory().getAbsolutePath() + "/copia_de_" + fileName);
 			// TODO: Esto está sin probar:
-
-			final int bufferSize = 16+MAX_BUFF_SIZE;
-			byte[] data = new byte[bufferSize];
-			DatagramPacket dataPacket = new DatagramPacket(data, data.length);
-			byte[] answer = new byte[5];
-			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length, socket.getInetAddress(), socket.getPort());
-			int receivedSeqNum = -1;
-			int expectedSeqNum = 1;
-			boolean seqOK = false;
-			byte[] seqArray = new byte[4];
-			Checksum checksum = new Adler32();
-			long calculatedCS = 0;
-			long receivedCS = 1;
-			boolean checksumOK = false;
-			byte retries = 1;
-			byte[] received_checksum_array = new byte[8];
-			boolean firstRun = true;
-			int count = MAX_BUFF_SIZE;
-			socket.setSoTimeout(3000);
-
-			// TODO: repasar este comentario.
-			/* Se envía:
-			 * Checksum =                   8 bytes +
-			 * Nº de secuencia =            4 bytes +
-			 * Tamaño de los datos leídos = 4 bytes +
-			 * Datos =                   1024 bytes = 1040 bytes
-			 */
-			while (count == MAX_BUFF_SIZE){
-				while (retries > 0){
-					try {
-						socket.receive(dataPacket);
-						retries = -1;
-					} catch (SocketTimeoutException e) {
-						e.printStackTrace();
-						--retries;
-					}
-				}
-				// TODO: Si da tiempo implementar que las descargas se puedan pausar (por el usuario o por pérdida de la red).
-				if (retries == 0)
-					throw new AlertException("Se ha agotado el tiempo de espera", context);
-				retries = 5;
-
-				checksum.update(data, 8, data.length-8);
-				calculatedCS = checksum.getValue();
-				System.arraycopy(data, 0, received_checksum_array, 0, received_checksum_array.length);
-				receivedCS = byteArrayToLong(received_checksum_array);
-				checksumOK = (receivedCS == calculatedCS);
-
-				if (checksumOK){
-					// Si el checksum está bien comprobamos el nº de secuencia.
-					System.arraycopy(data, 8, seqArray, 0, seqArray.length);
-					receivedSeqNum = byteArrayToInt(seqArray);
-					seqOK = (receivedSeqNum == expectedSeqNum);
-
-					if (seqOK){
-						// Si el nº de secuencia es el esperado escribimos los datos en el archivo y notificamos al proveedor.
-						byte[] size = new byte[4];
-						System.arraycopy(data, 12, size, 0, size.length);
-						count = Utils.byteArrayToInt(size);
-						fos.write(data, 16, count);
-
-						++expectedSeqNum;
-						answer[0] = PACKET_OK;
-						socket.send(answerPacket);
-					}
-				}
-				if (!checksumOK || !seqOK) {
-					// Si el nº de secuencia no es el que esperábamos o el checksum está mal pedimos el paquete de nuevo.
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					baos.write(PACKET_CORRUPT_OR_LOST);
-					seqArray = intToByteArray(expectedSeqNum);
-					baos.write(seqArray);
-					answer = baos.toByteArray();
-					answerPacket = new DatagramPacket(answer, answer.length, socket.getInetAddress(), socket.getPort());
-					socket.send(answerPacket);
-				}
-
-
-				if (firstRun){
-					firstRun = false;
-					socket.setSoTimeout(2000);
-				}
+			// La recepción del fichero se resumiría en estas líneas:
+			int count;
+			while ((count = peerInput.read(dataBuffer)) > 0){
+				fos.write(dataBuffer, 0, count);
 			}
-
-		System.out.println("Envío completado");
 		}
-		catch (IOException | ArrayIndexOutOfBoundsException e){
+		catch (IOException e){
 			e.printStackTrace();
 		}
 	}

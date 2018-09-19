@@ -7,21 +7,24 @@ import com.tfgp2p.tfg_p2p_nsp.AlertException;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.Queue;
-import java.util.zip.Adler32;
-import java.util.zip.Checksum;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -41,14 +44,25 @@ public class Servidor {
 
 	private Context context;
 
-	private int listenPort;
-	private byte[] address;
-	private SocketAddress localSA;
+	private byte[] localAddress;
+	private int localPort;
 
-	private DatagramSocket socket;
-	private DatagramSocket socket_to_client;
+	private ServerSocket tcpListenSocket;
+	private DatagramSocket udpSocket;
+	// TODO: Harán falta tantos sockets TCP como clientes haya que servir a la vez...
+	private Socket tcpSocket;
+	/*private Socket peerConnectingSocket;
+	private DataOutputStream serverOutput;
+	private DataInputStream serverInput;
+	*/
+	private DataOutputStream peerOutput;
+	private DataInputStream peerInput;
+
+	//private DatagramSocket listenSocket;
+	//private DatagramSocket socket_to_client;
 
 	// Cola que guarda el nombre del amigo y la petición.
+	// TODO: En su lugar seguramente tendría que implementar una cola de hilos, cada uno con el socket al cliente corespondiente...
 	private Queue<Pair<String, byte[]>> requestQueue;
 
 	/*
@@ -76,12 +90,23 @@ public class Servidor {
 		try {
 			this.context = c;
 
-			this.socket = new DatagramSocket();
-			this.socket.setReuseAddress(true);
-			this.socket_to_client = new DatagramSocket(null	);
-			this.socket_to_client.setReuseAddress(true);
+			// Se crea el socket UDP y se asocia a un puerto disponible con el constructor por defecto:
+			this.udpSocket = new DatagramSocket();
+			this.udpSocket.setReuseAddress(true);
 
-			this.address = new byte[4];
+			//this.localAddress = udpListenSocket.getLocalAddress().getAddress();
+			this.localAddress = Utils.getIP(udpSocket, context);
+			this.localPort = udpSocket.getLocalPort();
+
+			this.tcpListenSocket = new ServerSocket(localPort);
+			this.tcpListenSocket.setReuseAddress(true);
+
+			this.tcpSocket = new Socket();
+			this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
+			this.tcpSocket.setReuseAddress(true);
+
+			// TODO: COMPROBAR QUE TODOS LOS SOCKETS TIENEN LAS DIRECCIONES Y LOS PUERTOS IGUALES.
+
 			this.requestQueue = new ArrayDeque<>();
 
 			loginServer();
@@ -117,31 +142,18 @@ public class Servidor {
 
 		try {
 			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			socket.connect(serverAddr);
-			listenPort = socket.getLocalPort();
-			localSA = socket.getLocalSocketAddress();
+			udpSocket.connect(serverAddr);
 
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			baos.write(SERVER_CONNECT);
 			baos.write((byte) myName.length());
 			baos.write(myName.getBytes(), 0, myName.length());
-			this.address = Utils.getIP(socket, context);
-			//byte[] localPort = Utils.intToByteArray(listenPort);
+			baos.write(localAddress, 0, localAddress.length);
 
-			baos.write(address, 0, address.length);
-			//baos.write(localPort, 0, localPort.length);
 			byte[] connectionBuffer = baos.toByteArray();
 			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length, serverAddr);
-			socket.send(p);
+			udpSocket.send(p);
 
-
-			// Primero hay que mandar el tamaño del stream que tiene que leer el servidor:
-			//DataOutputStream dos = new DataOutputStream(peerSocket.getOutputStream());
-			//serverOutput.writeInt(baos.size());
-
-			// Ahora se escribe la información:
-			//baos.writeTo(serverOutput);
-			//dos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -228,8 +240,7 @@ public class Servidor {
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-
-		socket.receive(friendInfoPacket);
+		udpSocket.receive(friendInfoPacket);
 
 		byte[] IParray = new byte[4];
 		System.arraycopy(friendInfo, 0, IParray, 0, 4);
@@ -239,26 +250,21 @@ public class Servidor {
 		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		socket_to_client.bind(localSA);
-		socket_to_client.connect(friendIP, friendPort);
+		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 
-		//TODO: revisar este comentario.
-		/* Ahora entra en acción el Hole Punching. Se deben enviar 2 paquetes:
-		 *
-		 * El primero es el que abre el camino hacia nuestro dispositivo. Cuando el router toma este
-		 * paquete para reenviarlo crea en su tabla NAT la traducción IP_origen/puerto_origen ;
-		 * IP_destino/puerto_destino. Así cuando reciba un paquete desde el destino hasta el origen
-		 * registrados lo pasará.
-		 *
-		 * El segundo paquete tiene como objetivo asegurarse de que la NAT del otro dispositivo
-		 * ya tiene guardada la traducción correspondiente en su tabla de traducciones y que desde
-		 * el momento que obtiene respuesta ya se puede comenzar con la comunicación de los datos
-		 * que nos interesan.
-		 */
 
 		byte[] sendPunchArray = {PUNCH};
-		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, socket_to_client.getInetAddress(), socket_to_client.getPort());
-		socket_to_client.send(sendPunch);
+		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, peerISA);
+		udpSocket.send(sendPunch);
+
+
+		/*listenSocket = new ServerSocket(listenPort);
+		listenSocket.setReuseAddress(true);
+		*/
+		tcpSocket = tcpListenSocket.accept();
+
+		peerOutput = new DataOutputStream(tcpSocket.getOutputStream());
+		peerInput = new DataInputStream(tcpSocket.getInputStream());
 	}
 
 
@@ -280,15 +286,15 @@ public class Servidor {
 		try{
 			// Mientras el servidor no envíe aviso de nueva petición el hilo no avanza.
 			byte[] new_req = new byte[1];
-			DatagramPacket p = new DatagramPacket(new_req, new_req.length);
 
 			while (new_req[0] != NEW_REQ){
 				new_req[0] = 0;
-				socket.receive(p);
+				new_req[0] = peerInput.readByte();
 			}
 
 			connect_to_friend();
 
+			// todo: Ver si tengo conectado el peerConnectedSocket aquí fuera del thread.
 			byte[] requestorFriendName = new byte[32];
 			byte[] request = new byte[64];
 			request[0] = -1;
@@ -303,23 +309,20 @@ public class Servidor {
 			 * y después el nombre, que se guarda en requestorFriendName.
 			 */
 
-			DatagramPacket reqFriendPacket = new DatagramPacket(requestorFriendName, requestorFriendName.length);
-			socket_to_client.receive(reqFriendPacket);
-			byte nameSize = requestorFriendName[0];
-			String friendName = new String(requestorFriendName).substring(1, nameSize+1);
+			byte nameSize = peerInput.readByte();
+			peerInput.readFully(requestorFriendName, 0, nameSize);
+			String friendName = new String(requestorFriendName).substring(0, nameSize);
 
 
 			Amigos amigos = Amigos.getInstance(context);
 			//////////////////// BORRAR AÑADIDO MANUAL DEL AMIGO //////////////////////
-			amigos.addFriend(friendName, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
+			amigos.addFriend(friendName, tcpSocket.getInetAddress(), tcpSocket.getPort());
 			///////////////////////////////////////////////////////////////////////////
 
-			if (!amigos.isFriend(friendName, reqFriendPacket.getAddress())){
+			if (!amigos.isFriend(friendName, tcpSocket.getInetAddress())){
 			// Valor -1 no válido para provocar fallo en caso de petición incorrecta.
 				request[0] = -1;
-				byte[] no = {NO_FRIEND};
-				DatagramPacket resp = new DatagramPacket(no, no.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				socket_to_client.send(resp);
+				peerOutput.writeByte(NO_FRIEND);
 				throw new AlertException("Error, alguien ha realizado una petición sin ser tu amigo.", context);
 				// TODO: (Opcional) Implementar bloqueo de usuarios que no son amigos o sí y/o realizan peticiones a saco.
 				// TODO: (Opcional) Implementar HashMap de usuarios bloqueados.
@@ -328,14 +331,11 @@ public class Servidor {
 			}
 			else{
 				// Se manda un saludo al amigo para hacerle saber que la conexión ha ido bien y que se espera su petición:
-				byte[] ok = {HELLO_FRIEND};
-				DatagramPacket resp = new DatagramPacket(ok, ok.length, reqFriendPacket.getAddress(), reqFriendPacket.getPort());
-				socket_to_client.send(resp);
+				peerOutput.writeByte(HELLO_FRIEND);
 
 				// Se recibe su petición:
-				DatagramPacket reqPacket = new DatagramPacket(request, request.length);
-				socket_to_client.receive(reqPacket);
-				int reqSize = reqPacket.getLength();
+				int reqSize = peerInput.readInt();
+				peerInput.read(request,0, reqSize);
 
 				/* Se mete en la cola el amigo y la petición entera, incluído un nombre
 				 * de fichero si es eso lo que solicita.
@@ -343,7 +343,7 @@ public class Servidor {
 				if (isValidRequest(request[0])){
 					synchronized (requestQueue) {
 						byte[] aux = new byte[reqSize];
-						System.arraycopy(request, 0, aux, 0, reqSize);
+						System.arraycopy(request, 0, aux, 0, request.length);
 						requestQueue.add(new Pair<>(friendName, aux));
 						requestQueue.notify();
 					}
@@ -403,6 +403,10 @@ public class Servidor {
 				}
 				break;
 
+			case PACKET_ACK:
+				// TODO: Puede que packetACK no sea útil aquí...
+				break;
+
 			default:
 				// Petición no admitida.
 				// TODO: deberíamos hacer que en el destinatario se mostrara una alerta de error.
@@ -418,11 +422,9 @@ public class Servidor {
 	 * @param addr Dirección IP y puerto al que se envía el archivo.
 	 */
 	private void sendFile(String fileName, InetSocketAddress addr){
-		// TODO: Poner aquí bien la ruta de la carpeta compartida.
-		String sharedFolder = Utils.parseMountDirectory().getAbsolutePath();
-		File file = new File(sharedFolder + '/' + fileName);
+		try{
+			//InetSocketAddress addr = this.friends.get("Manolito");
 
-		try (FileInputStream fis = new FileInputStream(file)){
 			// Escribir los datos del archivo aquí.
 			// <1 KB.
 			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/de_julio.txt";
@@ -430,6 +432,15 @@ public class Servidor {
 			//String path = Utils.parseMountDirectory().getAbsolutePath() + "/Resumen ASOR.pdf";
 			// 9 KB.
 
+			/*String path = Utils.parseMountDirectory().getAbsolutePath() + "/contacts.vcf";
+			File file = new File(path);*/
+			///////////////////////////////////////
+			// TODO: Poner aquí bien la ruta de la carpeta compartida.
+			String sharedFolder = Utils.parseMountDirectory().getAbsolutePath();
+			File file = new File(sharedFolder + '/' + fileName);
+			///////////////////////////////////////
+			FileInputStream fis = new FileInputStream(file);
+			/*int fileLength = (int) file.length();
 
 			// TODO: Implementar almacenamiento de metadatos de ficheros ajenos.
 			// TODO: ¿Quitar sendFileMetadata() de aquí?
@@ -437,104 +448,62 @@ public class Servidor {
 			 * Si el usuario ha seleccionado el fichero que quiere descargar es porque ya tiene
 			 * los metadatos necesarios.
 			 */
+			//sendFileMetadata(file, addr, fileLength);
 
 			// TODO: Esto está sin probar:
-			final int bufferSize = 16+MAX_BUFF_SIZE;
-			byte[] buffer = new byte[bufferSize];
-			byte[] readDataSize;
-			DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+			// El envío del fichero en sí se resumiría en 4 líneas:
+			byte[] buffer = new byte[MAX_BUFF_SIZE];
 			int count;
-			Checksum checksum = new Adler32();
-			long longCS;
-			byte[] checksumArray;
-			int seqNum = 0;
-			byte[] seqArray;
-			byte[] answer = new byte[5];
-			DatagramPacket answerPacket = new DatagramPacket(answer, answer.length);
-			int lostPacketNum;
-			socket_to_client.connect(addr);
-			/* Los paquetes enviados se guardan (¿temporalmente? llamar a clear()) para poder reenviarlos en caso
-			 * de que al cliente no le hayan llegado alguno.
-			 */
-			HashMap<Integer, DatagramPacket> packetsSent = new HashMap<>(16);
-			socket_to_client.setSoTimeout(2000);
-
-			while ((count = fis.read(buffer, 16, MAX_BUFF_SIZE)) > 0) {
-				// TODO: repasar este comentario.
-				/* Se envía:
-				 * Checksum =                   8 bytes +
-				 * Nº de secuencia =            4 bytes +
-				 * Tamaño de los datos leídos = 4 bytes +
-				 * Datos =                   1024 bytes = 1040 bytes
-				 */
-
-				// Copia de nº de secuenia:
-				seqArray = Utils.intToByteArray(++seqNum);
-				System.arraycopy(seqArray, 0, buffer, 8, seqArray.length);
-
-				// Copia de los datos leídos:
-				readDataSize = Utils.intToByteArray(count);
-				System.arraycopy(readDataSize, 0, buffer, 12, readDataSize.length);
-
-				// Copia del checksum (Va al principio del buffer y se calcula al final):
-				checksum.update(buffer, 8, bufferSize-8);
-				longCS = checksum.getValue();
-				checksumArray = longToByteArray(longCS);
-				System.arraycopy(checksumArray, 0, buffer, 0, checksumArray.length);
-
-				socket_to_client.send(packet);
-				packetsSent.put(seqNum, packet);
-
-				try {
-					socket_to_client.receive(answerPacket);
-					/* answer[] podría recibir la señal de si hay paquetes corruptos o perdidos,
-					 * cuántos son y el nº del primero (o directamente todos los números).
-					 */
-					if (answer[0] != PACKET_OK) {
-						while (answer[0] == PACKET_CORRUPT_OR_LOST) {
-							try {
-								System.arraycopy(answer, 1, seqArray, 0, seqArray.length);
-								lostPacketNum = byteArrayToInt(seqArray);
-								packet = packetsSent.get(lostPacketNum);
-								socket_to_client.send(packet);
-								socket_to_client.receive(answerPacket);
-							} catch (SocketTimeoutException e){
-								e.printStackTrace();
-							}
-						}
-					}
-				} catch (SocketTimeoutException e) {
-					/* Si no se recibe respuesta lo más probable es que todo haya ido bien y se
-					 * continua con al ejecución normal. En caso de que se haya perdido algún paquete
-					 * ya lo pedirá el cliente a continuación y se recibirá dicha petición en la
-					 * siguiente iteración.
-					 */
-					e.printStackTrace();
-				}
-
-				if (packetsSent.size() == 16)
-					packetsSent.clear();
+			while ((count = fis.read(buffer)) > 0) {
+				peerOutput.write(buffer, 0, count);
 			}
 
-			/* En cada recepción de paquetes pueden ocurrir varias cosas:
-			 * 1- Que llegue bien.
-			 * 2- Que llegue mal o que no llegue => Enviarlo de nuevo.
-			 *
-			 * En caso de implementarlo de forma que no se espere a una respuesta por parte del cliente
-			 * hay que tener en cuenta los casos descritos a continuación.
-			 * Para que funcione mejor se podrían enviar 8 paquetes (por ejemplo) y haríamos que el
-			 * cliente comprobara que todos están llegando bien cada 8 paquetes.
-			 *
-			 * 1- Que no llegue 1 o más y haya que calcular cuántos se han perdido =>
-			 *    => Hay que guardarlos en una estructura y mandarlos de nuevo.
-			 * 2- Que llegue alguno duplicado => Descartarlo.
-			 * 3- Que llegue corrupto (comprobar checksum) => Mandarlo de nuevo.
-			 */
+			//dos.close();
+			//fis.close();
+			/*int totalBytesRead = 0;
+			int bytesRead = 0;
+
+			DatagramPacket packet = new DatagramPacket(buffer, buffer.length, addr.getAddress(), addr.getPort());
+
+			boolean nextIsLast = false;
+			int bytesRemaining = fileLength;
+
+			while ((totalBytesRead < fileLength) && (bytesRead != -1)) {
+				if (buffer == null) {
+					if (!nextIsLast) {
+						buffer = new byte[MAX_BUFF_SIZE];
+						bytesRead = fis.read(buffer, 0, MAX_BUFF_SIZE);
+					}
+					else {
+						buffer = new byte[bytesRemaining];
+						bytesRead = fis.read(buffer, 0, bytesRemaining);
+					}
+				}
+				else
+					bytesRead = fis.read(buffer, 0, MAX_BUFF_SIZE);
+
+				totalBytesRead += bytesRead;
+				packet.setData(buffer);
+				//listenSocket.send(packet);
+				//////////////////////////////////////////////
+				/*try {
+					Thread.sleep(1000);
+				}
+				catch(InterruptedException e){ e.printStackTrace();}
+				*/
+				//////////////////////////////////////////////
+			/*	buffer = null;
+
+				bytesRemaining = fileLength - totalBytesRead;
+				if ((bytesRemaining) < MAX_BUFF_SIZE)
+					nextIsLast = true;
+			}*/
+
+			//fis.close();
 
 		} catch (IOException | NullPointerException | IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Envío completado");
 	}
 
 
@@ -564,11 +533,13 @@ public class Servidor {
 			metadataBuffer[i] = len[i];
 
 		// Nombre del fichero.
+		//byte[] aux = file.getName().getBytes(Charset.forName("UTF-8"));
 		byte[] aux = file.getName().getBytes();
 		System.arraycopy(aux, 0, metadataBuffer, 4, aux.length);
 
-		DatagramPacket metadataPacket = new DatagramPacket(metadataBuffer, metadataBuffer.length, addr.getAddress(), addr.getPort());
-		socket.send(metadataPacket);
+		int dataSize = metadataBuffer.length;
+		peerOutput.writeInt(dataSize);
+		peerOutput.write(metadataBuffer, 0, dataSize);
 	}
 
 
@@ -577,7 +548,6 @@ public class Servidor {
 	 * @return tamaño y nombre de los ficheros de la carpeta compartida.
 	 */
 	private byte[] getMetadataFromSharedFolder() {
-		// TODO: FALTAN 2 COSAS: MANDAR EL Nº DE FICHEROS TOTALES Y EL TAMAÑO DEL NOMBRE DE CADA UNO.
 		// TODO: Poner bien la carpeta compartida.
 		File filesPath =  new File(Utils.parseMountDirectory().getAbsolutePath());
 		File[] files = filesPath.listFiles();
@@ -617,8 +587,7 @@ public class Servidor {
 	private void sendAllFilesMetadata() {
 		try {
 			byte[] allMetadata = getMetadataFromSharedFolder();
-			DatagramPacket p = new DatagramPacket(allMetadata, allMetadata.length);
-			socket.send(p);
+			peerOutput.write(allMetadata, 0, allMetadata.length);
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -627,7 +596,7 @@ public class Servidor {
 
 
 	public byte[] getAddress(){
-		return this.address;
+		return this.localAddress;
 	}
 
 }

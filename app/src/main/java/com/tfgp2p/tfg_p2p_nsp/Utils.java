@@ -4,10 +4,24 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import com.tfgp2p.tfg_p2p_nsp.Conexion.Servidor;
+import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 
 /**
@@ -36,7 +50,7 @@ public class Utils {
 	/**
 	 * Constante que identifica un paquete como paquete de confirmación de recepción de datos.
 	 */
-	//public static final byte PACKET_ACK = 4;
+	public static final byte PACKET_ACK = 4;
 	/**
 	 * Constante que identifica un paquete como paquete de envío de metadatos de 1 fichero.
 	 */
@@ -66,11 +80,8 @@ public class Utils {
 	public static final byte IS_CLIENT_SOCKET = 11;
 	public static final byte CLOSE_SOCKET = 12;
 	public static final byte TRY_CONNECT = 13;
-	public static final byte PUNCH = 14;
-	public static final byte TAKE_IP_FROM_HEADER = 0;
-	public static final byte PACKET_OK = -1;
-	public static final byte PACKET_CORRUPT_OR_LOST = -2;
-	//public static final byte MISSING_FROM_NUMBER= -3;
+	public static final byte TAKE_IP_FROM_HEADER = 14;
+	public static final byte PUNCH = 15;
 
 	// TODO: Cada vez que se cree un tipo de identificador de paquete DEBE SER AÑADIDO MANUALMENTE AL HashSet.
 	/**
@@ -78,7 +89,7 @@ public class Utils {
 	 * de solicitud es válido. Se utiliza en el método isValidRequest().
 	 */
 	private static final HashSet<Byte> packetID = new HashSet<>(Arrays.asList(
-			METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, /*PACKET_ACK,*/ METADATA_SEND_1
+			METADATA_REQ_ONE, METADATA_REQ_ALL, FILE_REQ, PACKET_ACK, METADATA_SEND_1
 	));
 
 
@@ -115,25 +126,6 @@ public class Utils {
 
 
 	/**
-	 * Transforma un long en un array de 8 bytes.
-	 *
-	 * @param n
-	 * @return
-	 */
-	public static byte[] longToByteArray(long n) {
-		return new byte[] {
-				(byte)(n >>> 56),
-				(byte)(n >>> 48),
-				(byte)(n >>> 40),
-				(byte)(n >>> 32),
-				(byte)(n >>> 24),
-				(byte)(n >>> 16),
-				(byte)(n >>> 8),
-				(byte) n};
-	}
-
-
-	/**
 	 * Transforma un byte[] en un int.
 	 *
 	 * @param array
@@ -141,17 +133,6 @@ public class Utils {
 	 */
 	public static int byteArrayToInt(byte[] array){
 		return ByteBuffer.wrap(array).getInt();
-	}
-
-
-	/**
-	 * Transforma un byte[] en un long.
-	 *
-	 * @param array
-	 * @return
-	 */
-	public static long byteArrayToLong(byte[] array){
-		return ByteBuffer.wrap(array).getLong();
 	}
 
 
