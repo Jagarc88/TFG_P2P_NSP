@@ -4,10 +4,10 @@ import android.content.Context;
 import android.util.Pair;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
+import com.tfgp2p.tfg_p2p_nsp.MyAlert;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,12 +16,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -98,12 +96,13 @@ public class Servidor {
 			this.localAddress = Utils.getIP(udpSocket, context);
 			this.localPort = udpSocket.getLocalPort();
 
-			this.tcpListenSocket = new ServerSocket(localPort);
-			this.tcpListenSocket.setReuseAddress(true);
-
 			this.tcpSocket = new Socket();
-			this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
 			this.tcpSocket.setReuseAddress(true);
+			this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
+
+			/*this.tcpListenSocket = new ServerSocket(localPort);
+			this.tcpListenSocket.setReuseAddress(true);
+			*/
 
 			// TODO: COMPROBAR QUE TODOS LOS SOCKETS TIENEN LAS DIRECCIONES Y LOS PUERTOS IGUALES.
 
@@ -128,6 +127,7 @@ public class Servidor {
 		} catch (IOException e) {
 			new Servidor(c);
 		}
+
 	}
 
 
@@ -141,8 +141,8 @@ public class Servidor {
 		String myName = Amigos.getMyName();
 
 		try {
-			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			udpSocket.connect(serverAddr);
+			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getUdpServerInfo().getAddress(), Amigos.getUdpServerInfo().getPort());
+			//udpSocket.connect(serverAddr);
 
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			baos.write(SERVER_CONNECT);
@@ -191,11 +191,12 @@ public class Servidor {
 						}
 					}).start();
 				else
-					throw new AlertException("Error, ID de paquete no válida.");
+					throw new MyAlert("Error, ID de paquete no válida.");
 				*/
 			}
 		} catch (AlertException e){
-			e.showAlert();
+			e.printStackTrace();
+			//e.showAlert();
 		}
 	}
 
@@ -236,7 +237,7 @@ public class Servidor {
 	 *
 	 * @throws IOException
 	 */
-	private void connect_to_friend() throws IOException, AlertException {
+	private void connect_to_friend() throws Exception {
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
@@ -252,15 +253,34 @@ public class Servidor {
 
 		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 
-
-		byte[] sendPunchArray = {PUNCH};
+		/*byte[] sendPunchArray = {PUNCH};
 		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, peerISA);
 		udpSocket.send(sendPunch);
-
-
-		/*listenSocket = new ServerSocket(listenPort);
-		listenSocket.setReuseAddress(true);
 		*/
+
+
+		///////////////////////////////////////////////////////
+		// TODO: Si no funciona, probar a que falle sin provcarle yo el timeout.
+		// TODO: Falta indicarle al servidor que le diga al cliente que inicie la conexión directa con el sirviente.
+		try {
+			tcpSocket.connect(peerISA, 2000);
+		} catch (SocketTimeoutException e){}
+
+		// TODO: PASO 9.
+		Socket sock2Server = new Socket();
+		sock2Server.connect(Amigos.getTcpServerInfo());
+		DataOutputStream dos = new DataOutputStream(sock2Server.getOutputStream());
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		baos.write(CLOSE_SOCKET);
+
+		baos.writeTo(dos);
+		//tcpSocket.close();
+
+		this.tcpListenSocket = new ServerSocket(localPort);
+		this.tcpListenSocket.setReuseAddress(true);
+		///////////////////////////////////////////////////////
+
+		//TODO: poner timeout.
 		tcpSocket = tcpListenSocket.accept();
 
 		peerOutput = new DataOutputStream(tcpSocket.getOutputStream());
@@ -276,7 +296,7 @@ public class Servidor {
 	 * La petición recibida se mete en la cola de espera para atenderla cuando sea su turno.
 	 * Si la petición se realiza desde un dispositivo que no es amigo se muestra error.
 	 */
-	private void waitRequest() throws AlertException{
+	private void waitRequest() throws AlertException {
 		// Las solicitudes entrantes han de pasar por la cola de entrada SIEMPRE.
 		/*
 		 * Con la cola de espera estoy forzando a que las peticiones se atiendan de una en una.
@@ -285,12 +305,12 @@ public class Servidor {
 
 		try{
 			// Mientras el servidor no envíe aviso de nueva petición el hilo no avanza.
-			byte[] new_req = new byte[1];
+			/*byte[] new_req = new byte[1];
 
 			while (new_req[0] != NEW_REQ){
 				new_req[0] = 0;
 				new_req[0] = peerInput.readByte();
-			}
+			}*/
 
 			connect_to_friend();
 

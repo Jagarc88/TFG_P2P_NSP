@@ -3,27 +3,21 @@ package com.tfgp2p.tfg_p2p_nsp.Conexion;
 import android.content.Context;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
+import com.tfgp2p.tfg_p2p_nsp.MyAlert;
 import com.tfgp2p.tfg_p2p_nsp.Modelo.Amigos;
 import com.tfgp2p.tfg_p2p_nsp.Utils;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -48,11 +42,11 @@ public class Cliente {
 
 	private ServerSocket tcpListenSocket;
 	private Socket tcpSocket;
-	private DatagramSocket udpSocket;
-	/*private Socket peerConnectingSocket;
+	//private DatagramSocket udpSocket;
+	//private Socket peerConnectingSocket;
 	private DataOutputStream serverOutput;
 	private DataInputStream serverInput;
-	*/
+
 	private DataOutputStream peerOutput;
 	private DataInputStream peerInput;
 
@@ -78,21 +72,22 @@ public class Cliente {
 			this.amigos = Amigos.getInstance(context);
 
 			// Se crea el socket UDP y se asocia a un puerto disponible con el constructor por defecto:
-			this.udpSocket = new DatagramSocket();
+			/*this.udpSocket = new DatagramSocket();
 			this.udpSocket.setReuseAddress(true);
+
 
 			//this.localAddress = udpListenSocket.getLocalAddress().getAddress();
 			this.localAddress = Utils.getIP(udpSocket, context);
 			this.localPort = udpSocket.getLocalPort();
-
-			this.tcpListenSocket = new ServerSocket(localPort);
-			this.tcpListenSocket.setReuseAddress(true);
+			*/
 
 			this.tcpSocket = new Socket();
-			this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
+			//this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
 			this.tcpSocket.setReuseAddress(true);
 
-			// TODO: COMPROBAR QUE TODOS LOS SOCKETS TIENEN LAS DIRECCIONES Y LOS PUERTOS IGUALES.
+			/*this.tcpListenSocket = new ServerSocket(localPort);
+			this.tcpListenSocket.setReuseAddress(true);
+			*/
 
 			loginServer();
 
@@ -115,17 +110,25 @@ public class Cliente {
 
 				/* Datos para la primera comunicación:
 				 * "HOLA, quiero hablar con MANOLITO cuyo nombre tiene esta otra LONGITUD".
+				 * En la versión TCP no hace falta enviar la longitud del nombre porque ya
+				 * le estamos enviando la longitud total del buffer. Además habría que
+				 * mandar también el nombre del cliente.
 				 */
 				// TODO: Faltaría enviar tb la clave/id del amigo.
 				baos.write(HELLO);
-				//baos.write(nameLen);
-				//baos.write(nameBytes);
 				baos.write(friendNameLen);
 				baos.write(friendNameBytes);
+				// Si es TCP:
+				baos.write(Amigos.getMyName().getBytes());
 
-				byte[] nameBuff = baos.toByteArray();
+				serverOutput.writeInt(baos.size());
+				baos.writeTo(serverOutput);
+
+				// Si es UDP:
+				/*byte[] nameBuff = baos.toByteArray();
 				DatagramPacket p = new DatagramPacket(nameBuff, nameBuff.length, Amigos.getServerInfo());
 				udpSocket.send(p);
+				*/
 			}
 			catch (IOException e){
 				e.printStackTrace();
@@ -161,7 +164,7 @@ public class Cliente {
 					--retries;
 				}
 				if (retries < 0)
-					throw new AlertException("No se ha recibido respuesta del otro dispositivo");
+					throw new MyAlert("No se ha recibido respuesta del otro dispositivo");
 				*/
 				if (resp[0] == HELLO_FRIEND) {
 					requestFile(fileName, friendName);
@@ -196,7 +199,12 @@ public class Cliente {
 	private void loginServer(){
 		try {
 			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			udpSocket.connect(serverAddr);
+			//udpSocket.connect(serverAddr);
+
+			/////////////////////////////////////////////////
+			serverOutput = new DataOutputStream(tcpSocket.getOutputStream());
+			serverInput = new DataInputStream(tcpSocket.getInputStream());
+			////////////////////////////////////////////////
 
 			String myName = Amigos.getMyName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -253,11 +261,26 @@ public class Cliente {
 		 * traducción IP+puerto privados <-> IP+puerto públicos y pueda recibir ya el primer
 		 * paquete que le envíe el cliente.
 		 */
+		byte[] sendPunchArray = {PUNCH};
+		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, peerISA);
+		udpSocket.send(sendPunch);
+
+		byte[] resp = new byte[1];
+		DatagramPacket pp = new DatagramPacket(resp, resp.length);
+		udpSocket.receive(pp);
+
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
+		//////////////////////////////////////////////////////
+		/*try {
+			tcpSocket.connect(peerISA, 1000);
+		} catch (SocketTimeoutException e){}
+		*/
+		//////////////////////////////////////////////////////
 
 		tcpSocket.connect(peerISA);
 
@@ -291,8 +314,9 @@ public class Cliente {
 			/////////////////////////////////////////
 
 			// Envío del aviso de una nueva petición.
-			byte[] newreq = {Utils.NEW_REQ};
+			/*byte[] newreq = {Utils.NEW_REQ};
 			peerOutput.write(newreq);
+			*/
 
 			// Se envia FILE_REQ + nombre del archivo.
 

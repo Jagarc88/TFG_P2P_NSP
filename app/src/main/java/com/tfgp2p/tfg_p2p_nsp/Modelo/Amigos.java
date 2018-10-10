@@ -3,6 +3,7 @@ package com.tfgp2p.tfg_p2p_nsp.Modelo;
 import android.content.Context;
 
 import com.tfgp2p.tfg_p2p_nsp.AlertException;
+import com.tfgp2p.tfg_p2p_nsp.MyAlert;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -28,7 +29,8 @@ public class Amigos {
 	private static Amigos amigos = null;
 
 	// TODO: Debería ser final, pero en android no me permite dejarla en blanco e inicializarla en el constructor por ejemplo...
-	private static InetSocketAddress serverInfo;
+	private static InetSocketAddress udpServerInfo;
+	private static InetSocketAddress tcpServerInfo;
 
 	private Context context;
 
@@ -53,7 +55,8 @@ public class Amigos {
 		// Hasta 16 amigos por defecto.
 		this.friendsMap = new HashMap<>();
 		try {
-			serverInfo = new InetSocketAddress(Inet4Address.getByName(""),);
+			udpServerInfo = new InetSocketAddress(Inet4Address.getByName());
+			tcpServerInfo = new InetSocketAddress(Inet4Address.getByName());
 		} catch (UnknownHostException e){e.printStackTrace();}
 	}
 
@@ -63,11 +66,11 @@ public class Amigos {
 			InetSocketAddress iaddr = new InetSocketAddress(addr, port);
 			this.friendsMap.put(name, iaddr);
 		//}
-		//else throw new AlertException(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.", context);
+		//else throw new MyAlert(name + " ya existe, introduce otro nombre o modifica el antiguo amigo.", context);
 	}
 
 
-	public void updateFriendName(String name, String newName) throws AlertException{
+	public void updateFriendName(String name, String newName) throws AlertException {
 		if (this.friendsMap.containsKey(name)){
 			InetSocketAddress addr = this.friendsMap.get(name);
 			this.friendsMap.remove(name);
@@ -77,7 +80,7 @@ public class Amigos {
 	}
 
 
-	public void updateFriendAddr(String name, InetSocketAddress newAddr) throws AlertException{
+	public void updateFriendAddr(String name, InetSocketAddress newAddr) throws AlertException {
 		if (this.friendsMap.containsKey(name)){
 			this.friendsMap.remove(name);
 			this.friendsMap.put(name, newAddr);
@@ -86,7 +89,7 @@ public class Amigos {
 	}
 
 
-	public void removeFriend(String name) throws AlertException{
+	public void removeFriend(String name) throws AlertException {
 		if (this.friendsMap.containsKey(name)){
 			this.friendsMap.remove(name);
 		}
@@ -99,7 +102,7 @@ public class Amigos {
 	}
 
 
-	public InetSocketAddress getFriendAddr(String name) throws AlertException{
+	public InetSocketAddress getFriendAddr(String name) throws AlertException {
 		if (this.friendsMap.containsKey(name)){
 			return this.friendsMap.get(name);
 		}
@@ -128,8 +131,11 @@ public class Amigos {
 	}
 
 
-	public static InetSocketAddress getServerInfo(){
-		return serverInfo;
+	public static InetSocketAddress getUdpServerInfo(){
+		return udpServerInfo;
+	}
+	public static InetSocketAddress getTcpServerInfo(){
+		return tcpServerInfo;
 	}
 
 
