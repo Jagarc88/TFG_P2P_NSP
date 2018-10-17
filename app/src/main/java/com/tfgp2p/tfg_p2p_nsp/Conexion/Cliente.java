@@ -237,55 +237,36 @@ public class Cliente {
 	 * @throws IOException
 	 */
 	private void connect_to_friend() throws IOException, AlertException {
+		// TODO: QUIZÁ SEA NECESARIO USAR OTRO SOCKET DISTINTO (utilizando el mismo puerto) PARA CONECTAR CON EL AMIGO.
+
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
-		byte[] friendInfo = new byte[8];
-		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
-		udpSocket.receive(friendInfoPacket);
+		byte[] friendInfo = new byte[9];
+		serverInput.readFully(friendInfo);
 
-		if (friendInfo[0] == NO_FRIEND)
-			throw new AlertException("Ha habido un problema en la comunicación.", context);
+		if (friendInfo[0] == CLOSE_SOCKET) {
+			byte[] IParray = new byte[4];
+			// TODO: REVISAR que recibo la IP y puerto bien y que no me estoy equivocando en los índices.
+			System.arraycopy(friendInfo, 1, IParray, 0, 4);
+			InetAddress friendIP = InetAddress.getByAddress(IParray);
 
-		byte[] IParray = new byte[4];
-		System.arraycopy(friendInfo, 0, IParray, 0, 4);
-		InetAddress friendIP = InetAddress.getByAddress(IParray);
+			byte[] portArray = new byte[4];
+			System.arraycopy(friendInfo, 5, portArray, 0, 4);
+			int friendPort = Utils.byteArrayToInt(portArray);
 
-		byte[] portArray = new byte[4];
-		System.arraycopy(friendInfo, 4, portArray, 0, 4);
-		int friendPort = Utils.byteArrayToInt(portArray);
+			InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 
-		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+			tcpSocket.close();
+			// TODO: Comprobar que el puerto usado es el mismo que con el servidor.
+			tcpSocket.connect(peerISA);
 
-		// TODO: Repasar este comentario por si al final funciona de forma distinta:
-		/* Con esto damos tiempo a que el dispositivo que actúa como proveedor del archivo le dé
-		 * tiempo a mandar el paquete que hará que la NAT tras la que se encuentra registre la
-		 * traducción IP+puerto privados <-> IP+puerto públicos y pueda recibir ya el primer
-		 * paquete que le envíe el cliente.
-		 */
-		byte[] sendPunchArray = {PUNCH};
-		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, peerISA);
-		udpSocket.send(sendPunch);
-
-		byte[] resp = new byte[1];
-		DatagramPacket pp = new DatagramPacket(resp, resp.length);
-		udpSocket.receive(pp);
-
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			peerInput = new DataInputStream(tcpSocket.getInputStream());
+			peerOutput = new DataOutputStream(tcpSocket.getOutputStream());
 		}
 
-		//////////////////////////////////////////////////////
-		/*try {
-			tcpSocket.connect(peerISA, 1000);
-		} catch (SocketTimeoutException e){}
-		*/
-		//////////////////////////////////////////////////////
+		else if (friendInfo[0] == NO_FRIEND)
+			throw new AlertException("Ha habido un problema en la comunicación.", context);
 
-		tcpSocket.connect(peerISA);
 
-		peerInput = new DataInputStream(tcpSocket.getInputStream());
-		peerOutput = new DataOutputStream(tcpSocket.getOutputStream());
 	}
 
 

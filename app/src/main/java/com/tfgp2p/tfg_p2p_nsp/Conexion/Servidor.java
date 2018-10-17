@@ -242,6 +242,7 @@ public class Servidor {
 		byte[] friendInfo = new byte[8];
 		DatagramPacket friendInfoPacket = new DatagramPacket(friendInfo, friendInfo.length);
 		udpSocket.receive(friendInfoPacket);
+		// TODO: Falta comprobar si el cliente es amigo EXACTAMENTE AQUÍ. Habría que ampliar el buffer.
 
 		byte[] IParray = new byte[4];
 		System.arraycopy(friendInfo, 0, IParray, 0, 4);
@@ -263,17 +264,27 @@ public class Servidor {
 		// TODO: Si no funciona, probar a que falle sin provcarle yo el timeout.
 		// TODO: Falta indicarle al servidor que le diga al cliente que inicie la conexión directa con el sirviente.
 		try {
+			// Cerrar conexión con el servidor:
+			// TODO: Ver qué pasa en el servidor cuando cierro la conexión aquí. Si sigue el flujo normal, todo OK.
+			// TODO: Si no, meter el código que espera a la nueva conexión TCP y que ordena al cliente iniciar TCP en el catch.
+			tcpSocket.close();
+			// Intentar conexión con el cliente, abriendo el agujero local:
+			// TODO: COMPROBAR que el puerto usado aquí es el mismo que se usó en la conexión con el servidor. Si no lo es bindearlo.
 			tcpSocket.connect(peerISA, 2000);
 		} catch (SocketTimeoutException e){}
 
+		// Nuevo socket para mandar al servidor que cierre la conexión con el cliente:
+		// Además, el servidor indicará al cliente que ya puede intentar la conexión TCP con el amigo.
 		// TODO: PASO 9.
 		Socket sock2Server = new Socket();
+		sock2Server.bind(udpSocket.getLocalSocketAddress())
 		sock2Server.connect(Amigos.getTcpServerInfo());
 		DataOutputStream dos = new DataOutputStream(sock2Server.getOutputStream());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		baos.write(CLOSE_SOCKET);
-
 		baos.writeTo(dos);
+
+		// TODO: ¿Meto retardo aquí?
 		//tcpSocket.close();
 
 		this.tcpListenSocket = new ServerSocket(localPort);
