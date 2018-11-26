@@ -18,6 +18,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 
 import static com.tfgp2p.tfg_p2p_nsp.Utils.*;
 
@@ -32,8 +34,9 @@ public class Cliente {
 
 	private static Cliente client = null;
 
-	private byte[] localAddress;
-	private int localPort;
+	//private byte[] localAddress;
+	//private int localPort;
+	private SocketAddress localSocketAddress;
 
 	private Context context;
 
@@ -115,6 +118,7 @@ public class Cliente {
 				 * mandar también el nombre del cliente.
 				 */
 				// TODO: Faltaría enviar tb la clave/id del amigo.
+				// Quizá esto debería meterlo en el loginServer.
 				baos.write(HELLO);
 				baos.write(friendNameLen);
 				baos.write(friendNameBytes);
@@ -198,15 +202,23 @@ public class Cliente {
 	 */
 	private void loginServer(){
 		try {
-			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
-			//udpSocket.connect(serverAddr);
+			InetSocketAddress serverAddr = Amigos.getTcpServerInfo();
+					//new InetSocketAddress(Amigos.getTcpServerInfo().getAddress(), Amigos.getTcpServerInfo().getPort());
+			tcpSocket.connect(serverAddr);
+			InetAddress localAddress = tcpSocket.getLocalAddress();
+			int localPort = tcpSocket.getLocalPort();
+			//----------------------------------------------------------------------------------
+			this.localSocketAddress = new InetSocketAddress(localAddress, localPort);
+			//this.localSocketAddress = new InetSocketAddress(localPort);
+			//this.localSocketAddress = tcpSocket.getLocalSocketAddress();
+			//----------------------------------------------------------------------------------
 
 			/////////////////////////////////////////////////
 			serverOutput = new DataOutputStream(tcpSocket.getOutputStream());
 			serverInput = new DataInputStream(tcpSocket.getInputStream());
 			////////////////////////////////////////////////
 
-			String myName = Amigos.getMyName();
+			/*String myName = Amigos.getMyName();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			baos.write(SERVER_CONNECT);
 			baos.write((byte) myName.length());
@@ -217,10 +229,11 @@ public class Cliente {
 			DatagramPacket p = new DatagramPacket(connectionBuffer, connectionBuffer.length,
 					Amigos.getServerInfo().getAddress(), Amigos.getServerInfo().getPort());
 			udpSocket.send(p);
-
+		*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
 	}
 
 
@@ -237,8 +250,7 @@ public class Cliente {
 	 * @throws IOException
 	 */
 	private void connect_to_friend() throws IOException, AlertException {
-		// TODO: QUIZÁ SEA NECESARIO USAR OTRO SOCKET DISTINTO (utilizando el mismo puerto) PARA CONECTAR CON EL AMIGO.
-
+		// TODO: Falta devolver algún tipo de respuesta negativa si no se está registrado en el servidor.
 		// Tamaño del buffer: 4 bytes para la IP (raw byte[4]) y 4 bytes del puerto (int).
 		byte[] friendInfo = new byte[9];
 		serverInput.readFully(friendInfo);
@@ -256,8 +268,24 @@ public class Cliente {
 			InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 
 			tcpSocket.close();
+			tcpSocket = new Socket();
+			tcpSocket.setReuseAddress(true);
+			tcpSocket.bind(localSocketAddress);
 			// TODO: Comprobar que el puerto usado es el mismo que con el servidor.
+			try{
+				tcpSocket.connect(peerISA, 1000);
+			} catch (SocketTimeoutException e){}
+			//////////////////////////////////////////////////////////////////////
+			tcpSocket.close();
+			tcpSocket = new Socket();
+			tcpSocket.setReuseAddress(true);
+			tcpSocket.bind(localSocketAddress);
 			tcpSocket.connect(peerISA);
+			//////////////////////////////////////////////////////////////////////
+			/*ServerSocket listen = new ServerSocket();
+			listen.bind(localSocketAddress);
+			Socket conn = listen.accept();
+			*/
 
 			peerInput = new DataInputStream(tcpSocket.getInputStream());
 			peerOutput = new DataOutputStream(tcpSocket.getOutputStream());

@@ -43,7 +43,9 @@ public class Servidor {
 	private Context context;
 
 	private byte[] localAddress;
-	private int localPort;
+	private int udpPort;
+	private int tcpPort;
+	private InetSocketAddress localSocketAddress;
 
 	private ServerSocket tcpListenSocket;
 	private DatagramSocket udpSocket;
@@ -94,11 +96,11 @@ public class Servidor {
 
 			//this.localAddress = udpListenSocket.getLocalAddress().getAddress();
 			this.localAddress = Utils.getIP(udpSocket, context);
-			this.localPort = udpSocket.getLocalPort();
+			this.udpPort = udpSocket.getLocalPort();
 
 			this.tcpSocket = new Socket();
 			this.tcpSocket.setReuseAddress(true);
-			this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
+			//this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
 
 			/*this.tcpListenSocket = new ServerSocket(localPort);
 			this.tcpListenSocket.setReuseAddress(true);
@@ -141,8 +143,10 @@ public class Servidor {
 		String myName = Amigos.getMyName();
 
 		try {
-			InetSocketAddress serverAddr = new InetSocketAddress(Amigos.getUdpServerInfo().getAddress(), Amigos.getUdpServerInfo().getPort());
+			InetSocketAddress serverAddr = Amigos.getUdpServerInfo();
+					//new InetSocketAddress(Amigos.getUdpServerInfo().getAddress(), Amigos.getUdpServerInfo().getPort());
 			//udpSocket.connect(serverAddr);
+			//TODO: ¡¡¡IMPORTANTE!!! FALTA COMPROBAR QUE EL SERVIDOR ESTÁ EN LÍNEA. SI NO LO ESTÁ LANZAR EXCEPCIÓN.
 
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			baos.write(SERVER_CONNECT);
@@ -263,35 +267,69 @@ public class Servidor {
 		///////////////////////////////////////////////////////
 		// TODO: Si no funciona, probar a que falle sin provcarle yo el timeout.
 		// TODO: Falta indicarle al servidor que le diga al cliente que inicie la conexión directa con el sirviente.
+		Socket auxSocket = new Socket();
 		try {
-			// Cerrar conexión con el servidor:
 			// TODO: Ver qué pasa en el servidor cuando cierro la conexión aquí. Si sigue el flujo normal, todo OK.
 			// TODO: Si no, meter el código que espera a la nueva conexión TCP y que ordena al cliente iniciar TCP en el catch.
-			tcpSocket.close();
-			// Intentar conexión con el cliente, abriendo el agujero local:
-			// TODO: COMPROBAR que el puerto usado aquí es el mismo que se usó en la conexión con el servidor. Si no lo es bindearlo.
-			tcpSocket.connect(peerISA, 2000);
-		} catch (SocketTimeoutException e){}
+
+			// Conectar con el servidor para obtener un puerto.
+			auxSocket.connect(Amigos.getTcpServerInfo());
+			tcpPort = auxSocket.getLocalPort();
+			// TODO: Falta hacer con este socket el paso 5 AQUÍ.
+			auxSocket.close();
+			// TODO GORDO: Hallar la forma de que no dé error "address in use" para poder quitar este sleep.
+			// TODO: Probar varias veces sin este sleep.
+			//Thread.sleep(2000);
+
+			// Intentar conectar con el cliente para abrir el agujero local.
+			auxSocket = new Socket();
+			auxSocket.setReuseAddress(true);
+			auxSocket.bind(new InetSocketAddress(tcpPort));
+			auxSocket.connect(peerISA, 2000);
+
+			/*DatagramSocket punchSocket = new DatagramSocket(this.tcpPort);
+			punchSocket.setReuseAddress(true);
+			byte[] data = {PUNCH};
+			DatagramPacket packet = new DatagramPacket(data, data.length, peerISA);
+			punchSocket.send(packet);
+			punchSocket.close();
+			auxSocket.close();
+			*/
+			// TODO: catch por timeout inútil de momento.
+
+		} catch (SocketTimeoutException e){
+			// TODO: ¿Debería cerrar el socket?
+			auxSocket.close();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
 
 		// Nuevo socket para mandar al servidor que cierre la conexión con el cliente:
 		// Además, el servidor indicará al cliente que ya puede intentar la conexión TCP con el amigo.
 		// TODO: PASO 9.
 		Socket sock2Server = new Socket();
-		sock2Server.bind(udpSocket.getLocalSocketAddress())
+		//sock2Server.bind(udpSocket.getLocalSocketAddress());
 		sock2Server.connect(Amigos.getTcpServerInfo());
 		DataOutputStream dos = new DataOutputStream(sock2Server.getOutputStream());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		baos.write(CLOSE_SOCKET);
+		// TODO: Ahora falta que cuando el servidor reciba este CLOSE, envíe al cliente el puerto del destino.
 		baos.writeTo(dos);
 
 		// TODO: ¿Meto retardo aquí?
 		//tcpSocket.close();
 
-		this.tcpListenSocket = new ServerSocket(localPort);
-		this.tcpListenSocket.setReuseAddress(true);
+		tcpListenSocket = new ServerSocket();
+		tcpListenSocket.setReuseAddress(true);
+		tcpListenSocket.bind(new InetSocketAddress(tcpPort));
 		///////////////////////////////////////////////////////
 
-		//TODO: poner timeout.
+		//TODO: poner timeout y pensar qué hacer si no sale bien la conexión.
+		/*tcpSocket.close();
+		sock2Server.close();
+		auxSocket.close();
+		udpSocket.close();
+		*/
 		tcpSocket = tcpListenSocket.accept();
 
 		peerOutput = new DataOutputStream(tcpSocket.getOutputStream());
