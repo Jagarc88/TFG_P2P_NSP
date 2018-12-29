@@ -55,6 +55,8 @@ public class Servidor {
 	private DataOutputStream serverOutput;
 	private DataInputStream serverInput;
 	*/
+
+	private InetSocketAddress peerISA;
 	private DataOutputStream peerOutput;
 	private DataInputStream peerInput;
 
@@ -256,7 +258,8 @@ public class Servidor {
 		System.arraycopy(friendInfo, 4, portArray, 0, 4);
 		int friendPort = Utils.byteArrayToInt(portArray);
 
-		InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+		//InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
+		peerISA = new InetSocketAddress(friendIP, friendPort);
 
 		/*byte[] sendPunchArray = {PUNCH};
 		DatagramPacket sendPunch = new DatagramPacket(sendPunchArray, 1, peerISA);
@@ -267,25 +270,48 @@ public class Servidor {
 		///////////////////////////////////////////////////////
 		// TODO: Si no funciona, probar a que falle sin provcarle yo el timeout.
 		// TODO: Falta indicarle al servidor que le diga al cliente que inicie la conexión directa con el sirviente.
-		Socket auxSocket = new Socket();
+		/*Socket auxSocket = new Socket();
+		auxSocket.setReuseAddress(true);
+		*/
+		// TODO: Si funciona faltaría guardar en algún lado este socket (atributo privado por ej.).
+		Socket socket2Server = new Socket();
+		socket2Server.setReuseAddress(true);
 		try {
 			// TODO: Ver qué pasa en el servidor cuando cierro la conexión aquí. Si sigue el flujo normal, todo OK.
 			// TODO: Si no, meter el código que espera a la nueva conexión TCP y que ordena al cliente iniciar TCP en el catch.
 
 			// Conectar con el servidor para obtener un puerto.
-			auxSocket.connect(Amigos.getTcpServerInfo());
-			tcpPort = auxSocket.getLocalPort();
+			socket2Server.connect(Amigos.getTcpServerInfo());
+			tcpPort = socket2Server.getLocalPort();
 			// TODO: Falta hacer con este socket el paso 5 AQUÍ.
-			auxSocket.close();
+			//auxSocket.close();
 			// TODO GORDO: Hallar la forma de que no dé error "address in use" para poder quitar este sleep.
 			// TODO: Probar varias veces sin este sleep.
 			//Thread.sleep(2000);
 
 			// Intentar conectar con el cliente para abrir el agujero local.
-			auxSocket = new Socket();
+			new Thread(new Runnable(){
+				@Override
+				public void run() {
+					try{
+						Socket auxSocket = new Socket();
+						auxSocket.setReuseAddress(true);
+						auxSocket.bind(new InetSocketAddress(tcpPort));
+						auxSocket.connect(peerISA,1);
+						System.out.print("\n----------------------------\nSe ha conectado el auxSocket\n----------------------------\n");
+					} catch (IOException e){
+						System.out.print("\n----------------------------\nHa fallado el socket abierto\n----------------------------\n");
+						e.printStackTrace();
+					}
+				}
+			}).start();
+
+			/*Socket auxSocket = new Socket();
 			auxSocket.setReuseAddress(true);
-			auxSocket.bind(new InetSocketAddress(tcpPort));
+			*/
+			/*auxSocket.bind(new InetSocketAddress(tcpPort));
 			auxSocket.connect(peerISA, 2000);
+			*/
 
 			/*DatagramSocket punchSocket = new DatagramSocket(this.tcpPort);
 			punchSocket.setReuseAddress(true);
@@ -299,7 +325,7 @@ public class Servidor {
 
 		} catch (SocketTimeoutException e){
 			// TODO: ¿Debería cerrar el socket?
-			auxSocket.close();
+			//auxSocket.close();
 		} catch (IOException e){
 			e.printStackTrace();
 		}
@@ -307,10 +333,10 @@ public class Servidor {
 		// Nuevo socket para mandar al servidor que cierre la conexión con el cliente:
 		// Además, el servidor indicará al cliente que ya puede intentar la conexión TCP con el amigo.
 		// TODO: PASO 9.
-		Socket sock2Server = new Socket();
+		//Socket sock2Server = new Socket();
 		//sock2Server.bind(udpSocket.getLocalSocketAddress());
-		sock2Server.connect(Amigos.getTcpServerInfo());
-		DataOutputStream dos = new DataOutputStream(sock2Server.getOutputStream());
+		//sock2Server.connect(Amigos.getTcpServerInfo());
+		DataOutputStream dos = new DataOutputStream(socket2Server.getOutputStream());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		baos.write(CLOSE_SOCKET);
 		// TODO: Ahora falta que cuando el servidor reciba este CLOSE, envíe al cliente el puerto del destino.
@@ -411,7 +437,7 @@ public class Servidor {
 				 */
 				if (isValidRequest(request[0])){
 					synchronized (requestQueue) {
-						byte[] aux = new byte[reqSize];
+						byte[] aux = new byte[64];
 						System.arraycopy(request, 0, aux, 0, request.length);
 						requestQueue.add(new Pair<>(friendName, aux));
 						requestQueue.notify();
@@ -526,6 +552,8 @@ public class Servidor {
 			while ((count = fis.read(buffer)) > 0) {
 				peerOutput.write(buffer, 0, count);
 			}
+
+			System.out.println("\n\n****************\nEnvío completado\n****************\n");
 
 			//dos.close();
 			//fis.close();

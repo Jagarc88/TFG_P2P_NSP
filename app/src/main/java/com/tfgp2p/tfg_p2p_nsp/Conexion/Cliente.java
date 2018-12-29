@@ -44,6 +44,7 @@ public class Cliente {
 	private Amigos amigos;
 
 	private ServerSocket tcpListenSocket;
+	private Socket tcpSocket2Server;
 	private Socket tcpSocket;
 	//private DatagramSocket udpSocket;
 	//private Socket peerConnectingSocket;
@@ -87,6 +88,8 @@ public class Cliente {
 			this.tcpSocket = new Socket();
 			//this.tcpSocket.bind(udpSocket.getLocalSocketAddress());
 			this.tcpSocket.setReuseAddress(true);
+			this.tcpSocket2Server = new Socket();
+			this.tcpSocket2Server.setReuseAddress(true);
 
 			/*this.tcpListenSocket = new ServerSocket(localPort);
 			this.tcpListenSocket.setReuseAddress(true);
@@ -204,9 +207,9 @@ public class Cliente {
 		try {
 			InetSocketAddress serverAddr = Amigos.getTcpServerInfo();
 					//new InetSocketAddress(Amigos.getTcpServerInfo().getAddress(), Amigos.getTcpServerInfo().getPort());
-			tcpSocket.connect(serverAddr);
-			InetAddress localAddress = tcpSocket.getLocalAddress();
-			int localPort = tcpSocket.getLocalPort();
+			tcpSocket2Server.connect(serverAddr);
+			InetAddress localAddress = tcpSocket2Server.getLocalAddress();
+			int localPort = tcpSocket2Server.getLocalPort();
 			//----------------------------------------------------------------------------------
 			this.localSocketAddress = new InetSocketAddress(localAddress, localPort);
 			//this.localSocketAddress = new InetSocketAddress(localPort);
@@ -214,8 +217,8 @@ public class Cliente {
 			//----------------------------------------------------------------------------------
 
 			/////////////////////////////////////////////////
-			serverOutput = new DataOutputStream(tcpSocket.getOutputStream());
-			serverInput = new DataInputStream(tcpSocket.getInputStream());
+			serverOutput = new DataOutputStream(tcpSocket2Server.getOutputStream());
+			serverInput = new DataInputStream(tcpSocket2Server.getInputStream());
 			////////////////////////////////////////////////
 
 			/*String myName = Amigos.getMyName();
@@ -257,7 +260,6 @@ public class Cliente {
 
 		if (friendInfo[0] == CLOSE_SOCKET) {
 			byte[] IParray = new byte[4];
-			// TODO: REVISAR que recibo la IP y puerto bien y que no me estoy equivocando en los índices.
 			System.arraycopy(friendInfo, 1, IParray, 0, 4);
 			InetAddress friendIP = InetAddress.getByAddress(IParray);
 
@@ -267,19 +269,13 @@ public class Cliente {
 
 			InetSocketAddress peerISA = new InetSocketAddress(friendIP, friendPort);
 
-			tcpSocket.close();
-			tcpSocket = new Socket();
-			tcpSocket.setReuseAddress(true);
 			tcpSocket.bind(localSocketAddress);
 			// TODO: Comprobar que el puerto usado es el mismo que con el servidor.
-			try{
+			/*try{
 				tcpSocket.connect(peerISA, 1000);
 			} catch (SocketTimeoutException e){}
+			*/
 			//////////////////////////////////////////////////////////////////////
-			tcpSocket.close();
-			tcpSocket = new Socket();
-			tcpSocket.setReuseAddress(true);
-			tcpSocket.bind(localSocketAddress);
 			tcpSocket.connect(peerISA);
 			//////////////////////////////////////////////////////////////////////
 			/*ServerSocket listen = new ServerSocket();
@@ -371,6 +367,7 @@ public class Cliente {
 			while ((count = peerInput.read(dataBuffer)) > 0){
 				fos.write(dataBuffer, 0, count);
 			}
+			System.out.println("\n****************\nEnvío completado\n****************\n");
 		}
 		catch (IOException e){
 			e.printStackTrace();
